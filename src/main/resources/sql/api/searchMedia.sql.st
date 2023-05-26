@@ -20,6 +20,11 @@ SELECT media.id as id,
        row_to_json(address.*) as address
 FROM <schemaName>.media media
          JOIN <schemaName>.address address ON address.id = media.address_id
+         <if(joinTablesAndColumns)>
+            <joinTablesAndColumns:{joinTableAndColumn |
+            RIGHT JOIN <schemaName>.<joinTableAndColumn.tableName> <joinTableAndColumn.tableName>_<i0> ON media.entity_id = <joinTableAndColumn.tableName>_<i0>.id
+             AND <joinTableAndColumn.tableName>_<i0>."<joinTableAndColumn.columnName>" IN ('<joinTableAndColumn.columnValues:{columnValue | <columnValue>}; separator="', '">')}; separator="\n">
+         <endif>
 where media.image_url is not null
     and media.is_voided is false
     <if(request.fromDate)>                  and media.created_date_time >= :fromDate                   <endif>
@@ -29,7 +34,7 @@ where media.image_url is not null
     <if(request.encounterTypeNames)>        and media.encounter_type_name in (:encounterTypeNames)      <endif>
     <if(request.imageConcepts)>             and media.concept_name in (:imageConcepts)                  <endif>
     <if(request.syncValues)> and (<endif>
-      <<request.syncValues:{syncValue|
+      <request.syncValues:{syncValue|
         ((media.sync_parameter_key1 = :syncConceptName_<i0> and media.sync_parameter_value1 in (:syncConceptValues_<i0>))
         or (media.sync_parameter_key2 = :syncConceptName_<i0> and media.sync_parameter_value2 in (:syncConceptValues_<i0>)))};
         separator="\n OR "

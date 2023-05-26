@@ -34,6 +34,31 @@ public class SchemaMetadata {
         return this.getTableMetadata().stream().filter(currentTable -> currentTable.matches(newTable)).findFirst();
     }
 
+    public Optional<ColumnMetadata> findMatchingColumn(TableMetadata newTable, ColumnMetadata columnMetadata) {
+        Optional<TableMetadata> optionalTable = findMatchingTable(newTable);
+        if (optionalTable.isPresent()) {
+            TableMetadata table = optionalTable.get();
+            return table.getColumnMetadataList().stream().filter(currentColumn -> currentColumn.matches(columnMetadata)).findFirst();
+        }
+        return Optional.empty();
+    }
+
+    public List<TableMetadata> getAllSubjectTables() {
+        return tableMetadata.stream().filter(TableMetadata::isSubjectTable).toList();
+    }
+
+    public List<TableMetadata> getAllProgramEnrolmentTables() {
+        return tableMetadata.stream().filter(table -> table.getType() == TableMetadata.Type.ProgramEnrolment).toList();
+    }
+
+    public List<TableMetadata> getAllProgramEncounterTables() {
+        return tableMetadata.stream().filter(table -> table.getType() == TableMetadata.Type.ProgramEncounter).toList();
+    }
+
+    public List<TableMetadata> getAllEncounterTables() {
+        return tableMetadata.stream().filter(table -> table.getType() == TableMetadata.Type.Encounter).toList();
+    }
+
     private List<Diff> findChanges(SchemaMetadata currentSchema, TableMetadata newTable) {
         List<Diff> diffs = new ArrayList<>();
         Optional<TableMetadata> optionalMatchingTable = currentSchema.findMatchingTable(newTable);

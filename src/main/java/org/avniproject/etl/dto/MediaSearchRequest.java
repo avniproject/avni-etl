@@ -13,6 +13,7 @@ public final class MediaSearchRequest {
     private List<String> encounterTypeNames;
     private List<String> imageConcepts;
     private List<SyncValue> syncValues;
+    private List<ConceptFilter> conceptFilters;
     private Date fromDate;
     private Date toDate;
 
@@ -77,6 +78,17 @@ public final class MediaSearchRequest {
         this.syncValues = syncValues;
     }
 
+    public List<ConceptFilter> getConceptFilters() {
+        if (conceptFilters == null) {
+            conceptFilters = new ArrayList<>();
+        }
+        return conceptFilters;
+    }
+
+    public void setConceptFilters(List<ConceptFilter> conceptFilters) {
+        this.conceptFilters = conceptFilters;
+    }
+
     public Date getFromDate() {
         return fromDate;
     }
@@ -104,12 +116,13 @@ public final class MediaSearchRequest {
                 Objects.equals(this.imageConcepts, that.imageConcepts) &&
                 Objects.equals(this.syncValues, that.syncValues) &&
                 Objects.equals(this.fromDate, that.fromDate) &&
-                Objects.equals(this.toDate, that.toDate);
+                Objects.equals(this.toDate, that.toDate) &&
+                Objects.equals(this.conceptFilters, that.conceptFilters);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(subjectTypeNames, programNames, encounterTypeNames, imageConcepts, syncValues, fromDate, toDate);
+        return Objects.hash(subjectTypeNames, programNames, encounterTypeNames, imageConcepts, syncValues, fromDate, toDate, conceptFilters);
     }
 
     @Override
@@ -120,6 +133,7 @@ public final class MediaSearchRequest {
                 "encounterTypeNames=" + encounterTypeNames + ", " +
                 "imageConcepts=" + imageConcepts + ", " +
                 "syncValues=" + syncValues + ", " +
+                "conceptFilters=" + conceptFilters + ", " +
                 "fromDate=" + fromDate + ", " +
                 "toDate=" + toDate + ']';
     }

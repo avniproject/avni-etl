@@ -2,6 +2,7 @@ package org.avniproject.etl.repository.sql;
 
 import org.avniproject.etl.domain.ContextHolder;
 import org.avniproject.etl.dto.AddressRequest;
+import org.avniproject.etl.dto.ConceptFilterSearch;
 import org.avniproject.etl.dto.MediaSearchRequest;
 import org.avniproject.etl.dto.SyncValue;
 import org.stringtemplate.v4.ST;
@@ -9,6 +10,7 @@ import org.stringtemplate.v4.ST;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.avniproject.etl.repository.sql.SqlFile.readFile;
 
@@ -25,6 +27,14 @@ public class MediaSearchQueryBuilder {
     public MediaSearchQueryBuilder withMediaSearchRequest(MediaSearchRequest request) {
         template.add("request", request);
         addParameters(request);
+        return this;
+    }
+
+    public MediaSearchQueryBuilder withSearchConceptFilters(List<ConceptFilterSearch> conceptFilters) {
+        System.out.println("Building with searchConceptFilters:" + conceptFilters);
+        if (conceptFilters != null && !conceptFilters.isEmpty()) {
+            template.add("joinTablesAndColumns", conceptFilters);
+        }
         return this;
     }
 
@@ -56,6 +66,7 @@ public class MediaSearchQueryBuilder {
     }
 
     public Query build() {
+        System.out.println(template.render());
         return new Query(template.render(), parameters);
     }
 
