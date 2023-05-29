@@ -19,7 +19,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.avniproject.etl.repository.JdbcContextWrapper.runInOrgContext;
@@ -42,7 +41,12 @@ public class MediaTableRepository {
     private List<ConceptFilterSearch> determineConceptFilterTablesAndColumns(List<ConceptFilter> conceptFilters) {
         System.out.println("searching concepts: " + conceptFilters);
         List<ConceptFilterSearch> conceptFilterTablesAndColumns = new ArrayList<>();
-        List<ColumnMetadata.ConceptType> supportedConceptSearchTypes = Arrays.asList(ColumnMetadata.ConceptType.Numeric, ColumnMetadata.ConceptType.Date, ColumnMetadata.ConceptType.SingleSelect);
+        List<ColumnMetadata.ConceptType> supportedConceptSearchTypes = Arrays.asList(
+            ColumnMetadata.ConceptType.Numeric,
+            ColumnMetadata.ConceptType.Date,
+            ColumnMetadata.ConceptType.SingleSelect,
+            ColumnMetadata.ConceptType.MultiSelect
+        );
         SchemaMetadata schema = schemaMetadataRepository.getExistingSchemaMetadata();
         List<TableMetadata> tablesToSearch = Stream.of(schema.getAllSubjectTables(),
                 schema.getAllProgramEnrolmentTables(),
@@ -57,13 +61,14 @@ public class MediaTableRepository {
                 Optional<ColumnMetadata> column = tableMetadata.getColumnMetadataList()
                     .stream()
                     .filter(columnMetadata -> Objects.equals(columnMetadata.getConceptUuid(), conceptUuid)
-//                        && supportedConceptSearchTypes.contains(columnMetadata.getConceptType())
+                        && supportedConceptSearchTypes.contains(columnMetadata.getConceptType())
                     ).findFirst();
                 if (column.isPresent()) {
                     ColumnMetadata columnMetadata = column.get();
-                    ConceptFilterSearch c = new ConceptFilterSearch(tableMetadata.getName(), columnMetadata.getName(), conceptFilter.getValues());
-                    System.out.println("Found Concept and created ConceptFilterSearch: " + c);
-                    conceptFilterTablesAndColumns.add(c);
+                    conceptFilterTablesAndColumns.add(new ConceptFilterSearch(tableMetadata.getName(),
+                        columnMetadata.getName(), conceptFilter.getValues(),
+                        conceptFilter.getFrom(), conceptFilter.getTo(),
+                        columnMetadata.getConceptType().equals(ColumnMetadata.ConceptType.Numeric)));
                     break;
                 }
             }

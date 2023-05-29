@@ -23,7 +23,15 @@ FROM <schemaName>.media media
          <if(joinTablesAndColumns)>
             <joinTablesAndColumns:{joinTableAndColumn |
             RIGHT JOIN <schemaName>.<joinTableAndColumn.tableName> <joinTableAndColumn.tableName>_<i0> ON media.entity_id = <joinTableAndColumn.tableName>_<i0>.id
-             AND <joinTableAndColumn.tableName>_<i0>."<joinTableAndColumn.columnName>" IN ('<joinTableAndColumn.columnValues:{columnValue | <columnValue>}; separator="', '">')}; separator="\n">
+             AND <joinTableAndColumn.tableName>_<i0>."<joinTableAndColumn.columnName>"
+             <if(joinTableAndColumn.columnValues)>
+              IN ('<joinTableAndColumn.columnValues:{columnValue | <columnValue>}; separator="', '">')
+             <else>
+              <! BETWEEN <if(joinTableAndColumn.isNonStringValue)>if <joinTableAndColumn.from> AND <joinTableAndColumn.to><else> else '<joinTableAndColumn.from>' AND '<joinTableAndColumn.to>'<endif> !>
+              <! Below works because postgresql does an implicit type cast to numeric on passing strings for comparing with numeric. Revert to above approach after fixing (currently isNonStringValue is always false despite setting boolean) if this causes issues later. !>
+              BETWEEN '<joinTableAndColumn.from>' AND '<joinTableAndColumn.to>'
+             <endif>
+             }; separator="\n">
          <endif>
 where media.image_url is not null
     and media.is_voided is false
