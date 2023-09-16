@@ -36,9 +36,7 @@ public class ReportController {
             return reportRepository.generateUserActivity(
                    reportUtil.getDateDynamicWhere(startDate, endDate, "registration_date"),
                    reportUtil.getDateDynamicWhere(startDate, endDate, "encounter_date_time"),
-                   reportUtil.getDateDynamicWhere(startDate, endDate, "enrolment_date_time"),
-                   reportUtil.getDynamicUserWhere(userIds, "u.id")
-            );
+                   reportUtil.getDateDynamicWhere(startDate, endDate, "enrolment_date_time"));
     }
 
     @PreAuthorize("hasAnyAuthority('analytics_user')")
@@ -47,8 +45,7 @@ public class ReportController {
                                                   @RequestParam(value = "endDate", required = false) String endDate,
                                                   @RequestParam(value = "userIds", required = false, defaultValue = "") List<Long> userIds){
             return reportRepository.generateUserSyncFailures(
-                    reportUtil.getDateDynamicWhere(startDate, endDate, "st.sync_start_time"),
-                    reportUtil.getDynamicUserWhere(userIds, "u.id")
+                    reportUtil.getDateDynamicWhere(startDate, endDate, "st.sync_start_time")
             );
     }
 
@@ -56,24 +53,21 @@ public class ReportController {
     @RequestMapping(value = "/report/hr/deviceModels", method = RequestMethod.GET)
     public List<AggregateReportResult> getUserWiseDeviceModels(@RequestParam(value = "userIds", required = false, defaultValue = "") List<Long> userIds) {
 
-        return reportRepository.generateUserDeviceModels(
-                reportUtil.getDynamicUserWhere(userIds, "u.id"));
+        return reportRepository.generateUserDeviceModels();
     }
 
     @PreAuthorize("hasAnyAuthority('analytics_user')")
     @RequestMapping(value = "/report/hr/appVersions", method = RequestMethod.GET)
     public List<AggregateReportResult> getUserWiseAppVersions(@RequestParam(value = "userIds", required = false, defaultValue = "") List<Long> userIds) {
 
-        return reportRepository.generateUserAppVersions(
-                reportUtil.getDynamicUserWhere(userIds, "u.id"));
+        return reportRepository.generateUserAppVersions();
     }
 
     @PreAuthorize("hasAnyAuthority('analytics_user')")
     @RequestMapping(value = "/report/hr/userDetails", method = RequestMethod.GET)
     public List<UserActivityDTO> getUserDetails(@RequestParam(value = "userIds", required = false, defaultValue = "") List<Long> userIds) {
 
-        return reportRepository.generateUserDetails(
-                reportUtil.getDynamicUserWhere(userIds, "u.id"));
+        return reportRepository.generateUserDetails();
     }
 
     @PreAuthorize("hasAnyAuthority('analytics_user')")
@@ -83,8 +77,7 @@ public class ReportController {
                                                 @RequestParam(value = "userIds", required = false, defaultValue = "") List<Long> userIds) {
 
         return reportRepository.generateLatestSyncs(
-                reportUtil.getDateDynamicWhere(startDate, endDate, "st.sync_end_time"),
-                reportUtil.getDynamicUserWhere(userIds, "u.id"));
+                reportUtil.getDateDynamicWhere(startDate, endDate, "st.sync_end_time"));
     }
 
     @PreAuthorize("hasAnyAuthority('analytics_user')")
@@ -104,8 +97,7 @@ public class ReportController {
                                                         @RequestParam(value = "userIds", required = false, defaultValue = "") List<Long> userIds) {
         return reportRepository.generateCompletedVisitsOnTimeByProportion(
                 ">= 0.5",
-                reportUtil.getDateDynamicWhere(startDate, endDate, "encounter_date_time"),
-                reportUtil.getDynamicUserWhere(userIds, "u.id"));
+                reportUtil.getDateDynamicWhere(startDate, endDate, "encounter_date_time"));
     }
 
     @PreAuthorize("hasAnyAuthority('analytics_user')")
@@ -115,9 +107,7 @@ public class ReportController {
                                                              @RequestParam(value = "userIds", required = false, defaultValue = "") List<Long> userIds) {
         return reportRepository.generateCompletedVisitsOnTimeByProportion(
                 "<= 0.5",
-                reportUtil.getDateDynamicWhere(startDate, endDate, "encounter_date_time"),
-                reportUtil.getDynamicUserWhere(userIds, "u.id")
-        );
+                reportUtil.getDateDynamicWhere(startDate, endDate, "encounter_date_time"));
     }
 
     @PreAuthorize("hasAnyAuthority('analytics_user')")
@@ -126,8 +116,7 @@ public class ReportController {
                                                                     @RequestParam(value = "endDate", required = false) String endDate,
                                                                     @RequestParam(value = "userIds", required = false, defaultValue = "") List<Long> userIds) {
         return reportRepository.generateUserCancellingMostVisits(
-                reportUtil.getDateDynamicWhere(startDate, endDate, "encounter_date_time"),
-                reportUtil.getDynamicUserWhere(userIds, "u.id"));
+                reportUtil.getDateDynamicWhere(startDate, endDate, "encounter_date_time"));
     }
 
 
