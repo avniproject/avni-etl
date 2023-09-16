@@ -1,6 +1,5 @@
 package org.avniproject.etl.controller;
 
-import org.avniproject.etl.domain.OrgIdentityContextHolder;
 import org.avniproject.etl.dto.AggregateReportResult;
 import org.avniproject.etl.dto.UserActivityDTO;
 import org.avniproject.etl.repository.ReportRepository;
@@ -26,9 +25,7 @@ public class ReportController {
     @PreAuthorize("hasAnyAuthority('analytics_user')")
     @RequestMapping(value = "/report/aggregate/summaryTable", method = RequestMethod.GET)
     public List<UserActivityDTO> getSummaryTable(){
-        return reportRepository.generateSummaryTable(
-                OrgIdentityContextHolder.getDbSchema()
-        );
+        return reportRepository.generateSummaryTable();
     }
 
     @PreAuthorize("hasAnyAuthority('analytics_user')")
@@ -37,7 +34,6 @@ public class ReportController {
                                           @RequestParam(value = "endDate", required = false) String endDate,
                                           @RequestParam(value = "userIds", required = false, defaultValue = "") List<Long> userIds){
             return reportRepository.generateUserActivity(
-                   OrgIdentityContextHolder.getDbSchema(),
                    reportUtil.getDateDynamicWhere(startDate, endDate, "registration_date"),
                    reportUtil.getDateDynamicWhere(startDate, endDate, "encounter_date_time"),
                    reportUtil.getDateDynamicWhere(startDate, endDate, "enrolment_date_time"),
@@ -51,7 +47,6 @@ public class ReportController {
                                                   @RequestParam(value = "endDate", required = false) String endDate,
                                                   @RequestParam(value = "userIds", required = false, defaultValue = "") List<Long> userIds){
             return reportRepository.generateUserSyncFailures(
-                    OrgIdentityContextHolder.getDbSchema(),
                     reportUtil.getDateDynamicWhere(startDate, endDate, "st.sync_start_time"),
                     reportUtil.getDynamicUserWhere(userIds, "u.id")
             );
@@ -62,7 +57,6 @@ public class ReportController {
     public List<AggregateReportResult> getUserWiseDeviceModels(@RequestParam(value = "userIds", required = false, defaultValue = "") List<Long> userIds) {
 
         return reportRepository.generateUserDeviceModels(
-                OrgIdentityContextHolder.getDbSchema(),
                 reportUtil.getDynamicUserWhere(userIds, "u.id"));
     }
 
@@ -71,7 +65,6 @@ public class ReportController {
     public List<AggregateReportResult> getUserWiseAppVersions(@RequestParam(value = "userIds", required = false, defaultValue = "") List<Long> userIds) {
 
         return reportRepository.generateUserAppVersions(
-                OrgIdentityContextHolder.getDbSchema(),
                 reportUtil.getDynamicUserWhere(userIds, "u.id"));
     }
 
@@ -80,7 +73,6 @@ public class ReportController {
     public List<UserActivityDTO> getUserDetails(@RequestParam(value = "userIds", required = false, defaultValue = "") List<Long> userIds) {
 
         return reportRepository.generateUserDetails(
-                OrgIdentityContextHolder.getDbSchema(),
                 reportUtil.getDynamicUserWhere(userIds, "u.id"));
     }
 
@@ -91,7 +83,6 @@ public class ReportController {
                                                 @RequestParam(value = "userIds", required = false, defaultValue = "") List<Long> userIds) {
 
         return reportRepository.generateLatestSyncs(
-                OrgIdentityContextHolder.getDbSchema(),
                 reportUtil.getDateDynamicWhere(startDate, endDate, "st.sync_end_time"),
                 reportUtil.getDynamicUserWhere(userIds, "u.id"));
     }
@@ -103,7 +94,6 @@ public class ReportController {
                                                 @RequestParam(value = "userIds", required = false, defaultValue = "") List<Long> userIds) {
 
         return reportRepository.generateMedianSync(
-                OrgIdentityContextHolder.getDbSchema(),
                 reportUtil.getDateSeries(startDate, endDate));
     }
 
@@ -114,7 +104,6 @@ public class ReportController {
                                                         @RequestParam(value = "userIds", required = false, defaultValue = "") List<Long> userIds) {
         return reportRepository.generateCompletedVisitsOnTimeByProportion(
                 ">= 0.5",
-                OrgIdentityContextHolder.getDbSchema(),
                 reportUtil.getDateDynamicWhere(startDate, endDate, "encounter_date_time"),
                 reportUtil.getDynamicUserWhere(userIds, "u.id"));
     }
@@ -126,7 +115,6 @@ public class ReportController {
                                                              @RequestParam(value = "userIds", required = false, defaultValue = "") List<Long> userIds) {
         return reportRepository.generateCompletedVisitsOnTimeByProportion(
                 "<= 0.5",
-                OrgIdentityContextHolder.getDbSchema(),
                 reportUtil.getDateDynamicWhere(startDate, endDate, "encounter_date_time"),
                 reportUtil.getDynamicUserWhere(userIds, "u.id")
         );
@@ -138,7 +126,6 @@ public class ReportController {
                                                                     @RequestParam(value = "endDate", required = false) String endDate,
                                                                     @RequestParam(value = "userIds", required = false, defaultValue = "") List<Long> userIds) {
         return reportRepository.generateUserCancellingMostVisits(
-                OrgIdentityContextHolder.getDbSchema(),
                 reportUtil.getDateDynamicWhere(startDate, endDate, "encounter_date_time"),
                 reportUtil.getDynamicUserWhere(userIds, "u.id"));
     }

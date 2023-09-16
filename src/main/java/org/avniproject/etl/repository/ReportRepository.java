@@ -1,6 +1,7 @@
 package org.avniproject.etl.repository;
 
 import org.avniproject.etl.domain.NullObject;
+import org.avniproject.etl.domain.OrgIdentityContextHolder;
 import org.avniproject.etl.domain.metadata.SchemaMetadata;
 import org.avniproject.etl.dto.AggregateReportResult;
 import org.avniproject.etl.dto.UserActivityDTO;
@@ -28,12 +29,12 @@ public class ReportRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public List<UserActivityDTO> generateSummaryTable(String orgSchemaName){
+    public List<UserActivityDTO> generateSummaryTable(){
         String baseQuery = "select name, type \n" +
                 "from public.table_metadata\n" +
                 "where schema_name = '${schemaName}'\n" +
                 "order by type;";
-        String query= baseQuery.replace("${schemaName}", orgSchemaName);
+        String query= baseQuery.replace("${schemaName}", OrgIdentityContextHolder.getDbSchema());
 
         runInOrgContext(() -> {
             jdbcTemplate.execute(query);
@@ -43,7 +44,7 @@ public class ReportRepository {
         return namedJdbcTemplate.query(query, new SummaryTableMapper());
     }
 
-    public List<UserActivityDTO> generateUserActivity(String orgSchemaName, String subjectWhere, String encounterWhere, String enrolmentWhere, String userWhere) {
+    public List<UserActivityDTO> generateUserActivity(String subjectWhere, String encounterWhere, String enrolmentWhere, String userWhere) {
         SchemaMetadata schema = schemaMetadataRepository.getExistingSchemaMetadata();
         List<String> subjectTableNames = schema.getAllSubjectTableNames().stream().toList();
         List<String> encounterTableNames = schema.getAllEncounterTableNames().stream().toList();
@@ -142,7 +143,7 @@ public class ReportRepository {
                  .add("encounterTableNames", encounterTableNames)
                  .add("programEnrolmentTableNames", programEnrolmentTableNames)
                  .add("programEncounterTableNames", programEncounterTableNames);
-        String query = baseQuery.render().replace("$schemaName", orgSchemaName)
+        String query = baseQuery.render().replace("$schemaName", OrgIdentityContextHolder.getDbSchema())
                .replace("$subjectWhere", subjectWhere)
                .replace("$encounterWhere", encounterWhere)
                .replace("$enrolmentWhere", enrolmentWhere)
@@ -156,7 +157,7 @@ public class ReportRepository {
         return namedJdbcTemplate.query(query, new UserActivityMapper());
     }
 
-    public List<UserActivityDTO> generateUserSyncFailures(String orgSchemaName, String syncTelemetryWhere, String userWhere) {
+    public List<UserActivityDTO> generateUserSyncFailures(String syncTelemetryWhere, String userWhere) {
         String baseQuery = "select coalesce(u.name, u.username) as name, \n" +
                 "       count(*) as count\n" +
                 "from ${schemaName}.sync_telemetry st\n" +
@@ -170,7 +171,7 @@ public class ReportRepository {
                 "order by 2 desc\n" +
                 "limit 10;";
         String query = baseQuery
-                .replace("${schemaName}", orgSchemaName)
+                .replace("${schemaName}", OrgIdentityContextHolder.getDbSchema())
                 .replace("${syncTelemetryWhere}", syncTelemetryWhere)
                 .replace("${userWhere}", userWhere);
 
@@ -182,7 +183,7 @@ public class ReportRepository {
         return namedJdbcTemplate.query(query, new UserCountMapper());
     }
 
-    public List<AggregateReportResult> generateUserAppVersions(String orgSchemaName, String userWhere) {
+    public List<AggregateReportResult> generateUserAppVersions(String userWhere) {
         String baseQuery = "select app_version as indicator,\n" +
                 "       count(*)     as count\n" +
                 "from ${schemaName}.users u\n" +
@@ -195,7 +196,7 @@ public class ReportRepository {
                 "${userWhere}\n"+
                 "group by app_version;";
         String query = baseQuery
-                .replace("${schemaName}", orgSchemaName)
+                .replace("${schemaName}", OrgIdentityContextHolder.getDbSchema())
                 .replace("${userWhere}", userWhere);
 
         runInOrgContext(() -> {
@@ -206,7 +207,7 @@ public class ReportRepository {
         return namedJdbcTemplate.query(query, new AggregateReportMapper());
     }
 
-    public List<AggregateReportResult> generateUserDeviceModels(String orgSchemaName, String userWhere) {
+    public List<AggregateReportResult> generateUserDeviceModels(String userWhere) {
         String baseQuery = "select device_model as indicator,\n" +
                 "       count(*)     as count\n" +
                 "from ${schemaName}.users u\n" +
@@ -219,7 +220,7 @@ public class ReportRepository {
                 "${userWhere}\n"+
                 "group by device_model;";
         String query = baseQuery
-                .replace("${schemaName}", orgSchemaName)
+                .replace("${schemaName}", OrgIdentityContextHolder.getDbSchema())
                 .replace("${userWhere}", userWhere);
 
         runInOrgContext(() -> {
@@ -230,7 +231,7 @@ public class ReportRepository {
         return namedJdbcTemplate.query(query, new AggregateReportMapper());
     }
 
-    public List<UserActivityDTO> generateUserDetails(String orgSchemaName, String userWhere) {
+    public List<UserActivityDTO> generateUserDetails(String userWhere) {
         String baseQuery = "select coalesce(u.name, u.username) as name,\n" +
                 "       app_version,\n" +
                 "       device_model,\n" +
@@ -249,7 +250,7 @@ public class ReportRepository {
                 "  ${userWhere}\n"+
                 "order by 1 desc;";
         String query = baseQuery
-                .replace("${schemaName}", orgSchemaName)
+                .replace("${schemaName}", OrgIdentityContextHolder.getDbSchema())
                 .replace("${userWhere}", userWhere);
 
         runInOrgContext(() -> {
@@ -260,7 +261,7 @@ public class ReportRepository {
         return namedJdbcTemplate.query(query, new UserDetailsMapper());
     }
 
-    public List<UserActivityDTO> generateLatestSyncs(String orgSchemaName, String syncTelemetryWhere, String userWhere) {
+    public List<UserActivityDTO> generateLatestSyncs(String syncTelemetryWhere, String userWhere) {
         String baseQuery = "SELECT coalesce(u.name,u.username) as name, \n" +
                 "           android_version, app_version, device_name, sync_start_time, sync_end_time, sync_status, sync_source\n" +
                 "FROM public.sync_telemetry st\n" +
@@ -271,7 +272,7 @@ public class ReportRepository {
                 "order by 6 desc\n" +
                 "limit 10;\n";
         String query = baseQuery
-                .replace("${schemaName}", orgSchemaName)
+                .replace("${schemaName}", OrgIdentityContextHolder.getDbSchema())
                 .replace("${syncTelemetryWhere}", syncTelemetryWhere)
                 .replace("${userWhere}", userWhere);
 
@@ -283,7 +284,7 @@ public class ReportRepository {
         return namedJdbcTemplate.query(query, new LatestSyncMapper());
     }
 
-    public List<UserActivityDTO> generateMedianSync(String orgSchemaName, String syncTelemetryWhere) {
+    public List<UserActivityDTO> generateMedianSync(String syncTelemetryWhere) {
         String baseQuery = "with weeks as (\n" +
                 "    select day::date start_date, day::date+6 end_date\n" +
                 "    ${syncTelemetryWhere}\n" +
@@ -296,7 +297,7 @@ public class ReportRepository {
                 "and st.sync_source = 'manual'\n" +
                 "group by 1,2;";
         String query = baseQuery
-                .replace("${schemaName}", orgSchemaName)
+                .replace("${schemaName}", OrgIdentityContextHolder.getDbSchema())
                 .replace("${syncTelemetryWhere}", syncTelemetryWhere);
 
         runInOrgContext(() -> {
@@ -307,7 +308,7 @@ public class ReportRepository {
         return namedJdbcTemplate.query(query, new MedianSyncMapper());
     }
 
-    public List<AggregateReportResult> generateCompletedVisitsOnTimeByProportion(String proportionCondition, String orgSchemaName, String encounterWhere, String userWhere) {
+    public List<AggregateReportResult> generateCompletedVisitsOnTimeByProportion(String proportionCondition, String encounterWhere, String userWhere) {
         SchemaMetadata schema = schemaMetadataRepository.getExistingSchemaMetadata();
         List<String> encounterTableNames = schema.getAllEncounterTableNames().stream().toList();
         List<String> programEncounterTableNames = schema.getAllProgramEncounterTableNames().stream().toList();
@@ -372,7 +373,7 @@ public class ReportRepository {
         baseQuery.add("programEncounterTableNames", programEncounterTableNames)
                  .add("encounterTableNames", encounterTableNames);
         String query = baseQuery.render().replace("$proportion_condition", proportionCondition)
-                .replace("$schemaName", orgSchemaName)
+                .replace("$schemaName", OrgIdentityContextHolder.getDbSchema())
                 .replace("$encounterWhere", encounterWhere)
                 .replace("$userWhere", userWhere);
 
@@ -384,7 +385,7 @@ public class ReportRepository {
         return namedJdbcTemplate.query(query, new AggregateReportMapper());
     }
 
-    public List<AggregateReportResult> generateUserCancellingMostVisits(String orgSchemaName, String encounterWhere, String userWhere) {
+    public List<AggregateReportResult> generateUserCancellingMostVisits(String encounterWhere, String userWhere) {
         SchemaMetadata schema = schemaMetadataRepository.getExistingSchemaMetadata();
         List<String> encounterTableNames = schema.getAllEncounterTableNames().stream().toList();
         List<String> programEncounterTableNames = schema.getAllProgramEncounterTableNames().stream().toList();
@@ -442,7 +443,7 @@ public class ReportRepository {
         );
         baseQuery.add("programEncounterTableNames", programEncounterTableNames)
                 .add("encounterTableNames", encounterTableNames);
-        String query = baseQuery.render().replace("$schemaName", orgSchemaName)
+        String query = baseQuery.render().replace("$schemaName", OrgIdentityContextHolder.getDbSchema())
                 .replace("$encounterWhere", encounterWhere)
                 .replace("$userWhere", userWhere);
 
