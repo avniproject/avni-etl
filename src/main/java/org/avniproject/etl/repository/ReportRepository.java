@@ -1,25 +1,31 @@
 package org.avniproject.etl.repository;
 
+import org.avniproject.etl.domain.NullObject;
 import org.avniproject.etl.domain.metadata.SchemaMetadata;
 import org.avniproject.etl.dto.AggregateReportResult;
 import org.avniproject.etl.dto.UserActivityDTO;
 import org.avniproject.etl.repository.rowMappers.reports.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.stringtemplate.v4.ST;
 
 import java.util.List;
 
+import static org.avniproject.etl.repository.JdbcContextWrapper.runInOrgContext;
+
 @Component
 public class ReportRepository {
-    private final NamedParameterJdbcTemplate jdbcTemplate;
+    private final NamedParameterJdbcTemplate namedJdbcTemplate;
     private final SchemaMetadataRepository schemaMetadataRepository;
+    private final JdbcTemplate jdbcTemplate;
 
     @Autowired
-    public ReportRepository(NamedParameterJdbcTemplate jdbcTemplate, SchemaMetadataRepository schemaMetadataRepository) {
-        this.jdbcTemplate = jdbcTemplate;
+    public ReportRepository(NamedParameterJdbcTemplate namedJdbcTemplate, SchemaMetadataRepository schemaMetadataRepository, JdbcTemplate jdbcTemplate) {
+        this.namedJdbcTemplate = namedJdbcTemplate;
         this.schemaMetadataRepository = schemaMetadataRepository;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     public List<UserActivityDTO> generateSummaryTable(String orgSchemaName){
@@ -28,7 +34,13 @@ public class ReportRepository {
                 "where schema_name = '${schemaName}'\n" +
                 "order by type;";
         String query= baseQuery.replace("${schemaName}", orgSchemaName);
-        return jdbcTemplate.query(query, new SummaryTableMapper());
+
+        runInOrgContext(() -> {
+            jdbcTemplate.execute(query);
+            return NullObject.instance();
+        }, jdbcTemplate);
+
+        return namedJdbcTemplate.query(query, new SummaryTableMapper());
     }
 
     public List<UserActivityDTO> generateUserActivity(String orgSchemaName, String subjectWhere, String encounterWhere, String enrolmentWhere, String userWhere) {
@@ -135,7 +147,13 @@ public class ReportRepository {
                .replace("$encounterWhere", encounterWhere)
                .replace("$enrolmentWhere", enrolmentWhere)
                .replace("$userWhere", userWhere);
-        return jdbcTemplate.query(query, new UserActivityMapper());
+
+        runInOrgContext(() -> {
+            jdbcTemplate.execute(query);
+            return NullObject.instance();
+        }, jdbcTemplate);
+
+        return namedJdbcTemplate.query(query, new UserActivityMapper());
     }
 
     public List<UserActivityDTO> generateUserSyncFailures(String orgSchemaName, String syncTelemetryWhere, String userWhere) {
@@ -155,7 +173,13 @@ public class ReportRepository {
                 .replace("${schemaName}", orgSchemaName)
                 .replace("${syncTelemetryWhere}", syncTelemetryWhere)
                 .replace("${userWhere}", userWhere);
-        return jdbcTemplate.query(query, new UserCountMapper());
+
+        runInOrgContext(() -> {
+            jdbcTemplate.execute(query);
+            return NullObject.instance();
+        }, jdbcTemplate);
+
+        return namedJdbcTemplate.query(query, new UserCountMapper());
     }
 
     public List<AggregateReportResult> generateUserAppVersions(String orgSchemaName, String userWhere) {
@@ -173,7 +197,13 @@ public class ReportRepository {
         String query = baseQuery
                 .replace("${schemaName}", orgSchemaName)
                 .replace("${userWhere}", userWhere);
-        return jdbcTemplate.query(query, new AggregateReportMapper());
+
+        runInOrgContext(() -> {
+            jdbcTemplate.execute(query);
+            return NullObject.instance();
+        }, jdbcTemplate);
+
+        return namedJdbcTemplate.query(query, new AggregateReportMapper());
     }
 
     public List<AggregateReportResult> generateUserDeviceModels(String orgSchemaName, String userWhere) {
@@ -191,7 +221,13 @@ public class ReportRepository {
         String query = baseQuery
                 .replace("${schemaName}", orgSchemaName)
                 .replace("${userWhere}", userWhere);
-        return jdbcTemplate.query(query, new AggregateReportMapper());
+
+        runInOrgContext(() -> {
+            jdbcTemplate.execute(query);
+            return NullObject.instance();
+        }, jdbcTemplate);
+
+        return namedJdbcTemplate.query(query, new AggregateReportMapper());
     }
 
     public List<UserActivityDTO> generateUserDetails(String orgSchemaName, String userWhere) {
@@ -215,7 +251,13 @@ public class ReportRepository {
         String query = baseQuery
                 .replace("${schemaName}", orgSchemaName)
                 .replace("${userWhere}", userWhere);
-        return jdbcTemplate.query(query, new UserDetailsMapper());
+
+        runInOrgContext(() -> {
+            jdbcTemplate.execute(query);
+            return NullObject.instance();
+        }, jdbcTemplate);
+
+        return namedJdbcTemplate.query(query, new UserDetailsMapper());
     }
 
     public List<UserActivityDTO> generateLatestSyncs(String orgSchemaName, String syncTelemetryWhere, String userWhere) {
@@ -232,7 +274,13 @@ public class ReportRepository {
                 .replace("${schemaName}", orgSchemaName)
                 .replace("${syncTelemetryWhere}", syncTelemetryWhere)
                 .replace("${userWhere}", userWhere);
-        return jdbcTemplate.query(query, new LatestSyncMapper());
+
+        runInOrgContext(() -> {
+            jdbcTemplate.execute(query);
+            return NullObject.instance();
+        }, jdbcTemplate);
+
+        return namedJdbcTemplate.query(query, new LatestSyncMapper());
     }
 
     public List<UserActivityDTO> generateMedianSync(String orgSchemaName, String syncTelemetryWhere) {
@@ -250,7 +298,13 @@ public class ReportRepository {
         String query = baseQuery
                 .replace("${schemaName}", orgSchemaName)
                 .replace("${syncTelemetryWhere}", syncTelemetryWhere);
-        return jdbcTemplate.query(query, new MedianSyncMapper());
+
+        runInOrgContext(() -> {
+            jdbcTemplate.execute(query);
+            return NullObject.instance();
+        }, jdbcTemplate);
+
+        return namedJdbcTemplate.query(query, new MedianSyncMapper());
     }
 
     public List<AggregateReportResult> generateCompletedVisitsOnTimeByProportion(String proportionCondition, String orgSchemaName, String encounterWhere, String userWhere) {
@@ -321,7 +375,13 @@ public class ReportRepository {
                 .replace("$schemaName", orgSchemaName)
                 .replace("$encounterWhere", encounterWhere)
                 .replace("$userWhere", userWhere);
-        return jdbcTemplate.query(query, new AggregateReportMapper());
+
+        runInOrgContext(() -> {
+            jdbcTemplate.execute(query);
+            return NullObject.instance();
+        }, jdbcTemplate);
+
+        return namedJdbcTemplate.query(query, new AggregateReportMapper());
     }
 
     public List<AggregateReportResult> generateUserCancellingMostVisits(String orgSchemaName, String encounterWhere, String userWhere) {
@@ -385,6 +445,12 @@ public class ReportRepository {
         String query = baseQuery.render().replace("$schemaName", orgSchemaName)
                 .replace("$encounterWhere", encounterWhere)
                 .replace("$userWhere", userWhere);
-        return jdbcTemplate.query(query, new AggregateReportMapper());
+
+        runInOrgContext(() -> {
+            jdbcTemplate.execute(query);
+            return NullObject.instance();
+        }, jdbcTemplate);
+
+        return namedJdbcTemplate.query(query, new AggregateReportMapper());
     }
 }
