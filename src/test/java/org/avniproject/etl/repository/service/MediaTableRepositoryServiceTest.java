@@ -1,6 +1,7 @@
 package org.avniproject.etl.repository.service;
 
 import org.avniproject.etl.config.AmazonClientService;
+import org.avniproject.etl.config.S3FileDoesNotExist;
 import org.avniproject.etl.dto.MediaDTO;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +16,7 @@ import static org.mockito.Mockito.when;
 public class MediaTableRepositoryServiceTest {
 
     @Test
-    public void shouldReturnEmptySignedUrl() throws SQLException {
+    public void shouldReturnEmptySignedUrl() throws SQLException, S3FileDoesNotExist {
         AmazonClientService amazonClient = mock(AmazonClientService.class);
         when(amazonClient.generateMediaDownloadUrl(anyString())).thenThrow(new IllegalArgumentException());
         ResultSet resultSet = mock(ResultSet.class);

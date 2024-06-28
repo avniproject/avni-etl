@@ -43,9 +43,14 @@ public class AmazonClientService {
     }
 
 
-    public URL generateMediaDownloadUrl(String url) {
+    public URL generateMediaDownloadUrl(String url) throws S3FileDoesNotExist {
         AmazonS3URI amazonS3URI = new AmazonS3URI(url);
         String objectKey = amazonS3URI.getKey();
+
+        boolean exists = s3Client.doesObjectExist(bucketName, objectKey);
+        if (!exists) {
+            throw new S3FileDoesNotExist("File does not exist in S3 bucket: " + url);
+        }
 
         GeneratePresignedUrlRequest generatePresignedUrlRequest =
                 new GeneratePresignedUrlRequest(bucketName, objectKey)
@@ -60,5 +65,4 @@ public class AmazonClientService {
         expiration.setTime(expiration.getTime() + expireDuration);
         return expiration;
     }
-
 }

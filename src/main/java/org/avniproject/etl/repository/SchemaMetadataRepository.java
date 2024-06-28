@@ -143,7 +143,11 @@ public class SchemaMetadataRepository {
 
     private List<TableMetadata> getTableMetadataForForm(String sql) {
         List<Map<String, Object>> maps = runInOrgContext(() -> jdbcTemplate.queryForList(sql), jdbcTemplate);
-        Map<Object, List<Map<String, Object>>> tableMaps = maps.stream().collect(Collectors.groupingBy(stringObjectMap -> stringObjectMap.get("form_mapping_uuid")));
+        Map<Object, List<Map<String, Object>>> tableMaps = maps.stream().collect(Collectors.groupingBy(stringObjectMap -> {
+            String formMappingUUID = stringObjectMap.get("form_mapping_uuid").toString();
+            Object rqgConceptUUID = stringObjectMap.get("repeatable_question_group_concept_uuid");
+            return rqgConceptUUID == null ? formMappingUUID : formMappingUUID + rqgConceptUUID;
+        }));
         return tableMaps.values().stream().map(mapList -> new TableMetadataMapper().create(mapList)).collect(Collectors.toList());
     }
 

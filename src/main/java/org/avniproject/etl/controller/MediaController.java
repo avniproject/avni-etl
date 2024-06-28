@@ -45,6 +45,7 @@ public class MediaController {
                 modifiedRequest = new MediaSearchRequest();
             return ResponseEntity.ok(mediaService.search(modifiedRequest, new Page(page, size)));
         } catch (Exception exception) {
+            log.warn("Error processing request: ", exception);
             return ResponseEntity.badRequest().body(exception.getMessage());
         }
     }
