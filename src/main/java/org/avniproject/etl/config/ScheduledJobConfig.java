@@ -1,6 +1,7 @@
 package org.avniproject.etl.config;
 
 import org.avniproject.etl.contract.backgroundJob.JobEntityType;
+import org.avniproject.etl.contract.backgroundJob.JobGroup;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
@@ -12,24 +13,29 @@ import java.util.Date;
 
 @Component
 public class ScheduledJobConfig {
-    public static final String SYNC_JOB_GROUP = "SyncJobs";
-    public static final String SYNC_TRIGGER_GROUP = "SyncTriggers";
     public static final String JOB_CREATED_AT = "CreatedAt";
     public static final String ENTITY_TYPE = "EntityType";
 
-    @Value("${avni.scheduledJob.repeatIntervalInMinutes}")
+    @Value("${avni.scheduledJob.sync.repeatIntervalInMinutes}")
     private int repeatIntervalInMinutes;
 
-    public TriggerKey getTriggerKey(String organisationUUID) {
-        return new TriggerKey(organisationUUID, SYNC_TRIGGER_GROUP);
+    @Value("${avni.scheduledJob.mediaAnalysis.repeatIntervalInMinutes}")
+    private int mediaAnalysisRepeatIntervalInMinutes;
+
+    public TriggerKey getTriggerKey(String organisationUUID, JobGroup jobGroup) {
+        return new TriggerKey(organisationUUID, jobGroup.getTriggerName());
     }
 
-    public int getRepeatIntervalInMinutes() {
+    public int getSyncRepeatIntervalInMinutes() {
         return repeatIntervalInMinutes;
     }
 
-    public JobKey getJobKey(String organisationUUID) {
-        return new JobKey(organisationUUID, SYNC_JOB_GROUP);
+    public int getMediaAnalysisRepeatIntervalInMinutes() {
+        return mediaAnalysisRepeatIntervalInMinutes;
+    }
+
+    public JobKey getJobKey(String organisationUUID, JobGroup jobGroup) {
+        return new JobKey(organisationUUID, jobGroup.getGroupName());
     }
 
     public String getEntityId(JobDetail jobDetail) {

@@ -3,20 +3,14 @@ package org.avniproject.etl.controller.backgroundJob;
 import org.apache.log4j.Logger;
 import org.avniproject.etl.config.ScheduledJobConfig;
 import org.avniproject.etl.contract.JobScheduleRequest;
-import org.avniproject.etl.contract.backgroundJob.EtlJobHistoryItem;
-import org.avniproject.etl.contract.backgroundJob.EtlJobStatus;
-import org.avniproject.etl.contract.backgroundJob.EtlJobSummary;
-import org.avniproject.etl.contract.backgroundJob.JobEntityType;
+import org.avniproject.etl.contract.backgroundJob.*;
 import org.avniproject.etl.domain.OrganisationIdentity;
 import org.avniproject.etl.repository.OrganisationRepository;
 import org.avniproject.etl.scheduler.EtlJob;
+import org.avniproject.etl.scheduler.MediaAnalysisJob;
 import org.avniproject.etl.service.backgroundJob.ScheduledJobService;
 import org.avniproject.etl.util.DateTimeUtil;
-import org.quartz.JobDataMap;
-import org.quartz.Scheduler;
-import org.quartz.SchedulerException;
-import org.quartz.SimpleScheduleBuilder;
-import org.quartz.Trigger;
+import org.quartz.*;
 import org.quartz.impl.JobDetailImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -28,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.avniproject.etl.config.ScheduledJobConfig.SYNC_JOB_GROUP;
 import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
 import static org.quartz.TriggerBuilder.newTrigger;
 
@@ -50,23 +43,22 @@ public class EtlJobController {
 
     @PreAuthorize("hasAnyAuthority('admin')")
     @GetMapping("/job/{entityUUID}")
-    public ResponseEntity getJob(@PathVariable String entityUUID) throws SchedulerException {
-        EtlJobSummary latestJobRun = scheduledJobService.getLatestJobRun(entityUUID);
-        if (latestJobRun == null)
-            return ResponseEntity.notFound().build();
+    public ResponseEntity getJob(@PathVariable String entityUUID, @RequestParam(value="jobGroup", required = false) JobGroup jobGroup) throws SchedulerException {
+        EtlJobSummary latestJobRun = scheduledJobService.getLatestJobRun(entityUUID, jobGroup != null ? jobGroup : JobGroup.Sync);
+        if (latestJobRun == null) return ResponseEntity.notFound().build();
         return new ResponseEntity(latestJobRun, HttpStatus.OK);
     }
 
     @PreAuthorize("hasAnyAuthority('admin')")
     @PostMapping("/job/status")
-    public List<EtlJobStatus> getStatuses(@RequestBody List<String> organisationUUIDs) {
-        return scheduledJobService.getJobs(organisationUUIDs);
+    public List<EtlJobStatus> getStatuses(@RequestBody List<String> organisationUUIDs, @RequestParam(value="jobGroup", required = false) JobGroup jobGroup) {
+        return scheduledJobService.getJobs(organisationUUIDs, jobGroup != null ? jobGroup : JobGroup.Sync);
     }
 
     @PreAuthorize("hasAnyAuthority('admin')")
     @GetMapping("/job/history/{entityUUID}")
-    public List<EtlJobHistoryItem> getJobHistory(@PathVariable String entityUUID) {
-        return scheduledJobService.getJobHistory(entityUUID);
+    public List<EtlJobHistoryItem> getJobHistory(@PathVariable String entityUUID, @RequestParam(value="jobGroup", required = false) JobGroup jobGroup){
+        return scheduledJobService.getJobHistory(entityUUID, jobGroup != null ? jobGroup : JobGroup.Sync);
     }
 
     @PreAuthorize("hasAnyAuthority('admin')")
@@ -82,39 +74,31 @@ public class EtlJobController {
         if (organisationIdentity == null && organisationIdentitiesInGroup.size() == 0)
             return ResponseEntity.badRequest().body(String.format("No such organisation or group exists: %s", jobScheduleRequest.getEntityUUID()));
 
-        EtlJobSummary latestJobRun = scheduledJobService.getLatestJobRun(jobScheduleRequest.getEntityUUID());
-        if (latestJobRun != null)
-            return ResponseEntity.badRequest().body("Job already present");
+        EtlJobSummary latestJobRun = scheduledJobService.getLatestJobRun(jobScheduleRequest.getEntityUUID(), jobScheduleRequest.getJobGroup());
+        if (latestJobRun != null) return ResponseEntity.badRequest().body("Job already present");
 
         JobDetailImpl jobDetail = getJobDetail(jobScheduleRequest, organisationIdentity, organisationIdentitiesInGroup);
         scheduler.addJob(jobDetail, false);
         Trigger trigger = getTrigger(jobScheduleRequest, jobDetail);
         scheduler.scheduleJob(trigger);
-        logger.info(String.format("Job Scheduled for %s:%s", jobScheduleRequest.getJobEntityType(), jobScheduleRequest.getEntityUUID()));
+        logger.info(String.format("%s type job Scheduled for %s:%s", jobScheduleRequest.getJobGroup(), jobScheduleRequest.getJobEntityType(), jobScheduleRequest.getEntityUUID()));
         return ResponseEntity.ok().body("Job Scheduled!");
     }
 
     private Trigger getTrigger(JobScheduleRequest jobScheduleRequest, JobDetailImpl jobDetail) {
-        SimpleScheduleBuilder scheduleBuilder = simpleSchedule()
-                .withIntervalInMinutes(scheduledJobConfig.getRepeatIntervalInMinutes()).repeatForever();
+        SimpleScheduleBuilder scheduleBuilder = simpleSchedule().withIntervalInMinutes(jobScheduleRequest.getJobGroup().equals(JobGroup.Sync) ? scheduledJobConfig.getSyncRepeatIntervalInMinutes() : scheduledJobConfig.getMediaAnalysisRepeatIntervalInMinutes()).repeatForever();
 
-        Trigger trigger = newTrigger()
-                .withIdentity(scheduledJobConfig.getTriggerKey(jobScheduleRequest.getEntityUUID()))
-                .forJob(jobDetail)
-                .withSchedule(scheduleBuilder)
-                .startAt(DateTimeUtil.nowPlusSeconds(5))
-                .build();
+        Trigger trigger = newTrigger().withIdentity(scheduledJobConfig.getTriggerKey(jobScheduleRequest.getEntityUUID(), jobScheduleRequest.getJobGroup())).forJob(jobDetail).withSchedule(scheduleBuilder).startAt(DateTimeUtil.nowPlusSeconds(5)).build();
         return trigger;
     }
 
     private JobDetailImpl getJobDetail(JobScheduleRequest jobScheduleRequest, OrganisationIdentity organisationIdentity, List<OrganisationIdentity> organisationIdentitiesInGroup) {
         JobDetailImpl jobDetail = new JobDetailImpl();
-        jobDetail.setJobClass(EtlJob.class);
+        jobDetail.setJobClass(jobScheduleRequest.getJobGroup().equals(JobGroup.Sync) ? EtlJob.class : MediaAnalysisJob.class);
         jobDetail.setDurability(true);
-        jobDetail.setKey(scheduledJobConfig.getJobKey(jobScheduleRequest.getEntityUUID()));
-        jobDetail.setDescription(organisationIdentity == null ?
-                organisationIdentitiesInGroup.stream().map(OrganisationIdentity::toString).collect(Collectors.joining(";")) : organisationIdentity.toString());
-        jobDetail.setGroup(SYNC_JOB_GROUP);
+        jobDetail.setKey(scheduledJobConfig.getJobKey(jobScheduleRequest.getEntityUUID(), jobScheduleRequest.getJobGroup()));
+        jobDetail.setDescription(organisationIdentity == null ? organisationIdentitiesInGroup.stream().map(OrganisationIdentity::toString).collect(Collectors.joining(";")) : organisationIdentity.toString());
+        jobDetail.setGroup(jobScheduleRequest.getJobGroup().getGroupName());
         jobDetail.setName(jobScheduleRequest.getEntityUUID());
         JobDataMap jobDataMap = scheduledJobConfig.createJobData(jobScheduleRequest.getJobEntityType());
         jobDetail.setJobDataMap(jobDataMap);
@@ -123,8 +107,16 @@ public class EtlJobController {
 
     @PreAuthorize("hasAnyAuthority('admin')")
     @DeleteMapping(value = "/job/{id}")
-    public String deleteJob(@PathVariable String id) throws SchedulerException {
-        boolean jobDeleted = scheduler.deleteJob(scheduledJobConfig.getJobKey(id));
-        return jobDeleted ? "Job Deleted" : "Job Not Deleted";
+    public String deleteJob(@PathVariable String id, @RequestParam(value="jobGroup", required = false) JobGroup jobGroup) throws SchedulerException {
+        boolean syncJobDeleted = scheduler.deleteJob(scheduledJobConfig.getJobKey(id, jobGroup != null ? jobGroup : JobGroup.Sync));
+        String responseMsg = String.format("Sync Job Deleted: %s; ",syncJobDeleted);
+        if (jobGroup != null && jobGroup == JobGroup.Sync) {
+            EtlJobSummary mediaJobRun = scheduledJobService.getLatestJobRun(id, JobGroup.MediaAnalysis);
+            if (mediaJobRun != null) {
+                boolean mediaAnalysisJobDeleted = scheduler.deleteJob(scheduledJobConfig.getJobKey(id, JobGroup.MediaAnalysis));
+                responseMsg.concat(String.format("MediaAnalysis Job Deleted: %s;", mediaAnalysisJobDeleted));
+            }
+        }
+        return responseMsg;
     }
 }

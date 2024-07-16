@@ -4,6 +4,7 @@ import org.avniproject.etl.config.ScheduledJobConfig;
 import org.avniproject.etl.contract.backgroundJob.EtlJobHistoryItem;
 import org.avniproject.etl.contract.backgroundJob.EtlJobStatus;
 import org.avniproject.etl.contract.backgroundJob.EtlJobSummary;
+import org.avniproject.etl.contract.backgroundJob.JobGroup;
 import org.quartz.JobDetail;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
@@ -23,13 +24,9 @@ public class ScheduledJobService {
     private final Scheduler scheduler;
     private final ScheduledJobConfig scheduledJobConfig;
 
-    private static final String HISTORY_QUERY = "select sjr.started_at, sjr.ended_at, sjr.error_message, sjr.success from qrtz_job_details qjd\n" +
-            "    left outer join scheduled_job_run sjr on sjr.job_name = qjd.job_name\n" +
-            "     where sjr.job_name = ?" +
-            "order by 1 desc\n";
+    private static final String HISTORY_QUERY = "select sjr.started_at, sjr.ended_at, sjr.error_message, sjr.success from qrtz_job_details qjd\n" + "    left outer join scheduled_job_run sjr on sjr.job_name = qjd.job_name\n" + "     where qjd.job_name = ? and qjd.job_group = ?" + "order by 1 desc\n";
 
-    private static final String JOB_LIST_QUERY = "select organisationUUID, job_name from (SELECT unnest(string_to_array(?, ',')) as organisationUUID) foo\n" +
-            "    left outer join qrtz_job_details qjd on organisationUUID = qjd.job_name";
+    private static final String JOB_LIST_QUERY = "select organisationUUID, job_name from (SELECT unnest(string_to_array(?, ',')) as organisationUUID) foo\n" + "    left outer join qrtz_job_details qjd on organisationUUID = qjd.job_name where qjd.job_group = ?";
 
     @Autowired
     public ScheduledJobService(JdbcTemplate jdbcTemplate, Scheduler scheduler, ScheduledJobConfig scheduledJobConfig) {
@@ -38,24 +35,33 @@ public class ScheduledJobService {
         this.scheduledJobConfig = scheduledJobConfig;
     }
 
-    public List<EtlJobStatus> getJobs(List<String> organisationUUIDs) {
+    public List<EtlJobStatus> getJobs(List<String> organisationUUIDs, JobGroup jobGroup) {
         String organisations = String.join(",", organisationUUIDs);
-        return jdbcTemplate.query(JOB_LIST_QUERY, ps -> ps.setString(1, organisations), new EtlJobStatusMapper());
+        return jdbcTemplate.query(JOB_LIST_QUERY, ps -> {
+            ps.setString(1, organisations);
+            ps.setString(2, jobGroup.getGroupName());
+        }, new EtlJobStatusMapper());
     }
 
-    public EtlJobSummary getLatestJobRun(String organisationUUID) throws SchedulerException {
+    public EtlJobSummary getLatestJobRun(String organisationUUID, JobGroup jobGroup) throws SchedulerException {
         String query = HISTORY_QUERY + "limit 1";
-        List<EtlJobSummary> summaries = jdbcTemplate.query(query, ps -> ps.setString(1, organisationUUID), new EtlJobLatestStatusResponseMapper());
+        List<EtlJobSummary> summaries = jdbcTemplate.query(query, ps -> {
+            ps.setString(1, organisationUUID);
+            ps.setString(2, jobGroup.getGroupName());
+        }, new EtlJobLatestStatusResponseMapper());
         if (summaries.size() == 0) return null;
         EtlJobSummary etlJobSummary = summaries.get(0);
 
-        JobDetail jobDetail = scheduler.getJobDetail(scheduledJobConfig.getJobKey(organisationUUID));
+        JobDetail jobDetail = scheduler.getJobDetail(scheduledJobConfig.getJobKey(organisationUUID, jobGroup));
         etlJobSummary.setCreatedAt((Date) jobDetail.getJobDataMap().get(ScheduledJobConfig.JOB_CREATED_AT));
         return etlJobSummary;
     }
 
-    public List<EtlJobHistoryItem> getJobHistory(String organisationUUID) {
-        return jdbcTemplate.query(HISTORY_QUERY, ps -> ps.setString(1, organisationUUID), new EtlJobHistoryItemMapper());
+    public List<EtlJobHistoryItem> getJobHistory(String organisationUUID, JobGroup jobGroup) {
+        return jdbcTemplate.query(HISTORY_QUERY, ps -> {
+                ps.setString(1, organisationUUID);
+                ps.setString(2, jobGroup.getGroupName());
+        }, new EtlJobHistoryItemMapper());
     }
 
     static class EtlJobLatestStatusResponseMapper implements RowMapper<EtlJobSummary> {
