@@ -10,6 +10,6 @@ public class OrganisationIdentityRowMapper implements RowMapper<OrganisationIden
     @Override
     public OrganisationIdentity mapRow(ResultSet rs, int rowNum) throws SQLException {
         String dbUser = rs.getString("db_user");
-        return OrganisationIdentity.createForOrganisation(dbUser, rs.getString("schema_name"));
+        return OrganisationIdentity.createForOrganisation(dbUser, rs.getString("schema_name"), rs.getString("media_directory"));
     }
 }

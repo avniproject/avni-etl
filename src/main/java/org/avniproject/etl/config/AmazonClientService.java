@@ -8,19 +8,27 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.AmazonS3URI;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
+import com.amazonaws.services.s3.model.ListObjectsV2Request;
+import com.amazonaws.services.s3.model.ListObjectsV2Result;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.net.URL;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 @Service
 @ConditionalOnProperty(value = "aws.s3.enable", havingValue = "true", matchIfMissing = true)
 public class AmazonClientService {
 
+    public static final int MAX_KEYS = 1000;
     @Value("${avni.bucket.name}")
     String bucketName;
 
@@ -64,5 +72,32 @@ public class AmazonClientService {
         Date expiration = new Date();
         expiration.setTime(expiration.getTime() + expireDuration);
         return expiration;
+    }
+
+    public ArrayList<String> listObjectsInBucket(String s3PathPrefix, String negativeFilterPatternString) {
+        Boolean isNegativePatternFilteringRequired = StringUtils.hasText(negativeFilterPatternString);
+        Pattern negativeFilterPattern = Pattern.compile(negativeFilterPatternString);
+        Predicate<String> negativeFilterPatternPredicate = negativeFilterPattern.asPredicate();
+        Pattern uuidRegexPattern = Pattern.compile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
+        Predicate<String> uuidRegexPatternPredicate = uuidRegexPattern.asPredicate();
+
+        ArrayList<String> listOfMediaUrls = new ArrayList<>();
+        ListObjectsV2Request req = new ListObjectsV2Request().withBucketName(bucketName).withPrefix(s3PathPrefix).withMaxKeys(MAX_KEYS);
+        ListObjectsV2Result result;
+        do {
+            result = s3Client.listObjectsV2(req);
+            for (S3ObjectSummary objectSummary : result.getObjectSummaries()) {
+//                    System.out.printf(" - %s (size: %d)\n", objectSummary.getKey(), objectSummary.getSize());
+                if (uuidRegexPatternPredicate.test(objectSummary.getKey().substring(objectSummary.getKey().lastIndexOf("/") + 1))
+                        && !(isNegativePatternFilteringRequired && negativeFilterPatternPredicate.test(objectSummary.getKey()))) {
+                    listOfMediaUrls.add(objectSummary.getKey());
+                }
+            }
+            // If there are more than maxKeys keys in the bucket, get a continuation token
+            // and list the next objects.
+            String token = result.getNextContinuationToken();
+            req.setContinuationToken(token);
+        } while (result.isTruncated());
+        return listOfMediaUrls;
     }
 }
