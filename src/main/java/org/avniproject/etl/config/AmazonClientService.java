@@ -74,24 +74,14 @@ public class AmazonClientService {
         return expiration;
     }
 
-    public ArrayList<String> listObjectsInBucket(String s3PathPrefix, String negativeFilterPatternString) {
-        Boolean isNegativePatternFilteringRequired = StringUtils.hasText(negativeFilterPatternString);
-        Pattern negativeFilterPattern = Pattern.compile(negativeFilterPatternString);
-        Predicate<String> negativeFilterPatternPredicate = negativeFilterPattern.asPredicate();
-        Pattern uuidRegexPattern = Pattern.compile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
-        Predicate<String> uuidRegexPatternPredicate = uuidRegexPattern.asPredicate();
-
+    public ArrayList<String> listObjectsInBucket(String s3PathPrefix) {
         ArrayList<String> listOfMediaUrls = new ArrayList<>();
         ListObjectsV2Request req = new ListObjectsV2Request().withBucketName(bucketName).withPrefix(s3PathPrefix).withMaxKeys(MAX_KEYS);
         ListObjectsV2Result result;
         do {
             result = s3Client.listObjectsV2(req);
             for (S3ObjectSummary objectSummary : result.getObjectSummaries()) {
-//                    System.out.printf(" - %s (size: %d)\n", objectSummary.getKey(), objectSummary.getSize());
-                if (uuidRegexPatternPredicate.test(objectSummary.getKey().substring(objectSummary.getKey().lastIndexOf("/") + 1))
-                        && !(isNegativePatternFilteringRequired && negativeFilterPatternPredicate.test(objectSummary.getKey()))) {
-                    listOfMediaUrls.add(objectSummary.getKey());
-                }
+                listOfMediaUrls.add(objectSummary.getKey());
             }
             // If there are more than maxKeys keys in the bucket, get a continuation token
             // and list the next objects.

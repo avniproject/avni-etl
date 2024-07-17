@@ -76,6 +76,7 @@ public class EtlJobController {
 
         EtlJobSummary latestJobRun = scheduledJobService.getLatestJobRun(jobScheduleRequest.getEntityUUID(), jobScheduleRequest.getJobGroup());
         if (latestJobRun != null) return ResponseEntity.badRequest().body("Job already present");
+        //TODO Add validation for !jobScheduleRequest.getJobGroup().equals(JobGroup.Sync) to check that JobGroup.Sync is already scheduled
 
         JobDetailImpl jobDetail = getJobDetail(jobScheduleRequest, organisationIdentity, organisationIdentitiesInGroup);
         scheduler.addJob(jobDetail, false);
