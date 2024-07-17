@@ -17,7 +17,7 @@ class ColumnMetadataTest {
 
     @Test
     public void shouldRenameColumnIfNecessary() {
-        OrgIdentityContextHolder.setContext(OrganisationIdentity.createForOrganisation("dbUser", "schema"));
+        OrgIdentityContextHolder.setContext(OrganisationIdentity.createForOrganisation("dbUser", "schema", "mediaDirectory"));
         String uuid = UUID.randomUUID().toString();
         ColumnMetadata oldColumnMetadata = new ColumnMetadata(new Column("oldName", Column.Type.text), 12, ColumnMetadata.ConceptType.Text, uuid);
         ColumnMetadata newColumnMetadata = new ColumnMetadata(new Column("newName", Column.Type.text), 12, ColumnMetadata.ConceptType.Text, uuid);

@@ -37,7 +37,7 @@ public class DataSyncIntegrationTest extends BaseIntegrationTest {
     }
 
     private void runDataSync() {
-        etlService.runFor(OrganisationIdentity.createForOrganisation("orgc", "orgc"));
+        etlService.runFor(OrganisationIdentity.createForOrganisation("orgc", "orgc", "orgc"));
     }
 
     private List<Map<String, Object>> getPersons() {
@@ -213,10 +213,10 @@ public class DataSyncIntegrationTest extends BaseIntegrationTest {
         etlService.runForOrganisationGroup("og");
         etlService.runForOrganisationGroup("og");
 
-        etlService.runFor(OrganisationIdentity.createForOrganisation("ogi1", "ogi1"));
+        etlService.runFor(OrganisationIdentity.createForOrganisation("ogi1", "ogi1", "ogi1"));
 
         etlService.runForOrganisationGroup("og");
-        etlService.runFor(OrganisationIdentity.createForOrganisation("ogi1", "ogi1"));
+        etlService.runFor(OrganisationIdentity.createForOrganisation("ogi1", "ogi1", "ogi1"));
 
         jdbcTemplate.execute("set role og;");
         List<Map<String, Object>> groupList = jdbcTemplate.queryForList("select * from og.person;");
@@ -236,13 +236,13 @@ public class DataSyncIntegrationTest extends BaseIntegrationTest {
     @Sql(scripts = {"/test-data-teardown.sql", "/organisation-group-teardown.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void multipleRunsShouldNotCauseDuplicateDataInOrganisationsAndGroups() {
 
-        etlService.runFor(OrganisationIdentity.createForOrganisation("ogi2", "ogi2"));
+        etlService.runFor(OrganisationIdentity.createForOrganisation("ogi2", "ogi2", "ogi2"));
         etlService.runForOrganisationGroup("og");
-        etlService.runFor(OrganisationIdentity.createForOrganisation("ogi1", "ogi1"));
+        etlService.runFor(OrganisationIdentity.createForOrganisation("ogi1", "ogi1", "ogi2"));
 
-        etlService.runFor(OrganisationIdentity.createForOrganisation("ogi2", "ogi2"));
+        etlService.runFor(OrganisationIdentity.createForOrganisation("ogi2", "ogi2", "ogi2"));
         etlService.runForOrganisationGroup("og");
-        etlService.runFor(OrganisationIdentity.createForOrganisation("ogi1", "ogi1"));
+        etlService.runFor(OrganisationIdentity.createForOrganisation("ogi1", "ogi1", "ogi2"));
 
         jdbcTemplate.execute("set role og;");
         List<Map<String, Object>> groupList = jdbcTemplate.queryForList("select * from og.person;");
