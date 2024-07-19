@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -71,12 +72,8 @@ public class EtlJobController {
         else
             organisationIdentitiesInGroup = organisationRepository.getOrganisationGroup(jobScheduleRequest.getEntityUUID());
 
-        if (organisationIdentity == null && organisationIdentitiesInGroup.size() == 0)
-            return ResponseEntity.badRequest().body(String.format("No such organisation or group exists: %s", jobScheduleRequest.getEntityUUID()));
-
-        EtlJobSummary latestJobRun = scheduledJobService.getLatestJobRun(jobScheduleRequest.getEntityUUID(), jobScheduleRequest.getJobGroup());
-        if (latestJobRun != null) return ResponseEntity.badRequest().body("Job already present");
-        //TODO Add validation for !jobScheduleRequest.getJobGroup().equals(JobGroup.Sync) to check that JobGroup.Sync is already scheduled
+        ResponseEntity<String> jobScheduleValidationResult = validateRequest(jobScheduleRequest, organisationIdentity, organisationIdentitiesInGroup);
+        if (jobScheduleValidationResult != null) return jobScheduleValidationResult;
 
         JobDetailImpl jobDetail = getJobDetail(jobScheduleRequest, organisationIdentity, organisationIdentitiesInGroup);
         scheduler.addJob(jobDetail, false);
@@ -84,6 +81,20 @@ public class EtlJobController {
         scheduler.scheduleJob(trigger);
         logger.info(String.format("%s type job Scheduled for %s:%s", jobScheduleRequest.getJobGroup(), jobScheduleRequest.getJobEntityType(), jobScheduleRequest.getEntityUUID()));
         return ResponseEntity.ok().body("Job Scheduled!");
+    }
+
+    private ResponseEntity<String> validateRequest(JobScheduleRequest jobScheduleRequest, OrganisationIdentity organisationIdentity, List<OrganisationIdentity> organisationIdentitiesInGroup) throws SchedulerException {
+        if (organisationIdentity == null && organisationIdentitiesInGroup.size() == 0) {
+            return ResponseEntity.badRequest().body(String.format("No such organisation or group exists: %s", jobScheduleRequest.getEntityUUID()));
+        }
+        EtlJobSummary latestJobRun = scheduledJobService.getLatestJobRun(jobScheduleRequest.getEntityUUID(), jobScheduleRequest.getJobGroup());
+        if (latestJobRun != null) return ResponseEntity.badRequest().body("Job already present");
+        if (!jobScheduleRequest.getJobGroup().equals(JobGroup.Sync)) {
+            EtlJobSummary correspondingSyncJobRun = scheduledJobService.getLatestJobRun(jobScheduleRequest.getEntityUUID(), JobGroup.Sync);
+            if (correspondingSyncJobRun == null)
+                return ResponseEntity.badRequest().body("Sync Job has not been triggered for this Org / OrgGroup");
+        }
+        return null;
     }
 
     private Trigger getTrigger(JobScheduleRequest jobScheduleRequest, JobDetailImpl jobDetail) {
@@ -98,12 +109,19 @@ public class EtlJobController {
         jobDetail.setJobClass(jobScheduleRequest.getJobGroup().equals(JobGroup.Sync) ? EtlJob.class : MediaAnalysisJob.class);
         jobDetail.setDurability(true);
         jobDetail.setKey(scheduledJobConfig.getJobKey(jobScheduleRequest.getEntityUUID(), jobScheduleRequest.getJobGroup()));
-        jobDetail.setDescription(organisationIdentity == null ? organisationIdentitiesInGroup.stream().map(OrganisationIdentity::getSchemaName).collect(Collectors.joining(";")) : organisationIdentity.getSchemaName());
+        String truncatedDescription = getTruncatedDescription(organisationIdentity, organisationIdentitiesInGroup);
+        jobDetail.setDescription(truncatedDescription);
         jobDetail.setGroup(jobScheduleRequest.getJobGroup().getGroupName());
         jobDetail.setName(jobScheduleRequest.getEntityUUID());
         JobDataMap jobDataMap = scheduledJobConfig.createJobData(jobScheduleRequest.getJobEntityType());
         jobDetail.setJobDataMap(jobDataMap);
         return jobDetail;
+    }
+
+    private String getTruncatedDescription(OrganisationIdentity organisationIdentity, List<OrganisationIdentity> organisationIdentitiesInGroup) {
+        String orgGroupSchemaNames = organisationIdentitiesInGroup.stream().map(OrganisationIdentity::getSchemaName).collect(Collectors.joining(";"));
+        String description = organisationIdentity == null ? "OrgGroup Schema names: " + orgGroupSchemaNames : organisationIdentity.toString();
+        return StringUtils.truncate(description, 240);
     }
 
     @PreAuthorize("hasAnyAuthority('admin')")
