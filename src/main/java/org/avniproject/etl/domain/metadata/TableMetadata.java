@@ -247,6 +247,7 @@ public class TableMetadata extends Model {
         IndividualEncounterCancellation,
         Address,
         Media,
+        MediaAnalysis,
         ManualProgramEnrolmentEligibility,
         GroupToMember,
         HouseholdToMember,
@@ -271,6 +272,18 @@ public class TableMetadata extends Model {
 
     public boolean isSubjectTable() {
         return Arrays.asList(Type.Individual, Type.Person, Type.Household, Type.Group).contains(this.type);
+    }
+
+    public boolean isMediaTable() {
+        return (Type.Media).equals(this.type);
+    }
+
+    public boolean isMediaAnalysisTable() {
+        return (Type.MediaAnalysis).equals(this.type);
+    }
+
+    public boolean isPartOfRegularSync() {
+        return !isMediaAnalysisTable();
     }
 
     private void addIndexMetadata(IndexMetadata indexMetadata) {

@@ -97,6 +97,14 @@ public class SchemaMetadata {
         return encounterTableNames;
     }
 
+    public Optional<TableMetadata> getMediaTable() {
+        return tableMetadata.stream().filter(TableMetadata::isMediaTable).findFirst();
+    }
+
+    public Optional<TableMetadata> getMediaAnalysisTable() {
+        return tableMetadata.stream().filter(TableMetadata::isMediaAnalysisTable).findFirst();
+    }
+
     private List<Diff> findChanges(SchemaMetadata currentSchema, TableMetadata newTable) {
         List<Diff> diffs = new ArrayList<>();
         Optional<TableMetadata> optionalMatchingTable = currentSchema.findMatchingTable(newTable);

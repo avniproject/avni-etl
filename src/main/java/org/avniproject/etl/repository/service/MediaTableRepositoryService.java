@@ -24,22 +24,28 @@ public class MediaTableRepositoryService {
     }
 
     public MediaDTO setMediaDto(ResultSet rs) {
+        return this.setMediaDto(rs, true);
+    }
+
+    public MediaDTO setMediaDto(ResultSet rs, boolean generateSignedUrls) {
         try {
             String imageUrl = rs.getString("image_url");
             String thumbnailUrl = Utils.getThumbnailUrl(imageUrl);
 
             URL signedImageUrl = null, signedThumbnailUrl = null;
 
-            try {
-                signedImageUrl = amazonClientService.generateMediaDownloadUrl(imageUrl);
+            if(generateSignedUrls) {
                 try {
-                    signedThumbnailUrl = amazonClientService.generateMediaDownloadUrl(thumbnailUrl);
-                } catch (S3FileDoesNotExist ignored) {
+                    signedImageUrl = amazonClientService.generateMediaDownloadUrl(imageUrl);
+                    try {
+                        signedThumbnailUrl = amazonClientService.generateMediaDownloadUrl(thumbnailUrl);
+                    } catch (S3FileDoesNotExist ignored) {
+                    }
+                } catch (IllegalArgumentException illegalArgumentException) {
+                    //Ignore and move on. Image will be null
+                } catch (S3FileDoesNotExist e) {
+                    throw new RuntimeException(e);
                 }
-            } catch (IllegalArgumentException illegalArgumentException) {
-                //Ignore and move on. Image will be null
-            } catch (S3FileDoesNotExist e) {
-                throw new RuntimeException(e);
             }
 
             String uuid = rs.getString("uuid");

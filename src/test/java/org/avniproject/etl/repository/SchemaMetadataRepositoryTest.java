@@ -82,6 +82,17 @@ public class SchemaMetadataRepositoryTest extends BaseIntegrationTest {
     @Test
     @Sql({"/test-data-teardown.sql", "/test-data.sql"})
     @Sql(scripts = {"/test-data-teardown.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    public void shouldGetMediaAnalysisTable() {
+        SchemaMetadata schemaMetadata = schemaMetadataRepository.getExistingSchemaMetadata();
+        Optional<TableMetadata> mediaAnalysis = schemaMetadata.getTableMetadata().stream().filter(tableMetadata1 -> tableMetadata1.getName().equals("media_analysis")).findFirst();
+
+        assertThat(mediaAnalysis.isPresent(), is(true));
+    }
+
+
+    @Test
+    @Sql({"/test-data-teardown.sql", "/test-data.sql"})
+    @Sql(scripts = {"/test-data-teardown.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void shouldGetSyncTelemetryTable() {
         SchemaMetadata schemaMetadata = schemaMetadataRepository.getNewSchemaMetadata();
         Optional<TableMetadata> syncTelemetryTable = schemaMetadata.getTableMetadata().stream().filter(tableMetadata1 -> tableMetadata1.getName().equals("sync_telemetry")).findFirst();
