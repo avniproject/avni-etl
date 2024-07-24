@@ -9,13 +9,15 @@ public class MediaAnalysisVO {
     boolean isValidUrl;
     boolean isPresentInStorage;
     boolean isThumbnailGenerated;
+    boolean isHavingDuplicates;
 
-    public MediaAnalysisVO(String uuid, String image_url, boolean isValidUrl, boolean isPresentInStorage, boolean isThumbnailGenerated) {
+    public MediaAnalysisVO(String uuid, String image_url, boolean isValidUrl, boolean isPresentInStorage, boolean isThumbnailGenerated, boolean isHavingDuplicates) {
         this.uuid = uuid;
         this.image_url = image_url;
         this.isValidUrl = isValidUrl;
         this.isPresentInStorage = isPresentInStorage;
         this.isThumbnailGenerated = isThumbnailGenerated;
+        this.isHavingDuplicates = isHavingDuplicates;
     }
 
     public String getUuid() {
@@ -38,16 +40,20 @@ public class MediaAnalysisVO {
         return isThumbnailGenerated;
     }
 
+    public boolean isHavingDuplicates() {
+        return isHavingDuplicates;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof MediaAnalysisVO)) return false;
         MediaAnalysisVO that = (MediaAnalysisVO) o;
-        return uuid.equals(that.uuid);
+        return getUuid().equals(that.getUuid()) && getImage_url().equals(that.getImage_url());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(uuid);
+        return Objects.hash(getUuid(), getImage_url());
     }
 }

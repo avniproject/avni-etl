@@ -12,16 +12,13 @@ import org.avniproject.etl.repository.MediaTableRepository;
 import org.avniproject.etl.repository.sql.SqlFile;
 import org.avniproject.etl.service.MediaAnalysisService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
 import org.stringtemplate.v4.ST;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -33,6 +30,13 @@ public class MediaAnalysisTableRegenerateAction {
     public static final String THUMBNAILS_PATTERN = "thumbnails";
     public static final String ADHOC_MOBILE_DB_BACKUP_PATTERN = "Adhoc|MobileDbBackup";
     public static final String UUID_V4_PATTERN = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
+    public static final String STRING_CONST_SEPARATOR = "/";
+    public static final String TRUNCATE_MEDIA_ANALYSIS_TABLE_SQL = "delete from <schemaName>.<mediaAnalysisTable> where uuid is not null;";
+    public static final String SCHEMA_NAME = "schemaName";
+    public static final String MEDIA_ANALYSIS_TABLE = "mediaAnalysisTable";
+    public static final int INT_CONSTANT_ZERO = 0;
+    public static final String COMPOSITE_UUID_SEPARATOR = "#";
+    public static final int INT_CONSTANT_ONE = 1;
 
     private final AmazonClientService amazonClientService;
     private final MediaTableRepository mediaTableRepository;
@@ -56,24 +60,27 @@ public class MediaAnalysisTableRegenerateAction {
         List<String> listOfAllMediaUrlsExcludingThumbnails = partitionResults.get(Boolean.FALSE);
         log.info(String.format("listOfAllMediaUrls %d listOfAllMediaUrlsExcludingThumbnails %d listOfAllThumbnailsUrls %d", listOfAllMediaUrls.size(), listOfAllMediaUrlsExcludingThumbnails.size(), listOfAllThumbnailsUrls.size()));
 
-        //TODO Log entries that get filtered out for dev purposes
-        // TODO: 17/07/24 Fetch list of MediaUrls from media table
-        //        SELECT REPLACE(image_url, 'https://s3.ap-south-1.amazonaws.com/prod-user-media/goonj/', '') as image_url_in_media_table
-        //        FROM goonj.media
-        //        ORDER BY REPLACE(image_url, 'https://s3.ap-south-1.amazonaws.com/prod-user-media/goonj/', '');
-        // TODO: 17/07/24 Invoke Analysis method to perform various metrics computations for each entry in media table of the org
-        //TODO Fix test issues causing build break
-        List<MediaDTO> listOfMediaEntities = mediaTableRepository.getAllMedia();
         String orgMediaDirectory = organisation.getOrganisationIdentity().getMediaDirectory();
-        // TODO: 22/07/24 do  
-        List<MediaAnalysisVO> mediaAnalysisVOS = listOfMediaEntities.stream().map(mediaDTO -> {
+        List<MediaDTO> listOfMediaDTOEntities = mediaTableRepository.getAllMedia();
+        Map<String, String> mediaUrlsMap = listOfAllMediaUrlsExcludingThumbnails.stream().collect(Collectors.toMap(mediaUrl -> mediaUrl.substring(mediaUrl.lastIndexOf(STRING_CONST_SEPARATOR)), Function.identity()));
+        Map<String, String> thumbnailUrlsMap = listOfAllThumbnailsUrls.stream().collect(Collectors.toMap(thumbnailUrl -> thumbnailUrl.substring(thumbnailUrl.lastIndexOf(STRING_CONST_SEPARATOR)), Function.identity()));
+
+        Map<String, List<MediaDTO>> groupedMediaEntityMap = listOfMediaDTOEntities.stream()
+                .collect(Collectors.groupingBy(mediaDTO -> mediaDTO.uuid())); //mediaDTO.uuid() returns a composite uuid of entity.uuid#media.uuid
+        List<MediaAnalysisVO> mediaAnalysisVOS = groupedMediaEntityMap.entrySet().stream().map(groupedMediaEntityMapEntry -> {
+            MediaDTO mediaDTO = groupedMediaEntityMapEntry.getValue().get(INT_CONSTANT_ZERO);
+            boolean isPresentInStorage = false, isThumbnailGenerated = false;
             boolean isValidUrl = mediaDTO.url().contains(orgMediaDirectory);
-            String urlToSearch = mediaDTO.url().substring(mediaDTO.url().indexOf(orgMediaDirectory));
-            boolean isPresentInStorage = listOfAllMediaUrlsExcludingThumbnails.contains(urlToSearch);
-            // TODO: 22/07/24 init booleans correctly
-            return new MediaAnalysisVO(mediaDTO.uuid(), mediaDTO.url(), isValidUrl, isPresentInStorage, false);
+            if (isValidUrl) {
+                String urlToSearch = mediaDTO.url().substring(mediaDTO.url().lastIndexOf(STRING_CONST_SEPARATOR));
+                isPresentInStorage = mediaUrlsMap.containsKey(urlToSearch);
+                isThumbnailGenerated = thumbnailUrlsMap.containsKey(urlToSearch);
+            }
+            return new MediaAnalysisVO(mediaDTO.uuid().substring(INT_CONSTANT_ZERO,mediaDTO.uuid().indexOf(COMPOSITE_UUID_SEPARATOR)),
+                    mediaDTO.url(), isValidUrl, isPresentInStorage, isThumbnailGenerated,
+                    groupedMediaEntityMapEntry.getValue().size() > INT_CONSTANT_ONE);
         }).collect(Collectors.toList());
-        log.info(String.format("listOfMediaEntities %d mediaAnalysisVOS %d ", listOfMediaEntities.size(), mediaAnalysisVOS.size()));
+        log.info(String.format("listOfMediaDTOEntities %d mediaAnalysisVOS %d duplicates %d", listOfMediaDTOEntities.size(), mediaAnalysisVOS.size(), listOfMediaDTOEntities.size() - mediaAnalysisVOS.size()));
 
         truncateMediaAnalysisTable(tableMetadata);
         generateMediaAnalysisTableEntries(tableMetadata, mediaAnalysisVOS);
@@ -82,9 +89,9 @@ public class MediaAnalysisTableRegenerateAction {
     private void truncateMediaAnalysisTable(TableMetadata tableMetadata) {
         String schema = OrgIdentityContextHolder.getDbSchema();
         String mediaAnalysisTable = tableMetadata.getName();
-        String sql = new ST("delete from <schemaName>.<mediaAnalysisTable> where uuid is not null;")
-                .add("schemaName", wrapInQuotes(schema))
-                .add("mediaAnalysisTable", wrapInQuotes(mediaAnalysisTable))
+        String sql = new ST(TRUNCATE_MEDIA_ANALYSIS_TABLE_SQL)
+                .add(SCHEMA_NAME, wrapInQuotes(schema))
+                .add(MEDIA_ANALYSIS_TABLE, wrapInQuotes(mediaAnalysisTable))
                 .render();
         runInOrgContext(() -> {
             jdbcTemplate.execute(sql);
@@ -118,8 +125,8 @@ public class MediaAnalysisTableRegenerateAction {
         String schema = OrgIdentityContextHolder.getDbSchema();
         String mediaAnalysisTable = tableMetadata.getName();
         String sql = new ST(generateMediaAnalysisTableTemplate)
-                .add("schemaName", wrapInQuotes(schema))
-                .add("mediaAnalysisTable", wrapInQuotes(mediaAnalysisTable))
+                .add(SCHEMA_NAME, wrapInQuotes(schema))
+                .add(MEDIA_ANALYSIS_TABLE, wrapInQuotes(mediaAnalysisTable))
                 .render();
         runInOrgContext(() -> {
             jdbcTemplate.batchUpdate(sql,
@@ -131,6 +138,7 @@ public class MediaAnalysisTableRegenerateAction {
                         ps.setBoolean(3, mediaAnalysisVO.isValidUrl());
                         ps.setBoolean(4, mediaAnalysisVO.isPresentInStorage());
                         ps.setBoolean(5, mediaAnalysisVO.isThumbnailGenerated());
+                        ps.setBoolean(6, mediaAnalysisVO.isHavingDuplicates());
                     });
             return NullObject.instance();
         }, jdbcTemplate);

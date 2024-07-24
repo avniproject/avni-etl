@@ -20,7 +20,8 @@ public class MediaAnalysisTable extends Table {
                         new Column("image_url", Column.Type.text),
                         new Column("is_valid_url", Column.Type.bool),
                         new Column("is_present_in_storage", Column.Type.bool),
-                        new Column("is_thumbnail_generated", Column.Type.bool)
+                        new Column("is_thumbnail_generated", Column.Type.bool),
+                        new Column("is_having_duplicates", Column.Type.bool)
                 ))
                 .build();
     }
