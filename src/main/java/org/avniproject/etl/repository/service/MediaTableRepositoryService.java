@@ -1,9 +1,9 @@
 package org.avniproject.etl.repository.service;
 
-import org.apache.log4j.Logger;
 import org.avniproject.etl.config.AmazonClientService;
 import org.avniproject.etl.config.S3FileDoesNotExist;
 import org.avniproject.etl.dto.ImageData;
+import org.avniproject.etl.dto.MediaCompactDTO;
 import org.avniproject.etl.dto.MediaDTO;
 import org.avniproject.etl.util.Utils;
 import org.springframework.stereotype.Service;
@@ -23,29 +23,39 @@ public class MediaTableRepositoryService {
         this.amazonClientService = amazonClientService;
     }
 
-    public MediaDTO setMediaDto(ResultSet rs) {
-        return this.setMediaDto(rs, true);
+    public MediaCompactDTO setMediaCompactDTO(ResultSet rs) {
+        try {
+            String imageUrl = rs.getString("image_url");
+            String uuid = rs.getString("uuid");
+            String imageUUID = getImageUUID(imageUrl);
+            String compositeUUID = uuid + "#" + imageUUID;
+            return new MediaCompactDTO(
+                    compositeUUID,
+                    uuid,
+                    imageUrl
+            );
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public MediaDTO setMediaDto(ResultSet rs, boolean generateSignedUrls) {
+    public MediaDTO setMediaDto(ResultSet rs) {
         try {
             String imageUrl = rs.getString("image_url");
             String thumbnailUrl = Utils.getThumbnailUrl(imageUrl);
 
             URL signedImageUrl = null, signedThumbnailUrl = null;
 
-            if(generateSignedUrls) {
+            try {
+                signedImageUrl = amazonClientService.generateMediaDownloadUrl(imageUrl);
                 try {
-                    signedImageUrl = amazonClientService.generateMediaDownloadUrl(imageUrl);
-                    try {
-                        signedThumbnailUrl = amazonClientService.generateMediaDownloadUrl(thumbnailUrl);
-                    } catch (S3FileDoesNotExist ignored) {
-                    }
-                } catch (IllegalArgumentException illegalArgumentException) {
-                    //Ignore and move on. Image will be null
-                } catch (S3FileDoesNotExist e) {
-                    throw new RuntimeException(e);
+                    signedThumbnailUrl = amazonClientService.generateMediaDownloadUrl(thumbnailUrl);
+                } catch (S3FileDoesNotExist ignored) {
                 }
+            } catch (IllegalArgumentException illegalArgumentException) {
+                //Ignore and move on. Image will be null
+            } catch (S3FileDoesNotExist e) {
+                throw new RuntimeException(e);
             }
 
             String uuid = rs.getString("uuid");

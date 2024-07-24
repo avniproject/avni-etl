@@ -7,7 +7,7 @@ import org.avniproject.etl.domain.OrgIdentityContextHolder;
 import org.avniproject.etl.domain.Organisation;
 import org.avniproject.etl.domain.metadata.TableMetadata;
 import org.avniproject.etl.dto.MediaAnalysisVO;
-import org.avniproject.etl.dto.MediaDTO;
+import org.avniproject.etl.dto.MediaCompactDTO;
 import org.avniproject.etl.repository.MediaTableRepository;
 import org.avniproject.etl.repository.sql.SqlFile;
 import org.avniproject.etl.service.MediaAnalysisService;
@@ -35,7 +35,6 @@ public class MediaAnalysisTableRegenerateAction {
     public static final String SCHEMA_NAME = "schemaName";
     public static final String MEDIA_ANALYSIS_TABLE = "mediaAnalysisTable";
     public static final int INT_CONSTANT_ZERO = 0;
-    public static final String COMPOSITE_UUID_SEPARATOR = "#";
     public static final int INT_CONSTANT_ONE = 1;
 
     private final AmazonClientService amazonClientService;
@@ -55,20 +54,17 @@ public class MediaAnalysisTableRegenerateAction {
     public void process(Organisation organisation, TableMetadata tableMetadata) {
 
         List<String> listOfAllMediaUrls = fetchValidMediaUrlsFromStorage(organisation);
-        Map<Boolean, List<String>> partitionResults = partitionListBasedOnThumbnailsPattern(listOfAllMediaUrls);
-        List<String> listOfAllThumbnailsUrls = partitionResults.get(Boolean.TRUE);
-        List<String> listOfAllMediaUrlsExcludingThumbnails = partitionResults.get(Boolean.FALSE);
-        log.info(String.format("listOfAllMediaUrls %d listOfAllMediaUrlsExcludingThumbnails %d listOfAllThumbnailsUrls %d", listOfAllMediaUrls.size(), listOfAllMediaUrlsExcludingThumbnails.size(), listOfAllThumbnailsUrls.size()));
+        Map<Boolean, Map<String, String>> partitionResults = partitionListBasedOnThumbnailsPattern(listOfAllMediaUrls);
+        Map<String, String> thumbnailUrlsMap = partitionResults.get(Boolean.TRUE);
+        Map<String, String> mediaUrlsMap = partitionResults.get(Boolean.FALSE);
 
         String orgMediaDirectory = organisation.getOrganisationIdentity().getMediaDirectory();
-        List<MediaDTO> listOfMediaDTOEntities = mediaTableRepository.getAllMedia();
-        Map<String, String> mediaUrlsMap = listOfAllMediaUrlsExcludingThumbnails.stream().collect(Collectors.toMap(mediaUrl -> mediaUrl.substring(mediaUrl.lastIndexOf(STRING_CONST_SEPARATOR)), Function.identity()));
-        Map<String, String> thumbnailUrlsMap = listOfAllThumbnailsUrls.stream().collect(Collectors.toMap(thumbnailUrl -> thumbnailUrl.substring(thumbnailUrl.lastIndexOf(STRING_CONST_SEPARATOR)), Function.identity()));
+        List<MediaCompactDTO> listOfMediaDTOEntities = mediaTableRepository.getAllMedia();
 
-        Map<String, List<MediaDTO>> groupedMediaEntityMap = listOfMediaDTOEntities.stream()
-                .collect(Collectors.groupingBy(mediaDTO -> mediaDTO.uuid())); //mediaDTO.uuid() returns a composite uuid of entity.uuid#media.uuid
+        Map<String, List<MediaCompactDTO>> groupedMediaEntityMap = listOfMediaDTOEntities.stream()
+                .collect(Collectors.groupingBy(mediaDTO -> mediaDTO.compositeUUID()));
         List<MediaAnalysisVO> mediaAnalysisVOS = groupedMediaEntityMap.entrySet().stream().map(groupedMediaEntityMapEntry -> {
-            MediaDTO mediaDTO = groupedMediaEntityMapEntry.getValue().get(INT_CONSTANT_ZERO);
+            MediaCompactDTO mediaDTO = groupedMediaEntityMapEntry.getValue().get(INT_CONSTANT_ZERO);
             boolean isPresentInStorage = false, isThumbnailGenerated = false;
             boolean isValidUrl = mediaDTO.url().contains(orgMediaDirectory);
             if (isValidUrl) {
@@ -76,7 +72,7 @@ public class MediaAnalysisTableRegenerateAction {
                 isPresentInStorage = mediaUrlsMap.containsKey(urlToSearch);
                 isThumbnailGenerated = thumbnailUrlsMap.containsKey(urlToSearch);
             }
-            return new MediaAnalysisVO(mediaDTO.uuid().substring(INT_CONSTANT_ZERO,mediaDTO.uuid().indexOf(COMPOSITE_UUID_SEPARATOR)),
+            return new MediaAnalysisVO(mediaDTO.entityUUID(),
                     mediaDTO.url(), isValidUrl, isPresentInStorage, isThumbnailGenerated,
                     groupedMediaEntityMapEntry.getValue().size() > INT_CONSTANT_ONE);
         }).collect(Collectors.toList());
@@ -111,9 +107,10 @@ public class MediaAnalysisTableRegenerateAction {
         listOfAllMediaUrls.removeIf(fastSyncAndAdhocDumpPatternPredicate.or(notUUIDPatternPredicate));
     }
 
-    private Map<Boolean, List<String>> partitionListBasedOnThumbnailsPattern(List<String> listOfAllMediaUrls) {
+    private Map<Boolean, Map<String, String>> partitionListBasedOnThumbnailsPattern(List<String> listOfAllMediaUrls) {
         Predicate<String> thumbnailsPatternPredicate = Pattern.compile(THUMBNAILS_PATTERN, Pattern.CASE_INSENSITIVE).asPredicate();
-        Map<Boolean, List<String>> partitionResults= listOfAllMediaUrls.stream().collect(Collectors.partitioningBy(thumbnailsPatternPredicate));
+        Map<Boolean, Map<String, String>> partitionResults= listOfAllMediaUrls.stream().collect(Collectors.partitioningBy(thumbnailsPatternPredicate,
+                Collectors.toMap(url -> url.substring(url.lastIndexOf(STRING_CONST_SEPARATOR)), Function.identity())));
         return partitionResults;
     }
 

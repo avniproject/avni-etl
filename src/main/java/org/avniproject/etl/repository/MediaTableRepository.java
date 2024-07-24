@@ -88,9 +88,9 @@ public class MediaTableRepository {
         return searchInternal(mediaSearchRequest, page, (rs, rowNum) -> mediaTableRepositoryService.setImageData(rs));
     }
 
-    public List<MediaDTO> getAllMedia() {
+    public List<MediaCompactDTO> getAllMedia() {
         Query query = new MediaSearchQueryBuilder().allWithoutAnyLimitOrOffset().build();
         return runInSchemaUserContext(() -> new NamedParameterJdbcTemplate(jdbcTemplate)
-                .query(query.sql(), query.parameters(), (rs, rowNum) -> mediaTableRepositoryService.setMediaDto(rs, false)), jdbcTemplate);
+                .query(query.sql(), query.parameters(), (rs, rowNum) -> mediaTableRepositoryService.setMediaCompactDTO(rs)), jdbcTemplate);
     }
 }
