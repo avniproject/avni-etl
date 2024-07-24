@@ -33,7 +33,7 @@ public class SchemaMetadataRepositoryTest extends BaseIntegrationTest {
     @Sql(scripts = {"/test-data-teardown.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void shouldGetAllTablesForAnOrganisation() {
         SchemaMetadata schemaMetadata = schemaMetadataRepository.getNewSchemaMetadata();
-        assertThat(schemaMetadata.getTableMetadata().size(), is(15));
+        assertThat(schemaMetadata.getTableMetadata().size(), is(16));
     }
 
     @Test
@@ -83,7 +83,7 @@ public class SchemaMetadataRepositoryTest extends BaseIntegrationTest {
     @Sql({"/test-data-teardown.sql", "/test-data.sql"})
     @Sql(scripts = {"/test-data-teardown.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void shouldGetMediaAnalysisTable() {
-        SchemaMetadata schemaMetadata = schemaMetadataRepository.getExistingSchemaMetadata();
+        SchemaMetadata schemaMetadata = schemaMetadataRepository.getNewSchemaMetadata();
         Optional<TableMetadata> mediaAnalysis = schemaMetadata.getTableMetadata().stream().filter(tableMetadata1 -> tableMetadata1.getName().equals("media_analysis")).findFirst();
 
         assertThat(mediaAnalysis.isPresent(), is(true));
