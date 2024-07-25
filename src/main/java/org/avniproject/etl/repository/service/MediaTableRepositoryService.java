@@ -50,12 +50,11 @@ public class MediaTableRepositoryService {
                 signedImageUrl = amazonClientService.generateMediaDownloadUrl(imageUrl);
                 try {
                     signedThumbnailUrl = amazonClientService.generateMediaDownloadUrl(thumbnailUrl);
-                } catch (S3FileDoesNotExist ignored) {
+                } catch (IllegalArgumentException | S3FileDoesNotExist exception) {
+                    //Ignore and move on. Thumbnail will be broken
                 }
-            } catch (IllegalArgumentException illegalArgumentException) {
+            } catch (IllegalArgumentException | S3FileDoesNotExist exception) {
                 //Ignore and move on. Image will be null
-            } catch (S3FileDoesNotExist e) {
-                throw new RuntimeException(e);
             }
 
             String uuid = rs.getString("uuid");
