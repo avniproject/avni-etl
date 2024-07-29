@@ -113,7 +113,7 @@ public class EtlJobController {
         jobDetail.setDurability(true);
         jobDetail.setKey(scheduledJobConfig.getJobKey(jobScheduleRequest.getEntityUUID()));
         jobDetail.setDescription(organisationIdentity == null ?
-                organisationIdentitiesInGroup.stream().map(OrganisationIdentity::toString).collect(Collectors.joining(";")) : organisationIdentity.toString());
+                organisationIdentitiesInGroup.stream().map(OrganisationIdentity::getSchemaName).collect(Collectors.joining(";")) : organisationIdentity.getSchemaName());
         jobDetail.setGroup(SYNC_JOB_GROUP);
         jobDetail.setName(jobScheduleRequest.getEntityUUID());
         JobDataMap jobDataMap = scheduledJobConfig.createJobData(jobScheduleRequest.getJobEntityType());
