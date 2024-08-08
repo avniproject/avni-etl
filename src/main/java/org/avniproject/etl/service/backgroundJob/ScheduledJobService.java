@@ -26,7 +26,7 @@ public class ScheduledJobService {
 
     private static final String HISTORY_QUERY = "select sjr.started_at, sjr.ended_at, sjr.error_message, sjr.success from qrtz_job_details qjd\n" + "    left outer join scheduled_job_run sjr on sjr.job_name = qjd.job_name\n" + "     where qjd.job_name = ? and qjd.job_group = ?" + "order by 1 desc\n";
 
-    private static final String JOB_LIST_QUERY = "select organisationUUID, job_name from (SELECT unnest(string_to_array(?, ',')) as organisationUUID) foo\n" + "    left outer join qrtz_job_details qjd on organisationUUID = qjd.job_name where qjd.job_group = ?";
+    private static final String JOB_LIST_QUERY = "select organisationUUID, job_name from (SELECT unnest(string_to_array(?, ',')) as organisationUUID) foo\n" + "    left outer join qrtz_job_details qjd on organisationUUID = qjd.job_name where qjd.job_group = ? or qjd is null";
 
     @Autowired
     public ScheduledJobService(JdbcTemplate jdbcTemplate, Scheduler scheduler, ScheduledJobConfig scheduledJobConfig) {
