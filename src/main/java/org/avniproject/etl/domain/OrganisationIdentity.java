@@ -9,22 +9,25 @@ public class OrganisationIdentity {
     private final String dbUser;
     private final String schemaName;
     private final String schemaUser;
+    private final String mediaDirectory;
     private List<String> orgGroupOrgDbUsers;
     private Date startTime;
 
-    private OrganisationIdentity(String dbUser, String schemaName, String schemaUser) {
+    private OrganisationIdentity(String dbUser, String schemaName, String schemaUser, String mediaDirectory) {
         this.dbUser = dbUser;
         this.schemaName = schemaName;
         this.schemaUser = schemaUser;
+        this.mediaDirectory = mediaDirectory;
     }
 
     /**
      * @param dbUser The database user who has access the source data of the organisation and is also a schema user
      * @param schemaName The destination schema name to be created/updated
      */
-    public static OrganisationIdentity createForOrganisation(String dbUser, String schemaName) {
-        return new OrganisationIdentity(dbUser, schemaName, dbUser);
+    public static OrganisationIdentity createForOrganisation(String dbUser, String schemaName, String mediaDirectory) {
+        return new OrganisationIdentity(dbUser, schemaName, dbUser, mediaDirectory);
     }
+
 
     /**
      * @param dbUser The database user who has access the source data of the organisation
@@ -32,7 +35,7 @@ public class OrganisationIdentity {
      * @param schemaUser The destination user who will have access to the schema
      */
     public static OrganisationIdentity createForOrganisationGroup(String dbUser, String schemaName, String schemaUser) {
-        return new OrganisationIdentity(dbUser, schemaName, schemaUser);
+        return new OrganisationIdentity(dbUser, schemaName, schemaUser, null);
     }
 
     public String getSchemaName() {
@@ -41,7 +44,7 @@ public class OrganisationIdentity {
 
     @Override
     public String toString() {
-        return String.format("Schema: %s, DB User: %s, Schema User: %s", schemaName, dbUser, schemaUser);
+        return String.format("Schema: %s, DB User: %s, Schema User: %s, MediaDirectory: %s", schemaName, dbUser, schemaUser, mediaDirectory);
     }
 
     public String getDbUser() {
@@ -70,5 +73,9 @@ public class OrganisationIdentity {
 
     public void setStartTime(Date startTime) {
         this.startTime = startTime;
+    }
+
+    public String getMediaDirectory() {
+        return mediaDirectory;
     }
 }

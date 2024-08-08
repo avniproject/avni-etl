@@ -14,12 +14,12 @@ public class CreateTableTest {
 
     @BeforeEach
     public void before() {
-        OrgIdentityContextHolder.setContext(OrganisationIdentity.createForOrganisation("dbUser", "schema"));
+        OrgIdentityContextHolder.setContext(OrganisationIdentity.createForOrganisation("dbUser", "schema", "mediaDirectory"));
     }
 
     @Test
     public void shouldCreateSqlWithCommonColumns() {
-        OrgIdentityContextHolder.setContext(OrganisationIdentity.createForOrganisation("dbUser", "schema"));
+        OrgIdentityContextHolder.setContext(OrganisationIdentity.createForOrganisation("dbUser", "schema", "mediaDirectory"));
         TableMetadata tableMetadata = new TableMetadata();
         tableMetadata.setName("tableName");
 

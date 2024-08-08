@@ -41,6 +41,7 @@ FROM <schemaName>.media media
          <endif>
 where media.image_url is not null
     and media.is_voided is false
+    <if(request)>
     <if(request.fromDate)>                  and media.created_date_time >= :fromDate                   <endif>
     <if(request.toDate)>                    and media.created_date_time \<= :toDate                     <endif>
     <if(request.subjectName)>               and  (<request.subjectNameTokens : {subjectNameToken |
@@ -61,5 +62,6 @@ where media.image_url is not null
     <if(request.addresses)> and (<endif>
         <request.addresses:{addressRequest|<if(addressRequest.addressLevelIds)>address."<addressRequest.addressLevelType> id" in (:addressLevelIds_<i0>)<else>1 = 2<endif>}; separator="\n OR ">
     <if(request.addresses)> )<endif>
+    <endif>
 ORDER BY media.created_date_time desc
 LIMIT :limit OFFSET :offset;

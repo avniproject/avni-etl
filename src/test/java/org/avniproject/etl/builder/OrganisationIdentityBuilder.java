@@ -6,6 +6,7 @@ public class OrganisationIdentityBuilder {
     private Integer id = 1;
     private String dbUser = "dbUser";
     private String schemaName = "schema";
+    private String mediaDirectory = "mediaDirectory";
 
     public OrganisationIdentityBuilder withId(Integer id) {
         this.id = id;
@@ -13,7 +14,7 @@ public class OrganisationIdentityBuilder {
     }
 
     public OrganisationIdentity build() {
-        return OrganisationIdentity.createForOrganisation(dbUser, schemaName);
+        return OrganisationIdentity.createForOrganisation(dbUser, schemaName, mediaDirectory);
     }
 
     public OrganisationIdentityBuilder withDbUser(String dbUser) {
@@ -23,6 +24,11 @@ public class OrganisationIdentityBuilder {
 
     public OrganisationIdentityBuilder withSchemaName(String schemaName) {
         this.schemaName = schemaName;
+        return this;
+    }
+
+    public OrganisationIdentityBuilder withMediaDirectory(String mediaDirectory) {
+        this.mediaDirectory = mediaDirectory;
         return this;
     }
 }

@@ -1,9 +1,9 @@
 package org.avniproject.etl.repository.service;
 
-import org.apache.log4j.Logger;
 import org.avniproject.etl.config.AmazonClientService;
 import org.avniproject.etl.config.S3FileDoesNotExist;
 import org.avniproject.etl.dto.ImageData;
+import org.avniproject.etl.dto.MediaCompactDTO;
 import org.avniproject.etl.dto.MediaDTO;
 import org.avniproject.etl.util.Utils;
 import org.springframework.stereotype.Service;
@@ -23,6 +23,22 @@ public class MediaTableRepositoryService {
         this.amazonClientService = amazonClientService;
     }
 
+    public MediaCompactDTO setMediaCompactDTO(ResultSet rs) {
+        try {
+            String imageUrl = rs.getString("image_url");
+            String uuid = rs.getString("uuid");
+            String imageUUID = getImageUUID(imageUrl);
+            String compositeUUID = uuid + "#" + imageUUID;
+            return new MediaCompactDTO(
+                    compositeUUID,
+                    uuid,
+                    imageUrl
+            );
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public MediaDTO setMediaDto(ResultSet rs) {
         try {
             String imageUrl = rs.getString("image_url");
@@ -34,12 +50,11 @@ public class MediaTableRepositoryService {
                 signedImageUrl = amazonClientService.generateMediaDownloadUrl(imageUrl);
                 try {
                     signedThumbnailUrl = amazonClientService.generateMediaDownloadUrl(thumbnailUrl);
-                } catch (S3FileDoesNotExist ignored) {
+                } catch (IllegalArgumentException | S3FileDoesNotExist exception) {
+                    //Ignore and move on. Thumbnail will be broken
                 }
-            } catch (IllegalArgumentException illegalArgumentException) {
+            } catch (IllegalArgumentException | S3FileDoesNotExist exception) {
                 //Ignore and move on. Image will be null
-            } catch (S3FileDoesNotExist e) {
-                throw new RuntimeException(e);
             }
 
             String uuid = rs.getString("uuid");

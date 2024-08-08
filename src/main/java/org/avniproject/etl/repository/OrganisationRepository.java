@@ -20,7 +20,7 @@ public class OrganisationRepository {
     }
 
     public OrganisationIdentity getOrganisation(String organisationUUID) {
-        String query = "select db_user, schema_name\n" +
+        String query = "select db_user, schema_name, media_directory\n" +
                 "from organisation where uuid = ? and is_voided = false";
         List<OrganisationIdentity> organisationIdentities = jdbcTemplate.query(query, ps -> ps.setString(1, organisationUUID), new OrganisationIdentityRowMapper());
         if (organisationIdentities.size() == 0) return null;

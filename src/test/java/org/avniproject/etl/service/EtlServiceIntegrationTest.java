@@ -22,8 +22,8 @@ public class EtlServiceIntegrationTest extends BaseIntegrationTest {
     @Sql(scripts = {"/test-data-teardown.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void shouldNotFailWhenRunTwice() {
 
-        etlService.runFor(OrganisationIdentity.createForOrganisation("orgc", "orgc"));
-        etlService.runFor(OrganisationIdentity.createForOrganisation("orgc", "orgc"));
+        etlService.runFor(OrganisationIdentity.createForOrganisation("orgc", "orgc", "orgc"));
+        etlService.runFor(OrganisationIdentity.createForOrganisation("orgc", "orgc", "orgc"));
 
         assertThat(countOfRowsIn("orgc.goat"), equalTo(1L));
         assertThat(countOfRowsIn("orgc.household"), equalTo(1L));

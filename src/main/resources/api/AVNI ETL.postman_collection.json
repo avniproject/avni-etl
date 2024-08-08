@@ -1,0 +1,422 @@
+{
+	"info": {
+		"_postman_id": "7cd37fa2-d77d-4a7b-816a-4b26ed1d5d5a",
+		"name": "AVNI ETL",
+		"description": "Avni ETL Internal APIs Documentation",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20957992"
+	},
+	"item": [
+		{
+			"name": "Scheduler Status",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/scheduler",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"scheduler"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Ping",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/ping",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"ping"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Fetch MediaAnalysis Job statuses",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "[\n\"{{organisation_uuid}}\"\n]",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/job/status?jobGroup=MediaAnalysis",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"job",
+						"status"
+					],
+					"query": [
+						{
+							"key": "jobGroup",
+							"value": "MediaAnalysis"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Fetch Sync Job statuses",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "[\n\"{{organisation_uuid}}\"\n]",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/job/status?jobGroup=Sync",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"job",
+						"status"
+					],
+					"query": [
+						{
+							"key": "jobGroup",
+							"value": "Sync"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Fetch MediaAnalysis Job History",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/job/history/{{organisation_uuid}}?jobGroup=MediaAnalysis",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"job",
+						"history",
+						"{{organisation_uuid}}"
+					],
+					"query": [
+						{
+							"key": "jobGroup",
+							"value": "MediaAnalysis"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Fetch Sync Job History",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/job/history/{{organisation_uuid}}?jobGroup=Sync",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"job",
+						"history",
+						"{{organisation_uuid}}"
+					],
+					"query": [
+						{
+							"key": "jobGroup",
+							"value": "Sync"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Fetch MediaAnalysis Job status for org",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/job/{{organisation_uuid}}?jobGroup=MediaAnalysis",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"job",
+						"{{organisation_uuid}}"
+					],
+					"query": [
+						{
+							"key": "jobGroup",
+							"value": "MediaAnalysis"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Fetch Sync Job status for org",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/job/{{organisation_uuid}}?jobGroup=Sync",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"job",
+						"{{organisation_uuid}}"
+					],
+					"query": [
+						{
+							"key": "jobGroup",
+							"value": "Sync"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Job",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"entityUUID\": \"{{organisation_uuid}}\",\n    \"jobEntityType\": \"Organisation\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/job",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"job"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create MediaAnalysis Job",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"entityUUID\": \"{{organisation_uuid}}\",\n    \"jobEntityType\": \"Organisation\",\n    \"jobGroup\": \"MediaAnalysis\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/job",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"job"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete a Job",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/job/{{organisation_uuid}}?jobGroup=Sync",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"job",
+						"{{organisation_uuid}}"
+					],
+					"query": [
+						{
+							"key": "jobGroup",
+							"value": "Sync"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete a MediaAnalysis Job",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/job/{{organisation_uuid}}?jobGroup=MediaAnalysis",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"job",
+						"{{organisation_uuid}}"
+					],
+					"query": [
+						{
+							"key": "jobGroup",
+							"value": "MediaAnalysis"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "apikey",
+		"apikey": [
+			{
+				"key": "value",
+				"value": "{{token}}",
+				"type": "string"
+			},
+			{
+				"key": "key",
+				"value": "AUTH-TOKEN",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "url",
+			"value": "http://localhost:8022",
+			"type": "string"
+		},
+		{
+			"key": "organisation_uuid",
+			"value": "7e8f3e7f-1c9e-4a35-b6f4-fdd4eb30bfb3",
+			"type": "string"
+		}
+	]
+}

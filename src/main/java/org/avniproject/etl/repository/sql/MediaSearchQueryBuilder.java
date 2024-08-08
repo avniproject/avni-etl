@@ -72,6 +72,14 @@ public class MediaSearchQueryBuilder {
         return this;
     }
 
+    public MediaSearchQueryBuilder allWithoutAnyLimitOrOffset() {
+        template.add("joinTablesAndColumns", null);
+        template.add("request", null);
+        parameters.put("offset", 0);
+        parameters.put("limit", Long.MAX_VALUE);
+        return this;
+    }
+
     public Query build() {
         String str = template.render();
         logger.debug(str);
