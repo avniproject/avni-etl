@@ -4,16 +4,16 @@ select create_db_user('orgc', 'password');
 select create_db_user('org_group_a', 'password');
 
 insert into organisation (id, name, db_user, uuid, parent_organisation_id, is_voided, media_directory, username_suffix,
-                          account_id, schema_name)
-values (10, 'Without analytics Org A', 'orga', uuid_generate_v4(), null, false, 'orga', 'orga', 1, 'orga');
+                          account_id, schema_name, category_id, status_id)
+values (10, 'Without analytics Org A', 'orga', uuid_generate_v4(), null, false, 'orga', 'orga', 1, 'orga', 1, 1);
 
 insert into organisation (id, name, db_user, uuid, parent_organisation_id, is_voided, media_directory, username_suffix,
-                          account_id, schema_name)
-values (11, 'With analytics Org B', 'orgb', uuid_generate_v4(), null, false, 'orgb', 'orgb', 1, 'orgb');
+                          account_id, schema_name, category_id, status_id)
+values (11, 'With analytics Org B', 'orgb', uuid_generate_v4(), null, false, 'orgb', 'orgb', 1, 'orgb', 1, 1);
 
 insert into organisation (id, name, db_user, uuid, parent_organisation_id, is_voided, media_directory, username_suffix,
-                          account_id, schema_name)
-values (12, 'With existing data', 'orgc', uuid_generate_v4(), null, false, 'orgc', 'orgc', 1, 'orgc');
+                          account_id, schema_name, category_id, status_id)
+values (12, 'With existing data', 'orgc', uuid_generate_v4(), null, false, 'orgc', 'orgc', 1, 'orgc', 1, 1);
 
 insert into organisation_group(id, name, db_user, account_id, schema_name)
 VALUES (10, 'Without analytics Org Groub A', 'org_group_a', 1, 'org_group');
