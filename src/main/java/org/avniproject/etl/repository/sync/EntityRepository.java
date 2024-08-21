@@ -24,6 +24,7 @@ public class EntityRepository {
                             SyncTelemetryTableSyncAction syncTelemetryTableSyncAction,
                             UserTableSyncAction userTableSyncAction,
                             CleanEnrolmentExitTableAction cleanEnrolmentExitTableAction,
+                            CleanEncounterCancelTableAction cleanEncounterCancelTableAction,
                             RepeatableQGTransactionTablesSyncAction repeatableQGTransactionTablesSyncAction) {
         entitySyncRepositories.add(transactionalTablesSyncAction);
         entitySyncRepositories.add(addressTableSyncAction);
@@ -34,6 +35,7 @@ public class EntityRepository {
         entitySyncRepositories.add(syncTelemetryTableSyncAction);
         entitySyncRepositories.add(userTableSyncAction);
         entitySyncRepositories.add(duplicateRowDeleteAction);
+        entitySyncRepositories.add(cleanEncounterCancelTableAction);
         entitySyncRepositories.add(cleanEnrolmentExitTableAction);
     }
 
