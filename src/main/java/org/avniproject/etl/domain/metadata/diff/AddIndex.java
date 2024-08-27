@@ -31,7 +31,9 @@ public class AddIndex implements Diff {
                 .append(tableName)
                 .append(QUOTE)
                 .append(OPEN_BRACKETS)
+                .append(QUOTE)
                 .append(columnName)
+                .append(QUOTE)
                 .append(CLOSE_BRACKETS)
                 .append(END_STATEMENT)
                 .toString();
