@@ -83,12 +83,12 @@ jobs:
 
       - run: wget -qO- https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/8.5.9/flyway-commandline-8.5.9-linux-x64.tar.gz | tar xvz && sudo ln -s `pwd`/flyway-8.5.9/flyway /usr/local/bin
 
-      - run: curl -L https://github.com/avniproject/avni-server/archive/master.zip >> ~/server.zip
+      - run: curl -L https://github.com/avniproject/avni-server/archive/$CIRCLE_BRANCH.zip >> ~/server.zip
 
       - run: |
           cd ~/
           unzip server.zip
-          mv avni-server-master avni-server
+          mv avni-server-$CIRCLE_BRANCH avni-server
           rm -rf server.zip
       - run: |
           pwd

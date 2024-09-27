@@ -69,6 +69,7 @@ public class SchemaMetadataRepository {
         tableMetadata.setName(addressTable.name(null));
         tableMetadata.setType(TableMetadata.Type.Address);
         tableMetadata.setColumnMetadataList(addressTable.columnMetadata());
+        addressTable.columns().stream().filter(Column::isIndexed).forEach(column -> tableMetadata.addIndexMetadata(column));
         return tableMetadata;
     }
 
