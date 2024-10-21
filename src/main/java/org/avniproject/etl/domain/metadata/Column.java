@@ -31,6 +31,7 @@ public class Column {
     }
 
     private String getName(String name) {
+        name = name.replace("\"", "");
         if (isColumnNameTruncated(name)) {
             String truncatedName = getTruncatedName(name);
             while (isColumnNameTruncated(truncatedName)) {
