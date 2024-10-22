@@ -139,6 +139,6 @@ public class SchemaMetadataRepositoryTest extends BaseIntegrationTest {
     public void shouldGetIndicesWhenGettingNewSchemaMetadata() {
         SchemaMetadata schemaMetadata = schemaMetadataRepository.getNewSchemaMetadata();
         List<IndexMetadata> personTableIndexMetadata = schemaMetadata.getTableMetadata().stream().filter(tableMetadata -> tableMetadata.getName().equals("person")).findFirst().get().getIndexMetadataList();
-        assertThat(personTableIndexMetadata, hasSize(8));
+        assertThat(personTableIndexMetadata, hasSize(9));
     }
 }
