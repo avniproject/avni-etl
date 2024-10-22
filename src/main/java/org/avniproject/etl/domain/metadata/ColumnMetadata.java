@@ -112,7 +112,7 @@ public class ColumnMetadata extends Model {
         if (realColumn.getConceptUuid() == null && getConceptUuid() == null) {
             return getName().equals(realColumn.getName());
         }
-        if (realColumn.getParentConceptUuid() != null) {
+        if (realColumn.getParentConceptUuid() != null || getParentConceptUuid() != null) {
             return nullSafeEquals(realColumn.getParentConceptUuid(), getParentConceptUuid()) &&
                     nullSafeEquals(realColumn.getConceptUuid(), getConceptUuid());
         }

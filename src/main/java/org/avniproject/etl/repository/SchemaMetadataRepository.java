@@ -107,6 +107,7 @@ public class SchemaMetadataRepository {
                 "         left outer join form_element gfe on gfe.id = fe.group_id\n and gfe.is_voided is false" +
                 "         left outer join concept c on fe.concept_id = c.id and c.data_type <> 'QuestionGroup' and c.uuid <> '%s'\n" +
                 "         left outer join concept gc on gfe.concept_id = gc.id\n" +
+                "         left outer join (select id, jsonb_array_elements(key_values) kv from form_element) gfe_kv on gfe_kv.id = gfe.id\n" +
                 "         inner join subject_type st on fm.subject_type_id = st.id\n" +
                 "         inner join operational_subject_type ost on st.id = ost.subject_type_id\n" +
                 "         left outer join program p on fm.entity_id = p.id\n" +
@@ -116,6 +117,7 @@ public class SchemaMetadataRepository {
                 "         left outer join non_applicable_form_element nafe on fe.id = nafe.form_element_id\n\n" +
                 "where fm.is_voided is false" +
                 " and (p.id is null or op.id is not null) and (et.id is null or oet.id is not null)" +
+                " and (gfe_kv.kv is null or gfe_kv.kv ->> 'key' <> 'repeatable' or (gfe_kv.kv ->> 'key' = 'repeatable' and gfe_kv.kv ->> 'value' <> 'true'))" +
                 " and nafe.id is null;", PLACEHOLDER_CONCEPT_UUID);
 
         List<TableMetadata> tables = getTableMetadataForForm(sql);
