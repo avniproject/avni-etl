@@ -15,10 +15,16 @@ public class MediaSearchQueryBuilder {
     private final ST template;
     private final Map<String, Object> parameters = new HashMap<>();
     private final static String sqlTemplate = readFile("/sql/api/searchMedia.sql.st");
+    private final static String withoutAddressFilterSqlTemplate = readFile("/sql/api/searchMediaWithoutAddressFilter.sql.st");
     private static final Logger logger = Logger.getLogger(MediaSearchQueryBuilder.class);
 
     public MediaSearchQueryBuilder() {
         this.template = new ST(sqlTemplate);
+        addDefaultParameters();
+    }
+
+    public MediaSearchQueryBuilder(MediaSearchRequest mediaSearchRequest) {
+        this.template = mediaSearchRequest.getAddresses().isEmpty() ? new ST(withoutAddressFilterSqlTemplate) : new ST(sqlTemplate);
         addDefaultParameters();
     }
 

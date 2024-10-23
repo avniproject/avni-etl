@@ -79,6 +79,10 @@ public class ColumnMetadata extends Model {
         this(null, column, conceptId, conceptType, conceptUuid, null);
     }
 
+    public ColumnMetadata(Column column) {
+        this(column, null, null, null);
+    }
+
     public Integer getConceptId() {
         return conceptId;
     }
