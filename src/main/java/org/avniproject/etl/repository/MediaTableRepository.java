@@ -75,7 +75,7 @@ public class MediaTableRepository {
             conceptFilterSearches = determineConceptFilterTablesAndColumns(mediaSearchRequest.getConceptFilters());
         }
 
-        Query query = new MediaSearchQueryBuilder()
+        Query query = new MediaSearchQueryBuilder(mediaSearchRequest)
             .withPage(page)
             .withMediaSearchRequest(mediaSearchRequest)
             .withSearchConceptFilters(conceptFilterSearches)
