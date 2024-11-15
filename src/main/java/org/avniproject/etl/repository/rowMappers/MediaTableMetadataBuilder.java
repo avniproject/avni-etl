@@ -1,5 +1,6 @@
 package org.avniproject.etl.repository.rowMappers;
 
+import org.avniproject.etl.domain.metadata.Column;
 import org.avniproject.etl.domain.metadata.ColumnMetadata;
 import org.avniproject.etl.domain.metadata.IndexMetadata;
 import org.avniproject.etl.domain.metadata.TableMetadata;
@@ -15,7 +16,7 @@ public class MediaTableMetadataBuilder {
         mediaTableMetadata.setName(mediaTable.name(null));
         mediaTableMetadata.setType(TableMetadata.Type.Media);
         mediaTableMetadata.addColumnMetadata(mediaTable.columns().stream().map(column -> new ColumnMetadata(column, null, null, null)).collect(Collectors.toList()));
-        mediaTableMetadata.addIndexMetadata(mediaTable.columns().stream().map(column -> column.isIndexed() ? new IndexMetadata(new ColumnMetadata(column)) : null).filter(Objects::nonNull).collect(Collectors.toList()));
+        mediaTable.columns().stream().filter(Column::isIndexed).forEach(column -> mediaTableMetadata.addIndexMetadata(column));
         return mediaTableMetadata;
     }
 }
