@@ -26,6 +26,7 @@ FROM (
     where et.uuid = '${encounter_type_uuid}'
     and st.uuid = '${subject_type_uuid}'
     and mainTable.observations ->> '${repeatable_question_group_concept_uuid}' is not null
+    and jsonb_typeof((mainTable.observations ->> '${repeatable_question_group_concept_uuid}')::jsonb) = 'array'
     and jsonb_array_length((mainTable.observations ->> '${repeatable_question_group_concept_uuid}')::jsonb) > 0
     and mainTable.cancel_date_time isnull
     and mainTable.last_modified_date_time > '${start_time}'

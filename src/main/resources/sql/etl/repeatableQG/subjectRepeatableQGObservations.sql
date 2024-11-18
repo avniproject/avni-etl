@@ -21,6 +21,7 @@ FROM (
     inner join public.subject_type st on mainTable.subject_type_id = st.id
     where st.uuid = '${subject_type_uuid}'
     and mainTable.observations ->> '${repeatable_question_group_concept_uuid}' is not null
+    and jsonb_typeof((mainTable.observations ->> '${repeatable_question_group_concept_uuid}')::jsonb) = 'array'
     and jsonb_array_length((mainTable.observations ->> '${repeatable_question_group_concept_uuid}')::jsonb) > 0
     and mainTable.last_modified_date_time > '${start_time}'
     and mainTable.last_modified_date_time <= '${end_time}'
