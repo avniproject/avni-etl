@@ -125,14 +125,14 @@ public class EtlJobController {
     }
 
     @PreAuthorize("hasAnyAuthority('admin')")
-    @DeleteMapping(value = "/job/{id}")
-    public String deleteJob(@PathVariable String id, @RequestParam(value="jobGroup", required = false) JobGroup jobGroup) throws SchedulerException {
-        boolean syncJobDeleted = scheduler.deleteJob(scheduledJobConfig.getJobKey(id, jobGroup != null ? jobGroup : JobGroup.Sync));
+    @DeleteMapping(value = "/job/{entityUUID}")
+    public String deleteJob(@PathVariable String entityUUID, @RequestParam(value="jobGroup", required = false) JobGroup jobGroup) throws SchedulerException {
+        boolean syncJobDeleted = scheduler.deleteJob(scheduledJobConfig.getJobKey(entityUUID, jobGroup != null ? jobGroup : JobGroup.Sync));
         String responseMsg = String.format("Sync Job Deleted: %s; ",syncJobDeleted);
         if (jobGroup != null && jobGroup == JobGroup.Sync) {
-            EtlJobSummary mediaJobRun = scheduledJobService.getLatestJobRun(id, JobGroup.MediaAnalysis);
+            EtlJobSummary mediaJobRun = scheduledJobService.getLatestJobRun(entityUUID, JobGroup.MediaAnalysis);
             if (mediaJobRun != null) {
-                boolean mediaAnalysisJobDeleted = scheduler.deleteJob(scheduledJobConfig.getJobKey(id, JobGroup.MediaAnalysis));
+                boolean mediaAnalysisJobDeleted = scheduler.deleteJob(scheduledJobConfig.getJobKey(entityUUID, JobGroup.MediaAnalysis));
                 responseMsg.concat(String.format("MediaAnalysis Job Deleted: %s;", mediaAnalysisJobDeleted));
             }
         }
