@@ -12,6 +12,7 @@ import org.stringtemplate.v4.ST;
 
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Optional;
 
 import static org.avniproject.etl.repository.JdbcContextWrapper.runInOrgContext;
 
@@ -29,13 +30,13 @@ public class CleanEncounterCancelTableAction implements EntitySyncAction {
         if (this.doesntSupport(tableMetadata)) {
             return;
         }
-        cleanUncancelledEncounters(tableMetadata);
+        cleanUncancelledEncounters(tableMetadata, currentSchemaMetadata);
     }
 
-    private void cleanUncancelledEncounters(TableMetadata tableMetadata) {
+    private void cleanUncancelledEncounters(TableMetadata tableMetadata, SchemaMetadata currentSchemaMetadata) {
         String schema = OrgIdentityContextHolder.getDbSchema();
         String encounterCancelTableName = tableMetadata.getName();
-        String primaryTableName = encounterCancelTableName.substring(0, encounterCancelTableName.length() - 7);
+        String primaryTableName = getPrimaryTableName(tableMetadata, currentSchemaMetadata);
         String sql = new ST(deleteUncancelledEncountersSqlTemplate)
                 .add("schemaName", wrapInQuotes(schema))
                 .add("encounterCancelTableName", wrapInQuotes(encounterCancelTableName))
@@ -45,6 +46,18 @@ public class CleanEncounterCancelTableAction implements EntitySyncAction {
             jdbcTemplate.execute(sql);
             return NullObject.instance();
         }, jdbcTemplate);
+    }
+
+    private String getPrimaryTableName(TableMetadata tableMetadata, SchemaMetadata currentSchemaMetadata) {
+        Optional<TableMetadata> primaryTableMetadata = currentSchemaMetadata.getAllIndividualAndProgramEncounterTables()
+                .stream().filter(tm -> tm.getEncounterTypeUuid() == tableMetadata.getEncounterTypeUuid()
+                        && tm.getProgramUuid() == tableMetadata.getProgramUuid()
+                        && tm.getSubjectTypeUuid() == tableMetadata.getSubjectTypeUuid()).findAny();
+
+        if (primaryTableMetadata.isPresent()) {
+            return primaryTableMetadata.get().getName();
+        }
+        throw new RuntimeException(String.format("Corresponding Primary table not found for cancel table: %s", tableMetadata.getName()));
     }
 
     private String wrapInQuotes(String parameter) {

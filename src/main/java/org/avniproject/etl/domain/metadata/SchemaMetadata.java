@@ -88,6 +88,11 @@ public class SchemaMetadata {
         return tableMetadata.stream().filter(table -> table.getType() == TableMetadata.Type.Encounter).toList();
     }
 
+    public List<TableMetadata> getAllIndividualAndProgramEncounterTables() {
+        return tableMetadata.stream().filter(table -> table.getType() == TableMetadata.Type.Encounter
+                || table.getType() == TableMetadata.Type.ProgramEncounter).toList();
+    }
+
     public List<String> getAllEncounterTableNames() {
         List<TableMetadata> encounterTables = getAllEncounterTables();
         List<String> encounterTableNames = new ArrayList<>();
