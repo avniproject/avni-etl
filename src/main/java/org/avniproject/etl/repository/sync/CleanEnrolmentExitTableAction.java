@@ -50,8 +50,8 @@ public class CleanEnrolmentExitTableAction implements EntitySyncAction {
 
     private String getPrimaryTableName(TableMetadata tableMetadata, SchemaMetadata currentSchemaMetadata) {
         Optional<TableMetadata> primaryTableMetadata = currentSchemaMetadata.getAllProgramEnrolmentTables()
-                .stream().filter(tm -> tm.getProgramUuid() == tableMetadata.getProgramUuid()
-                        && tm.getSubjectTypeUuid() == tableMetadata.getSubjectTypeUuid()).findAny();
+                .stream().filter(tm -> tm.getProgramUuid().equals(tableMetadata.getProgramUuid())
+                        && tm.getSubjectTypeUuid().equals(tableMetadata.getSubjectTypeUuid())).findAny();
 
         if (primaryTableMetadata.isPresent()) {
             return primaryTableMetadata.get().getName();

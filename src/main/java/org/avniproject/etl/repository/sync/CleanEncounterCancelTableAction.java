@@ -12,6 +12,7 @@ import org.stringtemplate.v4.ST;
 
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.avniproject.etl.repository.JdbcContextWrapper.runInOrgContext;
@@ -50,9 +51,9 @@ public class CleanEncounterCancelTableAction implements EntitySyncAction {
 
     private String getPrimaryTableName(TableMetadata tableMetadata, SchemaMetadata currentSchemaMetadata) {
         Optional<TableMetadata> primaryTableMetadata = currentSchemaMetadata.getAllIndividualAndProgramEncounterTables()
-                .stream().filter(tm -> tm.getEncounterTypeUuid() == tableMetadata.getEncounterTypeUuid()
-                        && tm.getProgramUuid() == tableMetadata.getProgramUuid()
-                        && tm.getSubjectTypeUuid() == tableMetadata.getSubjectTypeUuid()).findAny();
+                .stream().filter(tm -> tm.getEncounterTypeUuid().equals(tableMetadata.getEncounterTypeUuid())
+                        && (Objects.isNull(tm.getProgramUuid()) || (Objects.nonNull(tableMetadata.getProgramUuid()) && tableMetadata.getProgramUuid().equals(tm.getProgramUuid())))
+                        && tm.getSubjectTypeUuid().equals(tableMetadata.getSubjectTypeUuid())).findAny();
 
         if (primaryTableMetadata.isPresent()) {
             return primaryTableMetadata.get().getName();
