@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import org.stringtemplate.v4.ST;
 
 import java.util.Date;
+import java.util.Optional;
 
 import static org.avniproject.etl.repository.JdbcContextWrapper.runInOrgContext;
 
@@ -28,13 +29,13 @@ public class CleanEnrolmentExitTableAction implements EntitySyncAction {
         if (this.doesntSupport(tableMetadata)) {
             return;
         }
-        cleanInvalidExits(tableMetadata);
+        cleanInvalidExits(tableMetadata, currentSchemaMetadata);
     }
 
-    private void cleanInvalidExits(TableMetadata tableMetadata) {
+    private void cleanInvalidExits(TableMetadata tableMetadata, SchemaMetadata currentSchemaMetadata) {
         String schema = OrgIdentityContextHolder.getDbSchema();
         String exitTableName = tableMetadata.getName();
-        String primaryTableName = exitTableName.substring(0, exitTableName.length() - 5);
+        String primaryTableName = getPrimaryTableName(tableMetadata, currentSchemaMetadata);
         String sql = new ST(deleteInvalidExitsSqlTemplate)
                 .add("schemaName", wrapInQuotes(schema))
                 .add("exitTableName", wrapInQuotes(exitTableName))
@@ -44,6 +45,18 @@ public class CleanEnrolmentExitTableAction implements EntitySyncAction {
             jdbcTemplate.execute(sql);
             return NullObject.instance();
         }, jdbcTemplate);
+    }
+
+
+    private String getPrimaryTableName(TableMetadata tableMetadata, SchemaMetadata currentSchemaMetadata) {
+        Optional<TableMetadata> primaryTableMetadata = currentSchemaMetadata.getAllProgramEnrolmentTables()
+                .stream().filter(tm -> tm.getProgramUuid().equals(tableMetadata.getProgramUuid())
+                        && tm.getSubjectTypeUuid().equals(tableMetadata.getSubjectTypeUuid())).findAny();
+
+        if (primaryTableMetadata.isPresent()) {
+            return primaryTableMetadata.get().getName();
+        }
+        throw new RuntimeException(String.format("Corresponding Primary table not found for cancel table: %s", tableMetadata.getName()));
     }
 
     private String wrapInQuotes(String parameter) {
