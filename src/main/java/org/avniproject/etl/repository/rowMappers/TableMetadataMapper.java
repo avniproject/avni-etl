@@ -22,7 +22,8 @@ public class TableMetadataMapper {
                 (Integer) map.get("concept_id"),
                 map.get("concept_type") == null ? null : ColumnMetadata.ConceptType.valueOf((String) map.get("concept_type")),
                 (String) map.get("concept_uuid"),
-                (String) map.get("parent_concept_uuid"));
+                (String) map.get("parent_concept_uuid"),
+                (Boolean) map.get("concept_voided"));
     }
 
     public TableMetadata createFromExistingSchemaMetaData(List<Map<String, Object>> columns, List<Map<String, Object>> indices) {
@@ -38,8 +39,11 @@ public class TableMetadataMapper {
                 .map(this::createColumnMetaData)
                 .collect(Collectors.toList()));
 
-        tableMetadata.addIndexMetadata(indices.stream().map(index ->
-                new IndexMetadata((Integer) index.get("index_id"), (String) index.get("index_name"), createColumnMetaData(index))).collect(Collectors.toList()));
+        tableMetadata.addIndexMetadata(indices.stream().map(index -> {
+                    ColumnMetadata columnMetadata = tableMetadata.getColumn((Integer) index.get("column_id"));
+                    return new IndexMetadata((Integer) index.get("index_id"), (String) index.get("index_name"), columnMetadata);
+                })
+                .collect(Collectors.toList()));
 
         return tableMetadata;
     }
@@ -51,7 +55,7 @@ public class TableMetadataMapper {
         Table table = getTableStructure(tableMetadata.getType(), tableDetails);
         tableMetadata.setName(table.name(tableDetails));
 
-        tableMetadata.addColumnMetadata(table.columns().stream().map(column -> new ColumnMetadata(column, null, null, null)).collect(Collectors.toList()));
+        tableMetadata.addColumnMetadata(table.columns().stream().map(column -> new ColumnMetadata(column, null, null, null, false)).collect(Collectors.toList()));
         tableMetadata.addColumnMetadata(columns.stream()
                 .filter(stringObjectMap -> stringObjectMap.get("concept_id") != null)
                 .map(column -> new ColumnMetadataMapper().create(column)).collect(Collectors.toList()));

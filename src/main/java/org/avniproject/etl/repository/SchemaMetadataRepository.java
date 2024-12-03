@@ -69,7 +69,7 @@ public class SchemaMetadataRepository {
         tableMetadata.setName(addressTable.name(null));
         tableMetadata.setType(TableMetadata.Type.Address);
         tableMetadata.setColumnMetadataList(addressTable.columnMetadata());
-        addressTable.columns().stream().filter(Column::isIndexed).forEach(column -> tableMetadata.addIndexMetadata(column));
+        addressTable.columns().stream().filter(Column::isIndexed).forEach(tableMetadata::addIndexMetadata);
         return tableMetadata;
     }
 
@@ -80,45 +80,48 @@ public class SchemaMetadataRepository {
     }
 
     private List<TableMetadata> getFormTables() {
-        String sql = format("select fm.uuid                                                           form_mapping_uuid,\n" +
-                "       f.uuid                                                                 form_uuid,\n" +
-                "       ost.name                                                               subject_type_name,\n" +
-                "       st.uuid                                                                subject_type_uuid,\n" +
-                "       st.type                                                                subject_type_type,\n" +
-                "       st.allow_middle_name                                                   subject_type_allow_middle_name,\n" +
-                "       f.form_type                                                            table_type,\n" +
-                "       p.uuid                                                                 program_uuid,\n" +
-                "       op.name                                                                program_name,\n" +
-                "       et.uuid                                                                encounter_type_uuid,\n" +
-                "       oet.name                                                               encounter_type_name,\n" +
-                "       fm.enable_approval                                                     enable_approval,\n" +
-                "       c.name                                                                 concept_name,\n" +
-                "       gc.name                                                                parent_concept_name,\n" +
-                "       c.id                                                                   concept_id,\n" +
-                "       gc.id                                                                  parent_concept_id,\n" +
-                "       c.uuid                                                                 concept_uuid,\n" +
-                "       gc.uuid                                                                parent_concept_uuid,\n" +
-                "       (case when c.data_type = 'Coded' then fe.type else c.data_type end) as element_type,\n" +
-                "       (case when gc.data_type = 'Coded' then gfe.type else gc.data_type end) as parent_element_type\n" +
-                "from form_mapping fm\n" +
-                "         inner join form f on fm.form_id = f.id\n" +
-                "         left outer join form_element_group feg on f.id = feg.form_id\n" +
-                "         left outer join form_element fe on feg.id = fe.form_element_group_id\n and fe.is_voided is false" +
-                "         left outer join form_element gfe on gfe.id = fe.group_id\n and gfe.is_voided is false" +
-                "         left outer join concept c on fe.concept_id = c.id and c.data_type <> 'QuestionGroup' and c.uuid <> '%s'\n" +
-                "         left outer join concept gc on gfe.concept_id = gc.id\n" +
-                "         left outer join (select id, jsonb_array_elements(key_values) kv from form_element) gfe_kv on gfe_kv.id = gfe.id\n" +
-                "         inner join subject_type st on fm.subject_type_id = st.id\n" +
-                "         inner join operational_subject_type ost on st.id = ost.subject_type_id\n" +
-                "         left outer join program p on fm.entity_id = p.id\n" +
-                "         left outer join operational_program op on p.id = op.program_id\n" +
-                "         left outer join encounter_type et on fm.observations_type_entity_id = et.id\n" +
-                "         left outer join operational_encounter_type oet on et.id = oet.encounter_type_id\n" +
-                "         left outer join non_applicable_form_element nafe on fe.id = nafe.form_element_id\n\n" +
-                "where fm.is_voided is false" +
-                " and (p.id is null or op.id is not null) and (et.id is null or oet.id is not null)" +
-                " and (gfe_kv.kv is null or gfe_kv.kv ->> 'key' <> 'repeatable' or (gfe_kv.kv ->> 'key' = 'repeatable' and gfe_kv.kv ->> 'value' <> 'true'))" +
-                " and nafe.id is null;", PLACEHOLDER_CONCEPT_UUID);
+        String sql = format("""
+                    select fm.uuid                                                           form_mapping_uuid,
+                           f.uuid                                                                 form_uuid,
+                           ost.name                                                               subject_type_name,
+                           st.uuid                                                                subject_type_uuid,
+                           st.type                                                                subject_type_type,
+                           st.allow_middle_name                                                   subject_type_allow_middle_name,
+                           f.form_type                                                            table_type,
+                           p.uuid                                                                 program_uuid,
+                           op.name                                                                program_name,
+                           et.uuid                                                                encounter_type_uuid,
+                           oet.name                                                               encounter_type_name,
+                           fm.enable_approval                                                     enable_approval,
+                           c.name                                                                 concept_name,
+                           gc.name                                                                parent_concept_name,
+                           c.id                                                                   concept_id,
+                           gc.id                                                                  parent_concept_id,
+                           c.uuid                                                                 concept_uuid,
+                           gc.uuid                                                                parent_concept_uuid,
+                           c.is_voided                                                            concept_voided,
+                           (case when c.data_type = 'Coded' then fe.type else c.data_type end) as element_type,
+                           (case when gc.data_type = 'Coded' then gfe.type else gc.data_type end) as parent_element_type
+                    from form_mapping fm
+                             inner join form f on fm.form_id = f.id
+                             left outer join form_element_group feg on f.id = feg.form_id
+                             left outer join form_element fe on feg.id = fe.form_element_group_id and fe.is_voided is false
+                             left outer join form_element gfe on gfe.id = fe.group_id and gfe.is_voided is false
+                             left outer join concept c on fe.concept_id = c.id and c.data_type <> 'QuestionGroup' and c.uuid <> '%s'
+                             left outer join concept gc on gfe.concept_id = gc.id
+                             left outer join (select id, jsonb_array_elements(key_values) kv from form_element) gfe_kv on gfe_kv.id = gfe.id
+                             inner join subject_type st on fm.subject_type_id = st.id
+                             inner join operational_subject_type ost on st.id = ost.subject_type_id
+                             left outer join program p on fm.entity_id = p.id
+                             left outer join operational_program op on p.id = op.program_id
+                             left outer join encounter_type et on fm.observations_type_entity_id = et.id
+                             left outer join operational_encounter_type oet on et.id = oet.encounter_type_id
+                             left outer join non_applicable_form_element nafe on fe.id = nafe.form_element_id
+                    where fm.is_voided is false
+                     and (p.id is null or op.id is not null) and (et.id is null or oet.id is not null)
+                     and (gfe_kv.kv is null or gfe_kv.kv ->> 'key' <> 'repeatable' or (gfe_kv.kv ->> 'key' = 'repeatable' and gfe_kv.kv ->> 'value' <> 'true'))
+                     and nafe.id is null;
+                """, PLACEHOLDER_CONCEPT_UUID);
 
         List<TableMetadata> tables = getTableMetadataForForm(sql);
         tables.forEach(this::addDecisionConceptColumns);
@@ -152,19 +155,21 @@ public class SchemaMetadataRepository {
     }
 
     private void addDecisionConceptColumns(TableMetadata tableMetadata) {
-        String sql = "select c.id                                                                      as concept_id,\n" +
-                "       c.uuid                                                                    as concept_uuid,\n" +
-                "       c.name                                                                    as concept_name,\n" +
-                "       (case when c.data_type = 'Coded' then 'MultiSelect' else c.data_type end) as element_type\n" +
-                "from decision_concept dc\n" +
-                "         inner join concept c on dc.concept_id = c.id\n" +
-                "         inner join form f on f.id = dc.form_id\n" +
-                "where f.uuid = ?;";
+        String sql = """
+                select c.id                                                                      as concept_id,
+                c.uuid                                                                    as concept_uuid,
+                   c.name                                                                    as concept_name,
+                    c.is_voided as concept_voided,
+                   (case when c.data_type = 'Coded' then 'MultiSelect' else c.data_type end) as element_type
+                from decision_concept dc
+                         inner join concept c on dc.concept_id = c.id
+                         inner join form f on f.id = dc.form_id
+                where f.uuid = ?;""";
 
-        List<Map<String, Object>> conceptIds = runInOrgContext(() -> jdbcTemplate.queryForList(sql, tableMetadata.getFormUuid()), jdbcTemplate);
+        List<Map<String, Object>> concepts = runInOrgContext(() -> jdbcTemplate.queryForList(sql, tableMetadata.getFormUuid()), jdbcTemplate);
 
         tableMetadata.addColumnMetadata(
-                new ArrayList<>(conceptIds
+                new ArrayList<>(concepts
                         .stream()
                         .map(column -> new ColumnMetadataMapper().create(column))
                         .collect(Collectors.toMap(
@@ -222,9 +227,9 @@ public class SchemaMetadataRepository {
     }
 
     private void addHeadOfHouseholdColumns(TableMetadata tableMetadata) {
-        ColumnMetadata headOfHouseholdIDColumnMetadata = new ColumnMetadata(new Column( "Head of household ID",
-                Column.Type.integer, Column.ColumnType.index), null, null, null);
-        tableMetadata.addColumnMetadata(Arrays.asList(headOfHouseholdIDColumnMetadata));
+        ColumnMetadata headOfHouseholdIDColumnMetadata = new ColumnMetadata(new Column("Head of household ID",
+                Column.Type.integer, Column.ColumnType.index), null, null, null, false);
+        tableMetadata.addColumnMetadata(List.of(headOfHouseholdIDColumnMetadata));
     }
 
     private String getSyncAttributeSql(String columnName) {
@@ -262,6 +267,7 @@ public class SchemaMetadataRepository {
                         "       cm.name                                 concept_name,\n" +
                         "       cm.concept_uuid                         concept_uuid,\n" +
                         "       cm.parent_concept_uuid                  parent_concept_uuid,\n" +
+                        "       cm.concept_voided                       concept_voided,\n" +
                         "       tm.repeatable_question_group_concept_uuid                  repeatable_question_group_concept_uuid\n" +
                         "from table_metadata tm\n" +
                         "         left outer join column_metadata cm on tm.id = cm.table_id\n" +
@@ -284,6 +290,7 @@ public class SchemaMetadataRepository {
                         "       cm.name                concept_name,\n" +
                         "       cm.concept_uuid        concept_uuid,\n" +
                         "       cm.parent_concept_uuid parent_concept_uuid,\n" +
+                        "       cm.concept_voided concept_voided,\n" +
                         "       tm.repeatable_question_group_concept_uuid                  repeatable_question_group_concept_uuid\n" +
                         "from table_metadata tm\n" +
                         "         inner join index_metadata im on tm.id = im.table_metadata_id\n" +

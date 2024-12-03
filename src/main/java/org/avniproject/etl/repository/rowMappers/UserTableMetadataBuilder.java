@@ -12,7 +12,7 @@ public class UserTableMetadataBuilder {
         UserTable userTable = new UserTable();
         userTableMetadata.setName(userTable.name(null));
         userTableMetadata.setType(TableMetadata.Type.User);
-        userTableMetadata.addColumnMetadata(userTable.columns().stream().map(column -> new ColumnMetadata(column, null, null, null)).collect(Collectors.toList()));
+        userTableMetadata.addColumnMetadata(userTable.columns().stream().map(column -> new ColumnMetadata(column, null, null, null, false)).collect(Collectors.toList()));
 
         return userTableMetadata;
     }

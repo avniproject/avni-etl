@@ -12,7 +12,7 @@ public class SyncTelemetryTableMetadataBuilder {
         SyncTelemetryTable syncTelemetryTable = new SyncTelemetryTable();
         syncTelemetryTableMetadata.setName(syncTelemetryTable.name(null));
         syncTelemetryTableMetadata.setType(TableMetadata.Type.SyncTelemetry);
-        syncTelemetryTableMetadata.addColumnMetadata(syncTelemetryTable.columns().stream().map(column -> new ColumnMetadata(column, null, null, null)).collect(Collectors.toList()));
+        syncTelemetryTableMetadata.addColumnMetadata(syncTelemetryTable.columns().stream().map(column -> new ColumnMetadata(column, null, null, null, false)).collect(Collectors.toList()));
 
         return syncTelemetryTableMetadata;
     }

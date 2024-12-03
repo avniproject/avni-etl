@@ -3,6 +3,7 @@ package org.avniproject.etl.repository.sql;
 import org.avniproject.etl.builder.OrganisationIdentityBuilder;
 import org.avniproject.etl.builder.domain.metadata.TableMetadataBuilder;
 import org.avniproject.etl.domain.OrgIdentityContextHolder;
+import org.avniproject.etl.domain.metadata.Column;
 import org.avniproject.etl.domain.metadata.ColumnMetadata;
 import org.avniproject.etl.domain.metadata.TableMetadata;
 import org.junit.jupiter.api.Test;
@@ -16,16 +17,20 @@ import static org.hamcrest.Matchers.equalTo;
 
 class SqlGeneratorTest {
 
+    private ColumnMetadata createColumnMetaData(Integer id, String name, Integer conceptId, ColumnMetadata.ConceptType conceptType, String conceptUuid) {
+        return new ColumnMetadata(id, conceptType == null ? new Column(name, null) : new Column(name, conceptType.getColumnDatatype()), conceptId, conceptType, conceptUuid, null, false);
+    }
+
     @Test
     public void shouldGenerateSql() throws IOException {
         OrgIdentityContextHolder.setContext(new OrganisationIdentityBuilder().build());
         TableMetadata tableMetadata = new TableMetadataBuilder()
                 .forIndividual()
-                .withColumnMetadata(new ColumnMetadata(1, "numeric field", 10, ColumnMetadata.ConceptType.Numeric, "uuid-1"))
-                .withColumnMetadata(new ColumnMetadata(1, "text field", 10, ColumnMetadata.ConceptType.Text, "uuid-2"))
-                .withColumnMetadata(new ColumnMetadata(1, "single select", 10, ColumnMetadata.ConceptType.SingleSelect, "uuid-3"))
-                .withColumnMetadata(new ColumnMetadata(1, "multi select", 10, ColumnMetadata.ConceptType.MultiSelect, "uuid-4"))
-                .withColumnMetadata(new ColumnMetadata(1, "date", 10, ColumnMetadata.ConceptType.Date, "uuid-5"))
+                .withColumnMetadata(createColumnMetaData(1, "numeric field", 10, ColumnMetadata.ConceptType.Numeric, "uuid-1"))
+                .withColumnMetadata(createColumnMetaData(1, "text field", 10, ColumnMetadata.ConceptType.Text, "uuid-2"))
+                .withColumnMetadata(createColumnMetaData(1, "single select", 10, ColumnMetadata.ConceptType.SingleSelect, "uuid-3"))
+                .withColumnMetadata(createColumnMetaData(1, "multi select", 10, ColumnMetadata.ConceptType.MultiSelect, "uuid-4"))
+                .withColumnMetadata(createColumnMetaData(1, "date", 10, ColumnMetadata.ConceptType.Date, "uuid-5"))
                 .build();
         Calendar startTime = Calendar.getInstance();
         startTime.set(1970, 1, 12, 13, 23, 4);

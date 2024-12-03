@@ -106,6 +106,41 @@ public class DataSyncIntegrationTest extends BaseIntegrationTest {
         assertThat(Objects.equals(updatedPerson.get("Single Select Question"), "alpha"), is(true));
     }
 
+    @Test
+    @Sql({"/test-data-teardown.sql", "/test-data.sql"})
+    @Sql(scripts = "/test-data-teardown.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    public void changeDataTypeOfConcept() {
+        runDataSync();
+        jdbcTemplate.execute(format("update concept set name = 'Beneficiary Children', data_type = 'Numeric', last_modified_date_time = '%s' where name = 'Beneficiary Children'", getCurrentTime()));
+        runDataSync();
+    }
+
+    @Test
+    @Sql({"/test-data-teardown.sql", "/test-data.sql"})
+    @Sql(scripts = "/test-data-teardown.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    public void changeInDataTypeOfConcept_VoidOldAndRemoveFromForm_NewOneWithDifferentDataType() {
+        runDataSync();
+        jdbcTemplate.execute(format("update concept set name = 'Beneficiary Children (voided)', is_voided = true, last_modified_date_time = '%s' where name = 'Beneficiary Children'", getCurrentTime()));
+        jdbcTemplate.execute(format("""
+                insert into concept (data_type, high_absolute, high_normal, low_absolute, low_normal, name, uuid, version, unit, organisation_id, is_voided, audit_id, key_values, active, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time) values ('Numeric', null, null, null, null, 'Beneficiary Children', '81b7c2f2-3e43-4a4e-8614-5ccde27dea09', 0, null, 12, false, create_audit(), null, true, 1, 1, '%s', '%s');
+                """, getCurrentTime(), getCurrentTime()));
+        jdbcTemplate.execute(format("""
+                update form_element set concept_id = (select id from concept where name = 'Beneficiary Children'), last_modified_date_time = '%s' where name = 'Beneficiary Children Form Element'
+                """, getCurrentTime()));
+        runDataSync();
+    }
+
+    @Test
+    @Sql({"/test-data-teardown.sql", "/test-data.sql"})
+    @Sql(scripts = "/test-data-teardown.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    public void changeDataTypeOfConcept_UsingVoiding_ButBetweenTwoRuns() {
+        runDataSync();
+        jdbcTemplate.execute(format("update concept set name = 'Beneficiary Children (voided)', is_voided = false, last_modified_date_time = '%s' where name = 'Beneficiary Children'", getCurrentTime()));
+        runDataSync();
+        jdbcTemplate.execute(format("insert into concept (data_type, high_absolute, high_normal, low_absolute, low_normal, name, uuid, version, unit, organisation_id, is_voided, audit_id, key_values, active, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time) values ('Numeric', null, null, null, null, 'Beneficiary Children', '81b7c2f2-3e43-4a4e-8614-5ccde27dea09', 0, null, 12, false, create_audit(), null, true, 1, 1, '%s', '%s');", getCurrentTime(), getCurrentTime()));
+        jdbcTemplate.execute(format("update form_element set concept_id = (select id from concept where name = 'Beneficiary Children'), last_modified_date_time = '%s' where name = 'Beneficiary Children Form Element'", getCurrentTime()));
+        runDataSync();
+    }
 
     @Test
     @Sql({"/test-data-teardown.sql", "/test-data.sql", "/new-form-element.sql"})

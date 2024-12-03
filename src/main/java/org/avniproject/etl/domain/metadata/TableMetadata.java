@@ -41,28 +41,44 @@ public class TableMetadata extends Model {
                 && nullSafeEquals(other.repeatableQuestionGroupConceptUuid, this.repeatableQuestionGroupConceptUuid);
     }
 
-    public List<Diff> findChanges(TableMetadata currentTable) {
+    public List<Diff> findChanges(TableMetadata existingTable) {
         ArrayList<Diff> diffs = new ArrayList<>();
-        if (!currentTable.getName().equals(getName())) {
-            diffs.add(new RenameTable(currentTable.getName(), getName()));
+        if (!existingTable.getName().equals(getName())) {
+            diffs.add(new RenameTable(existingTable.getName(), getName()));
         }
 
+        diffs.addAll(getNowVoidedColumns(existingTable));
+
+        ArrayList<Diff> columnDiffs = new ArrayList<>();
         getColumnMetadataList().forEach(columnMetadata -> {
-            Optional<ColumnMetadata> matchingColumn = currentTable.findMatchingColumn(columnMetadata);
+            Optional<ColumnMetadata> matchingColumn = existingTable.findMatchingColumn(columnMetadata);
             if (matchingColumn.isEmpty()) {
-                diffs.add(new AddColumn(getName(), columnMetadata.getColumn()));
+                columnDiffs.add(new AddColumn(getName(), columnMetadata.getColumn()));
             } else {
-                diffs.addAll(columnMetadata.findChanges(this, matchingColumn.get()));
+                columnDiffs.addAll(columnMetadata.findChanges(this, matchingColumn.get()));
             }
         });
+        diffs.addAll(columnDiffs.stream().filter(diff -> diff instanceof RenameColumn).toList());
+        diffs.addAll(columnDiffs.stream().filter(diff -> diff instanceof AddColumn).toList());
 
         getIndexMetadataList().forEach(indexMetadata -> {
-            Optional<IndexMetadata> matchingIndex = currentTable.findMatchingIndex(indexMetadata);
+            Optional<IndexMetadata> matchingIndex = existingTable.findMatchingIndex(indexMetadata);
             if (matchingIndex.isEmpty()) {
                 diffs.add(indexMetadata.createIndex(getName()));
             }
         });
 
+        return diffs;
+    }
+
+    private List<Diff> getNowVoidedColumns(TableMetadata existingTable) {
+        List<Diff> diffs = new ArrayList<>();
+        existingTable.getColumnMetadataList().forEach(existingColumn -> {
+            Optional<ColumnMetadata> matchingColumn = findMatchingColumn(existingColumn);
+            if (matchingColumn.isEmpty() && !existingColumn.isConceptVoided()) {
+                diffs.add(new RenameColumn(getName(), existingColumn.getName(), existingColumn.getVoidedName()));
+            }
+        });
         return diffs;
     }
 
@@ -183,7 +199,7 @@ public class TableMetadata extends Model {
     }
 
     public void addIndexMetadata(Column column) {
-        addIndexMetadata(new IndexMetadata(findMatchingColumn(new ColumnMetadata(column, null, null, null)).get()));
+        addIndexMetadata(new IndexMetadata(findMatchingColumn(new ColumnMetadata(column, null, null, null, false)).get()));
     }
 
     public void addIndexMetadata(List<IndexMetadata> indexMetadataList) {
@@ -232,6 +248,10 @@ public class TableMetadata extends Model {
         if (StringUtils.hasLength(programUuid))
             return TableType.ProgramEnrolment;
         return TableType.IndividualProfile;
+    }
+
+    public ColumnMetadata getColumn(Integer columnId) {
+        return columnMetadataList.stream().filter(columnMetadata -> columnMetadata.getId().equals(columnId)).findFirst().orElse(null);
     }
 
     public enum Type {

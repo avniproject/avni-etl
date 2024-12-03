@@ -18,8 +18,8 @@ class IndexMetadataTest {
 
     @Test
     public void matches_shouldMatchColumnMetadata() {
-        ColumnMetadata id = new ColumnMetadata(new Column("id", Column.Type.numeric), null, null, null);
-        ColumnMetadata uuid = new ColumnMetadata(new Column("uuid", Column.Type.numeric), null, null, null);
+        ColumnMetadata id = new ColumnMetadata(new Column("id", Column.Type.numeric), null, null, null, false);
+        ColumnMetadata uuid = new ColumnMetadata(new Column("uuid", Column.Type.numeric), null, null, null, false);
 
         assertThat(id.matches(id), is(true));
         assertThat(id.matches(uuid), is(false));

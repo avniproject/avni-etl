@@ -34,12 +34,15 @@ public class ColumnMetadataRepository {
     }
 
     private ColumnMetadata update(Integer tableId, ColumnMetadata columnMetadata) {
-        String sql = "update column_metadata\n" +
-                "set name = :name,\n" +
-                "    type = :type,\n" +
-                "    table_id = :table_id,\n" +
-                "    concept_id = :concept_id\n" +
-                "where id = :id;";
+        String sql = """
+            update column_metadata
+            set name = :name,
+                type = :type,
+                table_id = :table_id,
+                concept_id = :concept_id,
+                concept_voided = :concept_voided
+            where id = :id;
+        """;
         new NamedParameterJdbcTemplate(jdbcTemplate).update(sql, addParameters(tableId, columnMetadata));
 
         return columnMetadata;
@@ -66,6 +69,7 @@ public class ColumnMetadataRepository {
         parameters.put("concept_type", columnMetadata.getConceptType() != null ? columnMetadata.getConceptType().toString() : null);
         parameters.put("concept_uuid", columnMetadata.getConceptUuid());
         parameters.put("parent_concept_uuid", columnMetadata.getParentConceptUuid());
+        parameters.put("concept_voided", columnMetadata.isConceptVoided());
         return parameters;
     }
 }

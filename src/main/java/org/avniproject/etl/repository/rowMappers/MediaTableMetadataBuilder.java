@@ -15,7 +15,7 @@ public class MediaTableMetadataBuilder {
         MediaTable mediaTable = new MediaTable();
         mediaTableMetadata.setName(mediaTable.name(null));
         mediaTableMetadata.setType(TableMetadata.Type.Media);
-        mediaTableMetadata.addColumnMetadata(mediaTable.columns().stream().map(column -> new ColumnMetadata(column, null, null, null)).collect(Collectors.toList()));
+        mediaTableMetadata.addColumnMetadata(mediaTable.columns().stream().map(column -> new ColumnMetadata(column, null, null, null, false)).collect(Collectors.toList()));
         mediaTable.columns().stream().filter(Column::isIndexed).forEach(column -> mediaTableMetadata.addIndexMetadata(column));
         return mediaTableMetadata;
     }

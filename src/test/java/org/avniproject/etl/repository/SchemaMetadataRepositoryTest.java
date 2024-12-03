@@ -130,7 +130,7 @@ public class SchemaMetadataRepositoryTest extends BaseIntegrationTest {
         assertThat(personTableIndexMetadata, hasSize(2));
         assertThat(personTableIndexMetadata, hasItem(hasProperty("name", equalTo("orgc_12344_idx"))));
         IndexMetadata idIndex = personTableIndexMetadata.stream().filter(indexMetadata -> indexMetadata.getName().equals("orgc_12344_idx")).findFirst().get();
-        assertThat(idIndex.matches(new IndexMetadata(new ColumnMetadata(new Column("id", Column.Type.numeric), null, null, null))), equalTo(true));
+        assertThat(idIndex.matches(new IndexMetadata(new ColumnMetadata(new Column("id", Column.Type.numeric), null, null, null, false))), equalTo(true));
     }
 
     @Test

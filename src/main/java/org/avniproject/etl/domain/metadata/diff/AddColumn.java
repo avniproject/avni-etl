@@ -12,7 +12,6 @@ public class AddColumn implements Diff {
     private final Column column;
     private static final Logger log = LoggerFactory.getLogger(AddColumn.class);
 
-
     public AddColumn(String tableName, Column column) {
         this.tableName = tableName;
         this.column = column;

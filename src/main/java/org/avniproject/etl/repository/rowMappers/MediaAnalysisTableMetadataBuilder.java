@@ -12,7 +12,7 @@ public class MediaAnalysisTableMetadataBuilder {
         MediaAnalysisTable mediaAnalysisTable = new MediaAnalysisTable();
         mediaAnalysisTableMetadata.setName(mediaAnalysisTable.name(null));
         mediaAnalysisTableMetadata.setType(TableMetadata.Type.MediaAnalysis);
-        mediaAnalysisTableMetadata.addColumnMetadata(mediaAnalysisTable.columns().stream().map(column -> new ColumnMetadata(column, null, null, null)).collect(Collectors.toList()));
+        mediaAnalysisTableMetadata.addColumnMetadata(mediaAnalysisTable.columns().stream().map(column -> new ColumnMetadata(column, null, null, null, false)).collect(Collectors.toList()));
 
         return mediaAnalysisTableMetadata;
     }

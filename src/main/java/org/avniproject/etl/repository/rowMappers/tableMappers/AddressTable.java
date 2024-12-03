@@ -44,11 +44,11 @@ public class AddressTable extends Table {
 
     public List<ColumnMetadata> columnMetadata() {
         List<ColumnMetadata> columnMetadata = this.columns().stream()
-                .map(column -> new ColumnMetadata(column, null, null, null))
+                .map(column -> new ColumnMetadata(column, null, null, null, false))
                 .collect(Collectors.toList());
         List<ColumnMetadata> formColumnsMetadata = this.formColumns.stream()
                 .filter(stringObjectMap -> stringObjectMap.get("concept_id") != null)
-                .map(column -> new ColumnMetadataMapper().create(column)).collect(Collectors.toList());
+                .map(column -> new ColumnMetadataMapper().create(column)).toList();
         columnMetadata.addAll(formColumnsMetadata);
         return columnMetadata;
     }

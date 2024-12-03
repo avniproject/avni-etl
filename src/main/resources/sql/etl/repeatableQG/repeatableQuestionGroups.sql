@@ -15,6 +15,7 @@ select fm.uuid                                                                  
        c.id                                                                      concept_id,
        gc.id                                                                     parent_concept_id,
        c.uuid                                                                    concept_uuid,
+       c.is_voided                                                               concept_voided,
        null                                                                     parent_concept_uuid,
        gc.uuid                                                                   repeatable_question_group_concept_uuid,
        (case when c.data_type = 'Coded' then fe.type else c.data_type end)    as element_type,

@@ -77,7 +77,7 @@ public class TableMetadataTest {
         OrgIdentityContextHolder.setContext(OrganisationIdentity.createForOrganisation("dbUser", "schema", "mediaDirectory"));
         TableMetadata oldTable = new TableMetadataBuilder().forPerson().build();
         TableMetadata newTable = new TableMetadataBuilder().forPerson().build();
-        newTable.addColumnMetadata(List.of(new ColumnMetadata(new Column("newColumn", Column.Type.text), 24, ColumnMetadata.ConceptType.Text, UUID.randomUUID().toString())));
+        newTable.addColumnMetadata(List.of(new ColumnMetadata(new Column("newColumn", Column.Type.text), 24, ColumnMetadata.ConceptType.Text, UUID.randomUUID().toString(), false)));
 
         List<Diff> changes = newTable.findChanges(oldTable);
 
@@ -93,8 +93,8 @@ public class TableMetadataTest {
         TableMetadata newTable = new TableMetadataBuilder().forPerson().build();
 
         String conceptUuid = UUID.randomUUID().toString();
-        oldTable.addColumnMetadata(List.of(new ColumnMetadata(new Column("oldColumn", Column.Type.text), 24, ColumnMetadata.ConceptType.Text, conceptUuid)));
-        newTable.addColumnMetadata(List.of(new ColumnMetadata(new Column("renamedColumn", Column.Type.text), 24, ColumnMetadata.ConceptType.Text, conceptUuid)));
+        oldTable.addColumnMetadata(List.of(new ColumnMetadata(new Column("oldColumn", Column.Type.text), 24, ColumnMetadata.ConceptType.Text, conceptUuid, false)));
+        newTable.addColumnMetadata(List.of(new ColumnMetadata(new Column("renamedColumn", Column.Type.text), 24, ColumnMetadata.ConceptType.Text, conceptUuid, false)));
 
         newTable.mergeWith(oldTable);
 
@@ -108,8 +108,8 @@ public class TableMetadataTest {
         TableMetadata newTable = new TableMetadataBuilder().forPerson().build();
 
         String conceptUuid = UUID.randomUUID().toString();
-        oldTable.addColumnMetadata(List.of(new ColumnMetadata(new Column("Total silt requested by the family members", Column.Type.text), 24, ColumnMetadata.ConceptType.Text, conceptUuid)));
-        newTable.addColumnMetadata(List.of(new ColumnMetadata(new Column("Total silt requested by the family members – Number of trolle", Column.Type.text), 24, ColumnMetadata.ConceptType.Text, conceptUuid)));
+        oldTable.addColumnMetadata(List.of(new ColumnMetadata(new Column("Total silt requested by the family members", Column.Type.text), 24, ColumnMetadata.ConceptType.Text, conceptUuid, false)));
+        newTable.addColumnMetadata(List.of(new ColumnMetadata(new Column("Total silt requested by the family members – Number of trolle", Column.Type.text), 24, ColumnMetadata.ConceptType.Text, conceptUuid, false)));
 
         List<Diff> changes = newTable.findChanges(oldTable);
         assertEquals(1, changes.size());

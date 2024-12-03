@@ -30,7 +30,8 @@ public class EtlJobListener implements JobListener {
     public void jobToBeExecuted(JobExecutionContext context) {
         try {
             JobDetail jobDetail = context.getJobDetail();
-            ScheduledJobRun scheduledJobRun = ScheduledJobRun.create(jobDetail, context.getTrigger());
+            ScheduledJobRun scheduledJobRun = ScheduledJobRun.
+                    create(jobDetail, context.getTrigger());
             scheduledJobRunRepository.save(scheduledJobRun);
         } catch (Exception exception) {
             log.error("Error while creating scheduled job run", exception);
