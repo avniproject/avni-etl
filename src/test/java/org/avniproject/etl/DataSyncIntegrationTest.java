@@ -1,6 +1,8 @@
 package org.avniproject.etl;
 
 import org.avniproject.etl.domain.OrganisationIdentity;
+import org.avniproject.etl.domain.metadata.ColumnMetadata;
+import org.avniproject.etl.repository.ColumnMetadataRepository;
 import org.avniproject.etl.service.EtlService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,12 +19,13 @@ import static java.lang.String.format;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class DataSyncIntegrationTest extends BaseIntegrationTest {
-
     @Autowired
     private EtlService etlService;
+    @Autowired
+    private ColumnMetadataRepository columnMetadataRepository;
 
     private static Date toDate(LocalDateTime localDateTime) {
         return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
@@ -109,36 +112,68 @@ public class DataSyncIntegrationTest extends BaseIntegrationTest {
     @Test
     @Sql({"/test-data-teardown.sql", "/test-data.sql"})
     @Sql(scripts = "/test-data-teardown.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
-    public void changeDataTypeOfConcept() {
+    public void changeDataTypeOfConceptIsNotSupported() {
         runDataSync();
         jdbcTemplate.execute(format("update concept set name = 'Beneficiary Children', data_type = 'Numeric', last_modified_date_time = '%s' where name = 'Beneficiary Children'", getCurrentTime()));
-        runDataSync();
-    }
-
-    @Test
-    @Sql({"/test-data-teardown.sql", "/test-data.sql"})
-    @Sql(scripts = "/test-data-teardown.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
-    public void changeInDataTypeOfConcept_VoidOldAndRemoveFromForm_NewOneWithDifferentDataType() {
-        runDataSync();
-        jdbcTemplate.execute(format("update concept set name = 'Beneficiary Children (voided)', is_voided = true, last_modified_date_time = '%s' where name = 'Beneficiary Children'", getCurrentTime()));
-        jdbcTemplate.execute(format("""
-                insert into concept (data_type, high_absolute, high_normal, low_absolute, low_normal, name, uuid, version, unit, organisation_id, is_voided, audit_id, key_values, active, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time) values ('Numeric', null, null, null, null, 'Beneficiary Children', '81b7c2f2-3e43-4a4e-8614-5ccde27dea09', 0, null, 12, false, create_audit(), null, true, 1, 1, '%s', '%s');
-                """, getCurrentTime(), getCurrentTime()));
-        jdbcTemplate.execute(format("""
-                update form_element set concept_id = (select id from concept where name = 'Beneficiary Children'), last_modified_date_time = '%s' where name = 'Beneficiary Children Form Element'
-                """, getCurrentTime()));
-        runDataSync();
+        assertThrows(RuntimeException.class, this::runDataSync);
     }
 
     @Test
     @Sql({"/test-data-teardown.sql", "/test-data.sql"})
     @Sql(scripts = "/test-data-teardown.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void changeDataTypeOfConcept_UsingVoiding_ButBetweenTwoRuns() {
+        String conceptName = "Beneficiary Children";
+
         runDataSync();
-        jdbcTemplate.execute(format("update concept set name = 'Beneficiary Children (voided)', is_voided = false, last_modified_date_time = '%s' where name = 'Beneficiary Children'", getCurrentTime()));
+        ColumnMetadata columnMetadata = this.columnMetadataRepository.findByName(conceptName);
+        assertFalse(columnMetadata.isConceptVoided());
+
+        String voidedConceptName = "Beneficiary Children (voided)";
+        jdbcTemplate.execute(format("update concept set name = '%s', is_voided = true, last_modified_date_time = '%s' where name = '%s'",
+                voidedConceptName, getCurrentTime(), conceptName));
         runDataSync();
-        jdbcTemplate.execute(format("insert into concept (data_type, high_absolute, high_normal, low_absolute, low_normal, name, uuid, version, unit, organisation_id, is_voided, audit_id, key_values, active, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time) values ('Numeric', null, null, null, null, 'Beneficiary Children', '81b7c2f2-3e43-4a4e-8614-5ccde27dea09', 0, null, 12, false, create_audit(), null, true, 1, 1, '%s', '%s');", getCurrentTime(), getCurrentTime()));
-        jdbcTemplate.execute(format("update form_element set concept_id = (select id from concept where name = 'Beneficiary Children'), last_modified_date_time = '%s' where name = 'Beneficiary Children Form Element'", getCurrentTime()));
+        columnMetadata = this.columnMetadataRepository.findByUuid(columnMetadata.getConceptUuid());
+        assertEquals(voidedConceptName, columnMetadata.getName());
+        assertTrue(columnMetadata.isConceptVoided());
+
+        String newConceptUuid = "81b7c2f2-3e43-4a4e-8614-5ccde27dea09";
+        jdbcTemplate.execute(format("insert into concept (data_type, high_absolute, high_normal, low_absolute, low_normal, name, uuid, version, unit, organisation_id, is_voided, audit_id, key_values, active, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time) values ('Numeric', null, null, null, null, 'Beneficiary Children', '%s', 0, null, 12, false, create_audit(), null, true, 1, 1, '%s', '%s');", newConceptUuid, getCurrentTime(), getCurrentTime()));
+        jdbcTemplate.execute(format("update form_element set concept_id = (select id from concept where name = '%s'), last_modified_date_time = '%s' where name = 'Beneficiary Children Form Element'", conceptName, getCurrentTime()));
+        runDataSync();
+        ColumnMetadata newColumnMetaData = this.columnMetadataRepository.findByUuid(newConceptUuid);
+        assertFalse(newColumnMetaData.isConceptVoided());
+        assertEquals(conceptName, newColumnMetaData.getName());
+    }
+
+    @Test
+    @Sql({"/test-data-teardown.sql", "/test-data.sql"})
+    @Sql(scripts = "/test-data-teardown.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    public void changeInDataTypeOfConcept_VoidOldAndRemoveFromForm_NewOneWithDifferentDataType() {
+        String newConceptUuid = "81b7c2f2-3e43-4a4e-8614-5ccde27dea09";
+        String conceptName = "Beneficiary Children";
+        // Name voiding convention between avni main db and etl db are decoupled
+        String voidedConceptName = "Beneficiary Children (voided)";
+
+        runDataSync();
+        // void the old concept
+        jdbcTemplate.execute(format("update concept set name = '%s', is_voided = true, last_modified_date_time = '%s' where name = '%s'", voidedConceptName, getCurrentTime(), conceptName));
+        // new concept with different data type
+        jdbcTemplate.execute(format("""
+                insert into concept (data_type, high_absolute, high_normal, low_absolute, low_normal, name, uuid, version, unit, organisation_id, is_voided, audit_id, key_values, active, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time) values ('Numeric', null, null, null, null, '%s', '%s', 0, null, 12, false, create_audit(), null, true, 1, 1, '%s', '%s');
+                """, conceptName, newConceptUuid, getCurrentTime(), getCurrentTime()));
+        // point form element to new concept
+        jdbcTemplate.execute(format("""
+                update form_element set concept_id = (select id from concept where name = '%s'), last_modified_date_time = '%s' where name = 'Beneficiary Children Form Element'
+                """, conceptName, getCurrentTime()));
+        runDataSync();
+
+        ColumnMetadata oldColumnMetaData = this.columnMetadataRepository.findByName(ColumnMetadata.getVoidedName(conceptName));
+        assertTrue(oldColumnMetaData.isConceptVoided());
+
+        ColumnMetadata newColumnMetaData = this.columnMetadataRepository.findByUuid(newConceptUuid);
+        assertFalse(newColumnMetaData.isConceptVoided());
+        assertEquals(conceptName, newColumnMetaData.getName());
+        // run again without any changes, should not get any error
         runDataSync();
     }
 
@@ -158,6 +193,8 @@ public class DataSyncIntegrationTest extends BaseIntegrationTest {
     @Sql({"/test-data-teardown.sql", "/test-data.sql", "/new-form-element.sql"})
     @Sql(scripts = "/test-data-teardown.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void changingConceptAnswerShouldUpdateTheOldMultiSelectData() {
+        String conceptName = "Beneficiary Children";
+
         runDataSync();
         Map<String, Object> person = getPersonById(574170);
         assertThat(Objects.equals(person.get("Multi Select Question"), "Delta, Kappa"), is(true));
@@ -399,7 +436,6 @@ public class DataSyncIntegrationTest extends BaseIntegrationTest {
         List<Map<String, Object>> list = jdbcTemplate.queryForList("select * from orgc.users where is_voided = true and id = 3453 ; ");
         assertThat(list.size(), is(equalTo(1)));
     }
-
 
     @Test
     @Sql({"/test-data-teardown.sql", "/test-data.sql"})

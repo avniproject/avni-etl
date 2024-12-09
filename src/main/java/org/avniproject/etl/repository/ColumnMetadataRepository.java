@@ -3,6 +3,7 @@ package org.avniproject.etl.repository;
 import org.avniproject.etl.domain.OrgIdentityContextHolder;
 import org.avniproject.etl.domain.metadata.ColumnMetadata;
 import org.avniproject.etl.domain.metadata.TableMetadata;
+import org.avniproject.etl.repository.rowMappers.ColumnMetadataMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
@@ -71,5 +72,25 @@ public class ColumnMetadataRepository {
         parameters.put("parent_concept_uuid", columnMetadata.getParentConceptUuid());
         parameters.put("concept_voided", columnMetadata.isConceptVoided());
         return parameters;
+    }
+
+    public ColumnMetadata findByName(String name) {
+        String sql = """
+            select *
+            from column_metadata
+            where name = :name;
+        """;
+        return new NamedParameterJdbcTemplate(jdbcTemplate)
+                .queryForObject(sql, Map.of("name", name), new ColumnMetadataMapper());
+    }
+
+    public ColumnMetadata findByUuid(String conceptUuid) {
+        String sql = """
+            select *
+            from column_metadata
+            where concept_uuid = :concept_uuid;
+        """;
+        return new NamedParameterJdbcTemplate(jdbcTemplate)
+                .queryForObject(sql, Map.of("concept_uuid", conceptUuid), new ColumnMetadataMapper());
     }
 }

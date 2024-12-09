@@ -32,7 +32,7 @@ public class SchemaMigrationService {
         OrganisationIdentity organisationIdentity = organisation.getOrganisationIdentity();
         ensureSchemaExists(organisationIdentity);
 
-        log.debug(String.format("Migrating schema for organisation: %s", organisationIdentity.toString()));
+        log.debug(String.format("Migrating schema for organisation: %s", organisationIdentity));
         SchemaMetadata newSchemaMetadata = schemaMetadataRepository.getNewSchemaMetadata();
 
         List<Diff> changes = newSchemaMetadata.findChanges(organisation.getSchemaMetadata());

@@ -68,6 +68,10 @@ public class Column {
                 '}';
     }
 
+    public Column getClonedColumn(String name) {
+        return new Column(name, this.type, this.columnType);
+    }
+
     public enum ColumnType {
         index,
         syncAttribute1,

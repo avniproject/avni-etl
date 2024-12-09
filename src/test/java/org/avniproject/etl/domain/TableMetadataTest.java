@@ -15,7 +15,7 @@ import java.util.UUID;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TableMetadataTest {
 
@@ -92,14 +92,58 @@ public class TableMetadataTest {
         TableMetadata oldTable = new TableMetadataBuilder().forPerson().build();
         TableMetadata newTable = new TableMetadataBuilder().forPerson().build();
 
-        String conceptUuid = UUID.randomUUID().toString();
-        oldTable.addColumnMetadata(List.of(new ColumnMetadata(new Column("oldColumn", Column.Type.text), 24, ColumnMetadata.ConceptType.Text, conceptUuid, false)));
-        newTable.addColumnMetadata(List.of(new ColumnMetadata(new Column("renamedColumn", Column.Type.text), 24, ColumnMetadata.ConceptType.Text, conceptUuid, false)));
+        String column1ConceptUuid = UUID.randomUUID().toString();
+        oldTable.addColumnMetadata(List.of(new ColumnMetadata(new Column("concept1", Column.Type.text), 24, ColumnMetadata.ConceptType.Text, column1ConceptUuid, false)));
+        String renamedColumn = "renamedColumn";
+        newTable.addColumnMetadata(List.of(new ColumnMetadata(new Column(renamedColumn, Column.Type.text), 24, ColumnMetadata.ConceptType.Text, column1ConceptUuid, false)));
+
+        // Voided
+        String column2ConceptUuid = UUID.randomUUID().toString();
+        oldTable.addColumnMetadata(List.of(new ColumnMetadata(new Column("concept2", Column.Type.text), 25, ColumnMetadata.ConceptType.Text, column2ConceptUuid, false)));
+        // new table will not have the voided column, if it is voided, as it is not picked from form element query
+
+        // was previously voided
+        String column3ConceptUuid = UUID.randomUUID().toString();
+        oldTable.addColumnMetadata(List.of(new ColumnMetadata(new Column(ColumnMetadata.getVoidedName("concept3"), Column.Type.text), 26, ColumnMetadata.ConceptType.Text, column3ConceptUuid, true)));
+        // new table will not have the voided column, if it is voided, as it is not picked from form element query
 
         newTable.mergeWith(oldTable);
 
-        assertEquals(1, newTable.getColumns().size());
-        assertEquals("renamedColumn", newTable.getColumns().get(0).getName());
+        assertEquals(3, newTable.getColumns().size());
+        assertNotNull(newTable.getColumnByConceptUuid(column1ConceptUuid));
+        ColumnMetadata column2 = newTable.getColumnByConceptUuid(column2ConceptUuid);
+        assertNotNull(column2);
+        assertTrue(column2.isConceptVoided());
+
+        ColumnMetadata column3 = newTable.getColumnByConceptUuid(column3ConceptUuid);
+        assertNotNull(column3);
+        assertTrue(column3.isConceptVoided());
+    }
+
+    @Test
+    public void mergeWith_changeInDataTypeButInDifferentConcept() {
+        TableMetadata oldTable = new TableMetadataBuilder().forPerson().build();
+        TableMetadata newTable = new TableMetadataBuilder().forPerson().build();
+
+        String conceptName = "concept1";
+
+        String column1ConceptUuid = "uuid-1";
+        oldTable.addColumnMetadata(List.of(new ColumnMetadata(new Column(conceptName, Column.Type.text), 24, ColumnMetadata.ConceptType.Text, column1ConceptUuid, false)));
+        // new table will not have the voided column, if it is voided, as it is not picked from form element query
+
+        String column2ConceptUuid = "uuid-2";
+        newTable.addColumnMetadata(List.of(new ColumnMetadata(new Column(conceptName, Column.Type.numeric), 25, ColumnMetadata.ConceptType.Numeric, column2ConceptUuid, false)));
+
+        newTable.mergeWith(oldTable);
+
+        assertEquals(2, newTable.getColumns().size());
+        ColumnMetadata column1 = newTable.getColumnByConceptUuid(column1ConceptUuid);
+        assertTrue(column1.isConceptVoided());
+        assertNotNull(column1);
+
+        ColumnMetadata column2 = newTable.getColumnByConceptUuid(column2ConceptUuid);
+        assertNotNull(column2);
+        assertFalse(column2.isConceptVoided());
     }
 
     @Test

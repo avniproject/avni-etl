@@ -19,8 +19,12 @@ public class ColumnMetadata extends Model {
     private final String parentConceptUuid;
     private final boolean conceptVoided;
 
+    public static String getVoidedName(String name) {
+        return "voided_" + name;
+    }
+
     public String getVoidedName() {
-        return "voided_" + this.getName();
+        return getVoidedName(getName());
     }
 
     public enum ConceptType {
@@ -63,6 +67,7 @@ public class ColumnMetadata extends Model {
 
 
     }
+
     public ColumnMetadata(Integer id, Column column, Integer conceptId, ConceptType conceptType, String conceptUuid, String parentConceptUuid, boolean conceptVoided) {
         super(id);
         this.column = column;
@@ -158,5 +163,12 @@ public class ColumnMetadata extends Model {
         return "{" +
                 "column=" + column +
                 '}';
+    }
+
+    public ColumnMetadata getNewVoidedColumnMetaData() {
+        String newName = this.conceptVoided ? this.getName() : this.getVoidedName();
+        Column newColumn = this.getColumn().getClonedColumn(newName);
+
+        return new ColumnMetadata(this.getId(), newColumn, this.getConceptId(), this.getConceptType(), this.getConceptUuid(), this.getParentConceptUuid(), true);
     }
 }

@@ -15,8 +15,7 @@ public class AddColumnTest {
         OrgIdentityContextHolder.setContext(OrganisationIdentity.createForOrganisation("dbUser", "schema", "mediaDirectory"));
         AddColumn addColumn = new AddColumn("table", new Column("name", Column.Type.text));
         assertThat(addColumn.getSql(), is("""
-alter table "schema"."table" add column if not exists "name" text;
-alter table "schema"."table" alter column "name" type text;"""));
+alter table "schema".table add column "name" text;"""));
     }
 
     @Test
@@ -34,7 +33,6 @@ alter table "schema"."table" alter column "name" type text;"""));
         OrgIdentityContextHolder.setContext(OrganisationIdentity.createForOrganisation("dbUser", "schema", "mediaDirectory"));
         AddColumn addColumn = new AddColumn("table", new Column(columnName, Column.Type.text));
         assertThat(addColumn.getSql(), is("""
-alter table "schema"."table" add column if not exists "%s" text;
-alter table "schema"."table" alter column "%s" type text;""".formatted(shortenedColumnName, shortenedColumnName)));
+alter table "schema".table add column "%s" text;""".formatted(shortenedColumnName)));
     }
 }

@@ -119,6 +119,9 @@ public class TableMetadata extends Model {
                         oldTableMetadata
                                 .findMatchingColumn(newColumn)
                                 .ifPresent(newColumn::mergeWith));
+        oldTableMetadata.getColumnMetadataList()
+                .stream().filter(oldColumnMetaData -> this.findMatchingColumn(oldColumnMetaData).isEmpty())
+                .forEach(missingInNewColumnMetaData -> this.columnMetadataList.add(missingInNewColumnMetaData.getNewVoidedColumnMetaData()));
         getIndexMetadataList()
                 .forEach(newIndex ->
                         oldTableMetadata.findMatchingIndex(newIndex)
@@ -252,6 +255,10 @@ public class TableMetadata extends Model {
 
     public ColumnMetadata getColumn(Integer columnId) {
         return columnMetadataList.stream().filter(columnMetadata -> columnMetadata.getId().equals(columnId)).findFirst().orElse(null);
+    }
+
+    public ColumnMetadata getColumnByConceptUuid(String conceptUuid) {
+        return columnMetadataList.stream().filter(columnMetadata -> columnMetadata.getConceptUuid().equals(conceptUuid)).findFirst().orElse(null);
     }
 
     public enum Type {

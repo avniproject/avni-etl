@@ -2,10 +2,13 @@ package org.avniproject.etl.repository.rowMappers;
 
 import org.avniproject.etl.domain.metadata.Column;
 import org.avniproject.etl.domain.metadata.ColumnMetadata;
+import org.springframework.jdbc.core.RowMapper;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Map;
 
-public class ColumnMetadataMapper {
+public class ColumnMetadataMapper implements RowMapper<ColumnMetadata> {
     public ColumnMetadata create(Map<String, Object> column) {
         // Column metadata is used by Address properties which are not supported right now for voiding, renaming
         Object isVoided = column.get("concept_voided");
@@ -44,5 +47,17 @@ public class ColumnMetadataMapper {
                 (String) column.get("concept_uuid"),
                 null,
                 columnType, false);
+    }
+
+    @Override
+    public ColumnMetadata mapRow(ResultSet rs, int rowNum) throws SQLException {
+        return new ColumnMetadata(
+                rs.getInt("id"),
+                new Column(rs.getString("name"), Column.Type.valueOf(rs.getString("type"))),
+                rs.getInt("concept_id"),
+                ColumnMetadata.ConceptType.valueOf(rs.getString("concept_type")),
+                rs.getString("concept_uuid"),
+                rs.getString("parent_concept_uuid"),
+                rs.getBoolean("concept_voided"));
     }
 }
