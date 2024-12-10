@@ -58,7 +58,7 @@ public class SchemaMetadataRepositoryTest extends BaseIntegrationTest {
         assertThat(addressTableOptional.isPresent(), is(true));
 
         TableMetadata addressTable = addressTableOptional.get();
-        assertThat(addressTable.getColumns().size(), is(16));
+        assertThat(addressTable.getColumns().size(), is(17));
         assertThat(addressTable.getColumns().stream().anyMatch(column -> column.getName().equals("District")), is(true));
         assertThat(addressTable.getColumns().stream().anyMatch(column -> column.getName().equals("District id")), is(true));
         assertThat(addressTable.getColumns().stream().anyMatch(column -> column.getName().equals("Block")), is(true));
