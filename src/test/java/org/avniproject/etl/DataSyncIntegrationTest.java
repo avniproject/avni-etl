@@ -148,6 +148,36 @@ public class DataSyncIntegrationTest extends BaseIntegrationTest {
     @Test
     @Sql({"/test-data-teardown.sql", "/test-data.sql"})
     @Sql(scripts = "/test-data-teardown.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    public void changeDataTypeOfConcept_UsingVoiding_ButBetweenTwoRuns_RepeatableQuestionGroup() {
+        String questionGroupName = "Asset Info";
+        String conceptName = "Beneficiary Parent";
+        String columnName = questionGroupName + " " + conceptName;
+
+        runDataSync();
+        ColumnMetadata columnMetadata = this.columnMetadataRepository.findByName(columnName);
+        assertFalse(columnMetadata.isConceptVoided());
+
+        String voidedConceptName = "Beneficiary Parent (voided)";
+        String voidedColumnName = questionGroupName + " " + voidedConceptName;
+        jdbcTemplate.execute(format("update concept set name = '%s', is_voided = true, last_modified_date_time = '%s' where name = '%s'",
+                voidedConceptName, getCurrentTime(), conceptName));
+        runDataSync();
+        columnMetadata = this.columnMetadataRepository.findByUuid(columnMetadata.getConceptUuid());
+        assertEquals(voidedColumnName, columnMetadata.getName());
+        assertTrue(columnMetadata.isConceptVoided());
+
+        String newConceptUuid = "a379fcef-f0a1-4ac2-8555-400041162fee";
+        jdbcTemplate.execute(format("insert into concept (data_type, high_absolute, high_normal, low_absolute, low_normal, name, uuid, version, unit, organisation_id, is_voided, audit_id, key_values, active, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time) values ('Numeric', null, null, null, null, 'Beneficiary Parent', '%s', 0, null, 12, false, create_audit(), null, true, 1, 1, '%s', '%s');", newConceptUuid, getCurrentTime(), getCurrentTime()));
+        jdbcTemplate.execute(format("update form_element set concept_id = (select id from concept where name = '%s'), last_modified_date_time = '%s' where name = 'Beneficiary Parent Form Element'", conceptName, getCurrentTime()));
+        runDataSync();
+        ColumnMetadata newColumnMetaData = this.columnMetadataRepository.findByUuid(newConceptUuid);
+        assertFalse(newColumnMetaData.isConceptVoided());
+        assertEquals(columnName, newColumnMetaData.getName());
+    }
+
+    @Test
+    @Sql({"/test-data-teardown.sql", "/test-data.sql"})
+    @Sql(scripts = "/test-data-teardown.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void changeInDataTypeOfConcept_VoidOldAndRemoveFromForm_NewOneWithDifferentDataType() {
         String newConceptUuid = "81b7c2f2-3e43-4a4e-8614-5ccde27dea09";
         String conceptName = "Beneficiary Children";
@@ -164,6 +194,38 @@ public class DataSyncIntegrationTest extends BaseIntegrationTest {
         // point form element to new concept
         jdbcTemplate.execute(format("""
                 update form_element set concept_id = (select id from concept where name = '%s'), last_modified_date_time = '%s' where name = 'Beneficiary Children Form Element'
+                """, conceptName, getCurrentTime()));
+        runDataSync();
+
+        ColumnMetadata oldColumnMetaData = this.columnMetadataRepository.findByName(ColumnMetadata.getVoidedName(conceptName));
+        assertTrue(oldColumnMetaData.isConceptVoided());
+
+        ColumnMetadata newColumnMetaData = this.columnMetadataRepository.findByUuid(newConceptUuid);
+        assertFalse(newColumnMetaData.isConceptVoided());
+        assertEquals(conceptName, newColumnMetaData.getName());
+        // run again without any changes, should not get any error
+        runDataSync();
+    }
+
+    @Test
+    @Sql({"/test-data-teardown.sql", "/test-data.sql"})
+    @Sql(scripts = "/test-data-teardown.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    public void changeInDataTypeOfConcept_VoidOldAndRemoveFromForm_NewOneWithDifferentDataType_LocationAttributes() {
+        String newConceptUuid = "4a8103ba-92a6-4b66-8440-9d1296f38bd3";
+        String conceptName = "Address Identifier";
+        // Name voiding convention between avni main db and etl db are decoupled
+        String voidedConceptName = "Address Identifier (voided)";
+
+        runDataSync();
+        // void the old concept
+        jdbcTemplate.execute(format("update concept set name = '%s', is_voided = true, last_modified_date_time = '%s' where name = '%s'", voidedConceptName, getCurrentTime(), conceptName));
+        // new concept with different data type
+        jdbcTemplate.execute(format("""
+                insert into concept (data_type, high_absolute, high_normal, low_absolute, low_normal, name, uuid, version, unit, organisation_id, is_voided, audit_id, key_values, active, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time) values ('Numeric', null, null, null, null, '%s', '%s', 0, null, 12, false, create_audit(), null, true, 1, 1, '%s', '%s');
+                """, conceptName, newConceptUuid, getCurrentTime(), getCurrentTime()));
+        // point form element to new concept
+        jdbcTemplate.execute(format("""
+                update form_element set concept_id = (select id from concept where name = '%s'), last_modified_date_time = '%s' where name = 'Address Identifier Form Element'
                 """, conceptName, getCurrentTime()));
         runDataSync();
 
