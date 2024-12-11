@@ -55,7 +55,7 @@ start_server_staging: build_server
 	OPENCHS_IAM_USER_ACCESS_KEY=$(OPENCHS_STAGING_IAM_USER_ACCESS_KEY) \
 	OPENCHS_IAM_USER_SECRET_ACCESS_KEY=$(OPENCHS_STAGING_IAM_USER_SECRET_ACCESS_KEY) \
 	OPENCHS_BUCKET_NAME=staging-user-media \
-  	OPENCHS_DATABASE_URL=jdbc:postgresql://localhost:6015/openchs \
+  	OPENCHS_DATABASE_URL=jdbc:postgresql://localhost:5433/openchs \
     	java -jar ./build/libs/etl-1.0.0-SNAPSHOT.jar
 
 boot_run:
