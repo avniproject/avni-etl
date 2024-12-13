@@ -77,6 +77,10 @@ public class EtlJobController {
 
         JobDetailImpl jobDetail = getJobDetail(jobScheduleRequest, organisationIdentity, organisationIdentitiesInGroup);
         scheduler.addJob(jobDetail, false);
+        if (jobScheduleRequest.getJobGroup().equals(JobGroup.Sync)) {
+            Trigger triggerForFirstRun = getHigherPriorityTriggerForFirstRun(jobScheduleRequest, jobDetail);
+            scheduler.scheduleJob(triggerForFirstRun);
+        }
         Trigger trigger = getTrigger(jobScheduleRequest, jobDetail);
         scheduler.scheduleJob(trigger);
         logger.info(String.format("%s type job Scheduled for %s:%s", jobScheduleRequest.getJobGroup(), jobScheduleRequest.getJobEntityType(), jobScheduleRequest.getEntityUUID()));
@@ -97,10 +101,27 @@ public class EtlJobController {
         return null;
     }
 
-    private Trigger getTrigger(JobScheduleRequest jobScheduleRequest, JobDetailImpl jobDetail) {
-        SimpleScheduleBuilder scheduleBuilder = simpleSchedule().withIntervalInMinutes(jobScheduleRequest.getJobGroup().equals(JobGroup.Sync) ? scheduledJobConfig.getSyncRepeatIntervalInMinutes() : scheduledJobConfig.getMediaAnalysisRepeatIntervalInMinutes()).repeatForever();
+    private Trigger getHigherPriorityTriggerForFirstRun(JobScheduleRequest jobScheduleRequest, JobDetailImpl jobDetail) {
+        Trigger trigger = newTrigger()
+                .withIdentity(scheduledJobConfig.getTriggerKey(jobScheduleRequest.getEntityUUID() + "run1", jobScheduleRequest.getJobGroup()))
+                .forJob(jobDetail)
+                .startAt(DateTimeUtil.nowPlusSeconds(5))
+                .withPriority(6) //higher than default (5)
+                .build();
+        return trigger;
+    }
 
-        Trigger trigger = newTrigger().withIdentity(scheduledJobConfig.getTriggerKey(jobScheduleRequest.getEntityUUID(), jobScheduleRequest.getJobGroup())).forJob(jobDetail).withSchedule(scheduleBuilder).startAt(DateTimeUtil.nowPlusSeconds(5)).build();
+    private Trigger getTrigger(JobScheduleRequest jobScheduleRequest, JobDetailImpl jobDetail) {
+        int repeatIntervalMinutes = jobScheduleRequest.getJobGroup().equals(JobGroup.Sync) ? scheduledJobConfig.getSyncRepeatIntervalInMinutes() : scheduledJobConfig.getMediaAnalysisRepeatIntervalInMinutes();
+        int startAtNowPlusSeconds = jobScheduleRequest.getJobGroup().equals(JobGroup.Sync) ? repeatIntervalMinutes * 60 : 5;
+        SimpleScheduleBuilder scheduleBuilder = simpleSchedule().withIntervalInMinutes(repeatIntervalMinutes).repeatForever();
+
+        Trigger trigger = newTrigger()
+                .withIdentity(scheduledJobConfig.getTriggerKey(jobScheduleRequest.getEntityUUID(), jobScheduleRequest.getJobGroup()))
+                .forJob(jobDetail)
+                .withSchedule(scheduleBuilder)
+                .startAt(DateTimeUtil.nowPlusSeconds(startAtNowPlusSeconds))
+                .build();
         return trigger;
     }
 
