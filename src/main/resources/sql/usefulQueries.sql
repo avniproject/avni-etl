@@ -55,8 +55,7 @@ select
     qjd.sched_name,
     qjd.job_group,
     qjd.description,
-    to_timestamp(qt.next_fire_time/1000),
-       current_timestamp
+    qt.next_fire_time
 from public.qrtz_triggers qt
          join public.qrtz_job_details qjd
               on qt.sched_name = qjd.sched_name
