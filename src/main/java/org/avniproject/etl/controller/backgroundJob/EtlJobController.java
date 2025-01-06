@@ -106,7 +106,7 @@ public class EtlJobController {
                 .withIdentity(scheduledJobConfig.getTriggerKey(jobScheduleRequest.getEntityUUID() + "run1", jobScheduleRequest.getJobGroup()))
                 .forJob(jobDetail)
                 .withSchedule(simpleSchedule().withMisfireHandlingInstructionFireNow())
-                .startAt(DateTimeUtil.nowMinusMinutes(scheduledJobConfig.getSyncRepeatIntervalInMinutes()))
+                .startAt(DateTimeUtil.nowMinusMinutes(30))
                 .withPriority(6) //higher than default (5)
                 .build();
         return trigger;
