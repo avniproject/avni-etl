@@ -55,6 +55,6 @@ public class MediaAnalysisService {
             return;
         }
         mediaAnalysisTableRegenerateAction.process(organisation,mediaAnalysisTableMetadata.get());
-        log.info(String.format("Completed Media Analysis for schema %s with dbUser %s and schemaUser %s", organisationIdentity.getSchemaName(), organisationIdentity.getDbUser(), organisationIdentity.getSchemaUser()));
+        log.info(String.format("Completed Media Analysis for %s", organisationIdentity.toString()));
     }
 }
