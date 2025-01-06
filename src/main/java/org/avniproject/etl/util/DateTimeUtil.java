@@ -7,4 +7,8 @@ public class DateTimeUtil {
         Date startTime = new Date();
         return new Date(startTime.getTime() + numberOfSeconds * 1000L);
     }
+    public static Date nowMinusMinutes(int numberOfMinutes) {
+        Date startTime = new Date();
+        return new Date(startTime.getTime() - numberOfMinutes * 60 * 1000L);
+    }
 }
