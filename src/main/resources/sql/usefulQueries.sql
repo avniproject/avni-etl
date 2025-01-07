@@ -74,3 +74,10 @@ select qft.state,
 from qrtz_fired_triggers qft
          join qrtz_triggers qt on qft.job_name = qt.job_name
          join qrtz_job_details qjd on qt.sched_name = qjd.sched_name and qt.job_name = qjd.job_name and qt.job_group = qjd.job_group;
+
+-- Query to list org-uuids and org-group-uuids with ETL enabled (SyncJob)
+select job_name
+from (select uuid organisationUUID from organisation) foo
+        right join qrtz_job_details qjd on organisationUUID = qjd.job_name
+where qjd.job_group = 'SyncJobs'
+   or qjd is null;

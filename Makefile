@@ -33,7 +33,7 @@ debug_server_with_dump_data_org: build_server
 	OPENCHS_DATABASE_NAME=avni_org OPENCHS_CLIENT_ID=dummy OPENCHS_KEYCLOAK_CLIENT_SECRET=dummy AVNI_IDP_TYPE=none java -Xmx2048m -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005 -jar ./build/libs/etl-1.0.0-SNAPSHOT.jar
 
 start_server_prerelease: build_server
-	-mkdir -p /tmp/openchs && sudo ln -s /tmp/openchs /var/log/openchs
+	-mkdir -p /tmp/avni-etl-service && sudo ln -s /tmp/avni-etl-service /var/log/avni-etl-service
 
 	AVNI_IDP_TYPE=cognito \
 	OPENCHS_CLIENT_ID=$(OPENCHS_CLIENT_ID) \
