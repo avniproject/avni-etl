@@ -52,12 +52,11 @@ public class MediaTableSyncAction implements EntitySyncAction {
                 insertData(tableMetadata, thisTableMetadata, mediaColumn, lastSyncTime, dataSyncBoundaryTime);
             });
         });
+        deleteDuplicateRows(lastSyncTime);
     }
 
     private void insertData(TableMetadata mediaTableMetadata, TableMetadata tableMetadata, ColumnMetadata mediaColumn, Date lastSyncTime, Date dataSyncBoundaryTime) {
         syncNewerRows(mediaTableMetadata, tableMetadata, mediaColumn, lastSyncTime, dataSyncBoundaryTime);
-
-        deleteDuplicateRows(lastSyncTime);
     }
 
     private void syncNewerRows(TableMetadata mediaTableMetadata, TableMetadata tableMetadata, ColumnMetadata mediaColumn, Date lastSyncTime, Date dataSyncBoundaryTime) {
