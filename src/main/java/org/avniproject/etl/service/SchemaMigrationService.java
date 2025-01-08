@@ -36,11 +36,12 @@ public class SchemaMigrationService {
         SchemaMetadata newSchemaMetadata = schemaMetadataRepository.getNewSchemaMetadata();
 
         List<Diff> changes = newSchemaMetadata.findChanges(organisation.getSchemaMetadata());
-        if(!changes.isEmpty()) {
-            schemaMetadataRepository.applyChanges(changes);
-            organisation.applyNewSchema(newSchemaMetadata);
-            schemaMetadataRepository.save(organisation.getSchemaMetadata());
-        }
+        schemaMetadataRepository.applyChanges(changes);
+
+        organisation.applyNewSchema(newSchemaMetadata);
+
+        schemaMetadataRepository.save(organisation.getSchemaMetadata());
+
         return organisation;
     }
 
