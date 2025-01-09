@@ -1,9 +1,8 @@
-delete
-from "<schemaName>"."media"
-where uuid in (
-    select t1.uuid
-    from "<schemaName>"."media" t1
-             inner join "<schemaName>"."media" t2 on
-                t1.uuid = t2.uuid
-            and t1.last_modified_date_time \< t2.last_modified_date_time)
-  and last_modified_date_time \<= :lastSyncTime;
+DELETE
+FROM "<schemaName>"."media" t2
+WHERE t2.id IN (
+    SELECT duplicates.dup_id
+    FROM (SELECT t1.id AS dup_id, ROW_NUMBER() OVER (PARTITION BY uuid, entity_id) AS occurence
+          FROM "<schemaName>"."media" t1) AS duplicates
+    WHERE duplicates.occurence > 1
+);
