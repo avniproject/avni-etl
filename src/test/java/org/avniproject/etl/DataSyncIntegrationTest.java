@@ -459,13 +459,22 @@ public class DataSyncIntegrationTest extends BaseIntegrationTest {
     @Sql(scripts = "/test-data-teardown.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void arrayStyleMediaObservationsCreateMultipleRowsInMediaTable() throws InterruptedException {
         String encounterImages = "[\"https://s3.amazon.com/image1.jpg\", \"https://s3.amazon.com/image2.jpg\"]";
-        String sql = "update encounter set observations = observations || '{\"44163589-f76d-447d-9b6e-f5c32aa859eb\": " + encounterImages + "}'::jsonb where id = 1900;";
+        String sql = "update encounter set last_modified_date_time = now(), observations = observations || '{\"44163589-f76d-447d-9b6e-f5c32aa859eb\": " + encounterImages + "}'::jsonb where id = 1900;";
         jdbcTemplate.execute(sql);
 
         runDataSync();
 
         List<Map<String, Object>> media = jdbcTemplate.queryForList("select * from orgc.media;");
         assertThat("Media table number of rows has not changed since last run", media.size(), is(6));
+
+        String encounterImagesSecondSet = "[\"https://s3.amazon.com/image3.jpg\", \"https://s3.amazon.com/image4.jpg\", \"https://s3.amazon.com/image5.jpg\"]";
+        String sqlSecondItr = "update encounter set last_modified_date_time = now(), observations = observations || '{\"44163589-f76d-447d-9b6e-f5c32aa859eb\": " + encounterImagesSecondSet + "}'::jsonb where id = 1900;";
+        jdbcTemplate.execute(sqlSecondItr);
+
+        runDataSync();
+
+        List<Map<String, Object>> mediaSecondItr = jdbcTemplate.queryForList("select * from orgc.media;");
+        assertThat("Media table number of rows was supposed to increase since last run", mediaSecondItr.size(), is(7));
     }
 
     @Test
