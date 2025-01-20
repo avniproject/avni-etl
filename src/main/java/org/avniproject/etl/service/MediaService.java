@@ -31,9 +31,9 @@ public class MediaService {
     }
 
     @Transactional (readOnly = true)
-    public ResponseDTO search(MediaSearchRequest mediaSearchRequest, Page page) {
+    public MediaSearchResponseDTO search(MediaSearchRequest mediaSearchRequest, Page page) {
         if (addressRepository.doAllAddressLevelTypeNamesExist(mediaSearchRequest.getAddressLevelTypes())) {
-            return new ResponseDTO(page, mediaTableRepository.search(mediaSearchRequest, page));
+            return new MediaSearchResponseDTO(page, mediaTableRepository.search(mediaSearchRequest, page), mediaSearchRequest.isIncludeTotalCount() ? mediaTableRepository.searchResultCount(mediaSearchRequest) : null);
         }
 
         throw new IllegalArgumentException("Address level type names are incorrect");

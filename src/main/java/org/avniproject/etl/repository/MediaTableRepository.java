@@ -16,6 +16,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigInteger;
 import java.util.*;
 
 import static org.avniproject.etl.repository.JdbcContextWrapper.runInSchemaUserContext;
@@ -69,13 +70,28 @@ public class MediaTableRepository {
         return searchInternal(mediaSearchRequest, page, (rs, rowNum) -> mediaTableRepositoryService.setMediaDto(rs));
     }
 
+    public BigInteger searchResultCount(MediaSearchRequest mediaSearchRequest) {
+        if (mediaSearchRequest.getTotalCount() != null) return mediaSearchRequest.getTotalCount();
+        List<ConceptFilterSearch> conceptFilterSearches = null;
+        if (mediaSearchRequest.getConceptFilters() != null) {
+            conceptFilterSearches = determineConceptFilterTablesAndColumns(mediaSearchRequest.getConceptFilters());
+        }
+
+        Query query = new MediaSearchQueryBuilder()
+                .withMediaSearchRequest(mediaSearchRequest)
+                .withSearchConceptFilters(conceptFilterSearches)
+                .buildCountQuery();
+        return runInSchemaUserContext(() -> new NamedParameterJdbcTemplate(jdbcTemplate)
+                .queryForObject(query.sql(), query.parameters(), BigInteger.class), jdbcTemplate);
+    }
+
     private <T> List<T> searchInternal(MediaSearchRequest mediaSearchRequest, Page page, RowMapper<T> rowMapper) {
         List<ConceptFilterSearch> conceptFilterSearches = null;
         if (mediaSearchRequest.getConceptFilters() != null) {
             conceptFilterSearches = determineConceptFilterTablesAndColumns(mediaSearchRequest.getConceptFilters());
         }
 
-        Query query = new MediaSearchQueryBuilder(mediaSearchRequest)
+        Query query = new MediaSearchQueryBuilder()
             .withPage(page)
             .withMediaSearchRequest(mediaSearchRequest)
             .withSearchConceptFilters(conceptFilterSearches)

@@ -12,24 +12,22 @@ import java.util.stream.Collectors;
 import static org.avniproject.etl.repository.sql.SqlFile.readFile;
 
 public class MediaSearchQueryBuilder {
-    private final ST template;
+    private final ST searchTemplate;
+    private final ST countTemplate;
     private final Map<String, Object> parameters = new HashMap<>();
-    private final static String sqlTemplate = readFile("/sql/api/searchMedia.sql.st");
-    private final static String withoutAddressFilterSqlTemplate = readFile("/sql/api/searchMediaWithoutAddressFilter.sql.st");
+    private final static String countSqlTemplate = readFile("/sql/api/searchMedia.sql.st");
+    private final static String searchSqlTemplate = readFile("/sql/api/countMedia.sql.st");
     private static final Logger logger = Logger.getLogger(MediaSearchQueryBuilder.class);
 
     public MediaSearchQueryBuilder() {
-        this.template = new ST(sqlTemplate);
-        addDefaultParameters();
-    }
-
-    public MediaSearchQueryBuilder(MediaSearchRequest mediaSearchRequest) {
-        this.template = mediaSearchRequest.getAddresses().isEmpty() ? new ST(withoutAddressFilterSqlTemplate) : new ST(sqlTemplate);
+        this.searchTemplate = new ST(countSqlTemplate);
+        this.countTemplate = new ST(searchSqlTemplate);
         addDefaultParameters();
     }
 
     public MediaSearchQueryBuilder withMediaSearchRequest(MediaSearchRequest request) {
-        template.add("request", request);
+        searchTemplate.add("request", request);
+        countTemplate.add("request", request);
         addParameters(request);
         return this;
     }
@@ -37,7 +35,7 @@ public class MediaSearchQueryBuilder {
     public MediaSearchQueryBuilder withSearchConceptFilters(List<ConceptFilterSearch> conceptFilters) {
         logger.debug("Building with searchConceptFilters:" + conceptFilters);
         if (conceptFilters != null && !conceptFilters.isEmpty()) {
-            template.add("joinTablesAndColumns", conceptFilters);
+            searchTemplate.add("joinTablesAndColumns", conceptFilters);
         }
         return this;
     }
@@ -79,15 +77,21 @@ public class MediaSearchQueryBuilder {
     }
 
     public MediaSearchQueryBuilder allWithoutAnyLimitOrOffset() {
-        template.add("joinTablesAndColumns", null);
-        template.add("request", null);
+        searchTemplate.add("joinTablesAndColumns", null);
+        searchTemplate.add("request", null);
         parameters.put("offset", 0);
         parameters.put("limit", Long.MAX_VALUE);
         return this;
     }
 
     public Query build() {
-        String str = template.render();
+        String str = searchTemplate.render();
+        logger.debug(str);
+        return new Query(str, parameters);
+    }
+
+    public Query buildCountQuery() {
+        String str = countTemplate.render();
         logger.debug(str);
         return new Query(str, parameters);
     }
@@ -105,7 +109,8 @@ public class MediaSearchQueryBuilder {
     }
 
     private void addDefaultParameters() {
-        template.add("schemaName", OrgIdentityContextHolder.getDbSchema());
+        searchTemplate.add("schemaName", OrgIdentityContextHolder.getDbSchema());
+        countTemplate.add("schemaName", OrgIdentityContextHolder.getDbSchema());
         parameters.put("offset", 0);
         parameters.put("limit", 10);
     }

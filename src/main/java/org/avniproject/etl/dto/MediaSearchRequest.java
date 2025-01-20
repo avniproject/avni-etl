@@ -1,5 +1,6 @@
 package org.avniproject.etl.dto;
 
+import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -15,6 +16,8 @@ public final class MediaSearchRequest {
     private Date toDate;
     private String subjectName;
     private List<String> subjectNameTokens = new ArrayList<>();
+    private boolean includeTotalCount = false;
+    private BigInteger totalCount;
 
     public MediaSearchRequest() {
     }
@@ -112,6 +115,22 @@ public final class MediaSearchRequest {
         this.subjectNameTokens = subjectNameTokens;
     }
 
+    public boolean isIncludeTotalCount() {
+        return includeTotalCount;
+    }
+
+    public void setIncludeTotalCount(boolean includeTotalCount) {
+        this.includeTotalCount = includeTotalCount;
+    }
+
+    public BigInteger getTotalCount() {
+        return totalCount;
+    }
+
+    public void setTotalCount(BigInteger totalCount) {
+        this.totalCount = totalCount;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (obj == this) return true;
@@ -125,12 +144,14 @@ public final class MediaSearchRequest {
                 Objects.equals(this.fromDate, that.fromDate) &&
                 Objects.equals(this.toDate, that.toDate) &&
                 Objects.equals(this.conceptFilters, that.conceptFilters) &&
-                Objects.equals(this.subjectName, that.subjectName);
+                Objects.equals(this.subjectName, that.subjectName) &&
+                Objects.equals(this.totalCount, that.totalCount) &&
+                Objects.equals(this.includeTotalCount, that.includeTotalCount);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(subjectTypeNames, programNames, encounterTypeNames, imageConcepts, syncValues, fromDate, toDate, conceptFilters, subjectName);
+        return Objects.hash(subjectTypeNames, programNames, encounterTypeNames, imageConcepts, syncValues, fromDate, toDate, conceptFilters, subjectName, includeTotalCount, totalCount);
     }
 
     @Override
@@ -144,7 +165,9 @@ public final class MediaSearchRequest {
                 "conceptFilters=" + conceptFilters + ", " +
                 "fromDate=" + fromDate + ", " +
                 "toDate=" + toDate + ", " +
-                "subjectName=" + subjectName + ']';
+                "subjectName=" + subjectName + ", " +
+                "includeTotalCount=" + includeTotalCount + ", " +
+                "totalCount=" + totalCount + ']';
     }
 }
 
