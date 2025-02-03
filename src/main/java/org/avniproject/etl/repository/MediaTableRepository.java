@@ -46,21 +46,19 @@ public class MediaTableRepository {
 
         SchemaMetadata schema = schemaMetadataRepository.getExistingSchemaMetadata();
 
-        List<ConceptFilterSearch> conceptFilterTablesAndColumns = conceptFilters.stream().map(conceptFilter -> {
-           TableMetadata table = schema.findTableByForm(conceptFilter.getFormUuid()).orElse(null);
-           if (table != null) {
-               ColumnMetadata column = table.findColumnMatchingConcept(conceptFilter.getConceptUuid()).orElse(null);
-               return column != null ? new ConceptFilterSearch(table.getName(),
-                       column.getName(),
-                       conceptFilter.getValues(),
-                       conceptFilter.getFrom(),
-                       conceptFilter.getTo(),
-                       column.getConceptType().equals(ColumnMetadata.ConceptType.Numeric),
-                       !textConceptSearchTypes.contains(column.getConceptType()))
-                   : null;
-           }
-           return null;
-        }).toList();
+        List<ConceptFilterSearch> conceptFilterTablesAndColumns = conceptFilters.stream()
+                .flatMap(conceptFilter -> schema.findTablesByForm(conceptFilter.getFormUuid())
+                        .flatMap(table -> table.getAllColumnsByConceptUuid(conceptFilter.getConceptUuid())
+                                .map(column -> new ConceptFilterSearch(table.getName(),
+                                        column.getName(),
+                                        conceptFilter.getValues(),
+                                        conceptFilter.getFrom(),
+                                        conceptFilter.getTo(),
+                                        column.getConceptType().equals(ColumnMetadata.ConceptType.Numeric),
+                                        !textConceptSearchTypes.contains(column.getConceptType()))
+                                )
+                        )
+                ).toList();
 
         logger.debug("Returning conceptFilterTablesAndColumns: " + conceptFilterTablesAndColumns);
         return conceptFilterTablesAndColumns;

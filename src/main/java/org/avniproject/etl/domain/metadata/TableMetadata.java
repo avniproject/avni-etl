@@ -6,6 +6,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.springframework.util.ObjectUtils.nullSafeEquals;
 
@@ -259,6 +260,10 @@ public class TableMetadata extends Model {
 
     public ColumnMetadata getColumnByConceptUuid(String conceptUuid) {
         return columnMetadataList.stream().filter(columnMetadata -> columnMetadata.getConceptUuid().equals(conceptUuid)).findFirst().orElse(null);
+    }
+
+    public Stream<ColumnMetadata> getAllColumnsByConceptUuid(String conceptUuid) {
+        return columnMetadataList.stream().filter(columnMetadata -> columnMetadata.getConceptUuid() != null && columnMetadata.getConceptUuid().equals(conceptUuid));
     }
 
     public enum Type {

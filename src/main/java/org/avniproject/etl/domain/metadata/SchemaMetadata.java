@@ -1,5 +1,6 @@
 package org.avniproject.etl.domain.metadata;
 
+import jakarta.validation.constraints.NotNull;
 import org.avniproject.etl.domain.metadata.diff.Diff;
 
 import java.util.ArrayList;
@@ -8,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.Comparator;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.groupingBy;
 
@@ -136,9 +138,8 @@ public class SchemaMetadata {
         return String.join(";", strings);
     }
 
-    public Optional<TableMetadata> findTableByForm(String formUuid) {
+    public Stream<TableMetadata> findTablesByForm(@NotNull String formUuid) {
         return this.tableMetadata.stream()
-            .filter(table -> table.getFormUuid() != null && table.getFormUuid().equals(formUuid))
-            .findFirst();
+            .filter(table -> table.getFormUuid() != null && table.getFormUuid().equals(formUuid));
     }
 }
