@@ -58,6 +58,19 @@ start_server_staging: build_server
   	OPENCHS_DATABASE_URL=jdbc:postgresql://localhost:5433/openchs \
     	java -jar ./build/libs/etl-1.0.0-SNAPSHOT.jar
 
+debug_server_staging: build_server
+	-mkdir -p /tmp/avni-etl-service && sudo ln -s /tmp/avni-etl-service /var/log/avni-etl-service
+
+	AVNI_IDP_TYPE=cognito \
+	OPENCHS_CLIENT_ID=$(OPENCHS_STAGING_APP_CLIENT_ID) \
+	OPENCHS_USER_POOL=$(OPENCHS_STAGING_USER_POOL_ID) \
+	OPENCHS_IAM_USER=$(OPENCHS_STAGING_IAM_USER) \
+	OPENCHS_IAM_USER_ACCESS_KEY=$(OPENCHS_STAGING_IAM_USER_ACCESS_KEY) \
+	OPENCHS_IAM_USER_SECRET_ACCESS_KEY=$(OPENCHS_STAGING_IAM_USER_SECRET_ACCESS_KEY) \
+	OPENCHS_BUCKET_NAME=staging-user-media \
+  	OPENCHS_DATABASE_URL=jdbc:postgresql://localhost:5433/openchs \
+    	java -Xmx2048m -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005 -jar ./build/libs/etl-1.0.0-SNAPSHOT.jar
+
 boot_run:
 	./gradlew bootRun
 
