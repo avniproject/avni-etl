@@ -36,6 +36,7 @@ public class MediaSearchQueryBuilder {
         logger.debug("Building with searchConceptFilters:" + conceptFilters);
         if (conceptFilters != null && !conceptFilters.isEmpty()) {
             searchTemplate.add("joinTablesAndColumns", conceptFilters);
+            countTemplate.add("joinTablesAndColumns", conceptFilters);
         }
         return this;
     }
