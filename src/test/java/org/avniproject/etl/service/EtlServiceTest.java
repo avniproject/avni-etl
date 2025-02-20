@@ -30,6 +30,9 @@ public class EtlServiceTest {
     private SchemaMigrationService schemaMigrationService;
 
     @Mock
+    private ReportingViewService reportingViewService;
+
+    @Mock
     private SyncService syncService;
 
     private AutoCloseable closeable;
@@ -46,7 +49,7 @@ public class EtlServiceTest {
 
     @Test
     public void runForOrganisationShouldSetContextForOrganisation() {
-        EtlService etlService = new EtlService(organisationRepository, organisationFactory, schemaMigrationService, syncService, new StubEtlServiceConfig());
+        EtlService etlService = new EtlService(organisationRepository, organisationFactory, schemaMigrationService, syncService, new StubEtlServiceConfig(), reportingViewService);
         OrganisationIdentity organisationIdentity = new OrganisationIdentityBuilder().withId(1).withDbUser("a").build();
 
         Organisation organisation = mock(Organisation.class);
@@ -60,7 +63,7 @@ public class EtlServiceTest {
 
     @Test
     public void runForOrganisationShouldCreateOrganisationAndCallEtlServiceForMigration() {
-        EtlService etlService = new EtlService(organisationRepository, organisationFactory, schemaMigrationService, syncService, new StubEtlServiceConfig());
+        EtlService etlService = new EtlService(organisationRepository, organisationFactory, schemaMigrationService, syncService, new StubEtlServiceConfig(), reportingViewService);
 
         OrganisationIdentity organisationIdentity = new OrganisationIdentityBuilder().withId(1).withDbUser("a").build();
         Organisation organisation = mock(Organisation.class);
