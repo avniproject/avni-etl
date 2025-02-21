@@ -4,10 +4,12 @@ import org.avniproject.etl.domain.OrganisationIdentity;
 
 public interface ReportingViewMetaData {
 
-    String INDIVIDUAL_VIEW_NAME = "individual_address_view";
-    String ENROLMENT_VIEW_NAME = "enrolment_address_view";
+    String SCHEMA_NAME = "schema_name";
+    String VIEW_NAME = "view_name";
+    String USER_NAME = "user_name";
 
     String SCHEMA_NAME = "schema_name";
+    String POST_FIX = "postfix";
     String VIEW_NAME = "view_name";
     String USER_NAME = "user_name";
 
@@ -16,14 +18,16 @@ public interface ReportingViewMetaData {
         ENROLMENT
     }
 
-    default String getViewName(Type type){
-        return switch (type) {
-            case INDIVIDUAL -> INDIVIDUAL_VIEW_NAME;
-            case ENROLMENT -> ENROLMENT_VIEW_NAME;
-        };
-
+    default String getViewName(String schemaName, Type type){
+        return String.format("%s_%s", schemaName, getPostfix(type));
     }
 
+    default String getPostfix(Type type) {
+        return switch (type) {
+            case INDIVIDUAL -> INDIVIDUAL_VIEW_POSTFIX;
+            case ENROLMENT -> ENROLMENT_VIEW_POSTFIX;
+        };
+    }
 
     void createOrReplaceView(OrganisationIdentity organisationIdentity);
 

@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW <schema_name>.<view_name> AS
+CREATE OR REPLACE VIEW <schema_name>.<schema_name>_<postfix> AS
 SELECT
     pe.id AS enrolment_id,
     pe.uuid AS enrolment_uuid,

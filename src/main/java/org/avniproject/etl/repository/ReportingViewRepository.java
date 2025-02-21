@@ -33,10 +33,10 @@ public class ReportingViewRepository  implements ReportingViewMetaData{
     }
 
     private void createViewAndGrantPermission(Type type,String viewFileName,String schemaName,List<String> users){
-        String viewName = getViewName(type);
+        String viewName = getViewName(schemaName,type);
         ST st = new ST(viewFileName);
         st.add(SCHEMA_NAME,schemaName);
-        st.add(VIEW_NAME,viewName);
+        st.add(POST_FIX,getPostfix(type));
         String query = st.render();
         try {
             jdbcTemplate.execute(query);
