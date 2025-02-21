@@ -30,7 +30,7 @@ public class SchemaMigrationService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Organisation migrate(Organisation organisation) {
         OrganisationIdentity organisationIdentity = organisation.getOrganisationIdentity();
-//        ensureSchemaExists(organisationIdentity);
+        ensureSchemaExists(organisationIdentity);
 
         log.debug(String.format("Migrating schema for organisation: %s", organisationIdentity));
         SchemaMetadata newSchemaMetadata = schemaMetadataRepository.getNewSchemaMetadata();
