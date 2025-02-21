@@ -40,7 +40,7 @@ public class OrganisationRepository {
                 "         inner join organisation_group_organisation ogo on og.id = ogo.organisation_group_id\n" +
                 "         inner join organisation o on ogo.organisation_id = o.id\n" +
                 "where og.uuid = ?";
-        List<String> orgGroupOrgDbUsers = (List<String>) jdbcTemplate.query(orgGroupOrgDbUsersQuery, ps -> ps.setString(1, organisationGroupUUID), (rs, rowNum) -> rs.getString(1));
+        List<String> orgGroupOrgDbUsers = jdbcTemplate.query(orgGroupOrgDbUsersQuery, ps -> ps.setString(1, organisationGroupUUID), (rs, rowNum) -> rs.getString(1));
         organisationIdentities.forEach(organisationIdentity -> organisationIdentity.setOrgGroupOrgDbUsers(orgGroupOrgDbUsers));
         return organisationIdentities;
     }
