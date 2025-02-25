@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW <schema_name>.<schema_name>_<postfix> AS
+CREATE OR REPLACE VIEW <schema_name>.<view_name> AS
 SELECT
     ind.id AS individual_id,
     st.name AS subject_type,
