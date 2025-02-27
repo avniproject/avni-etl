@@ -70,7 +70,11 @@ public class ColumnMetadataRepository {
         parameters.put("concept_type", columnMetadata.getConceptType() != null ? columnMetadata.getConceptType().toString() : null);
         parameters.put("concept_uuid", columnMetadata.getConceptUuid());
         parameters.put("parent_concept_uuid", columnMetadata.getParentConceptUuid());
-        parameters.put("concept_voided", columnMetadata.isConceptVoided());
+        if (OrgIdentityContextHolder.getOrganisationIdentity().isPartOfGroup())
+            parameters.put("concept_voided", false);
+        else
+            parameters.put("concept_voided", columnMetadata.isConceptVoided());
+
         return parameters;
     }
 

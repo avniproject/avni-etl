@@ -20,11 +20,11 @@ SELECT media.id as id,
        media.concept_name as concept_name,
        row_to_json(address.*) as address,
        media.entity_id as entity_id
-FROM <schemaName>.media media
-         JOIN <schemaName>.address address ON address.id = media.address_id
+FROM "<schemaName>".media media
+         JOIN "<schemaName>".address address ON address.id = media.address_id
          <if(joinTablesAndColumns)>
            <joinTablesAndColumns:{joinTableAndColumn |
-           RIGHT JOIN <schemaName>.<joinTableAndColumn.tableName> <joinTableAndColumn.tableName> ON media.entity_id = <joinTableAndColumn.tableName>.id
+           RIGHT JOIN "<schemaName>".<joinTableAndColumn.tableName> <joinTableAndColumn.tableName> ON media.entity_id = <joinTableAndColumn.tableName>.id
            <if(joinTableAndColumn.exactSearch)>
              AND <joinTableAndColumn.tableName>."<joinTableAndColumn.columnName>"
                <if(joinTableAndColumn.columnValues)>

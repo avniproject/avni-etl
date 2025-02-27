@@ -1,6 +1,8 @@
 package org.avniproject.etl.domain.metadata;
 
 import org.avniproject.etl.domain.Model;
+import org.avniproject.etl.domain.OrgIdentityContextHolder;
+import org.avniproject.etl.domain.OrganisationIdentity;
 import org.avniproject.etl.domain.metadata.diff.*;
 import org.springframework.util.StringUtils;
 
@@ -77,7 +79,9 @@ public class TableMetadata extends Model {
         existingTable.getColumnMetadataList().forEach(existingColumn -> {
             Optional<ColumnMetadata> matchingColumn = findMatchingColumn(existingColumn);
             if (matchingColumn.isEmpty() && !existingColumn.isConceptVoided()) {
-                diffs.add(new RenameColumn(getName(), existingColumn.getName(), existingColumn.getVoidedName()));
+                OrganisationIdentity organisationIdentity = OrgIdentityContextHolder.getOrganisationIdentity();
+                if (!organisationIdentity.isPartOfGroup())
+                    diffs.add(new RenameColumn(getName(), existingColumn.getName(), existingColumn.getVoidedName()));
             }
         });
         return diffs;
@@ -120,14 +124,17 @@ public class TableMetadata extends Model {
                         oldTableMetadata
                                 .findMatchingColumn(newColumn)
                                 .ifPresent(newColumn::mergeWith));
-        oldTableMetadata.getColumnMetadataList()
-                .stream().filter(oldColumnMetaData -> this.findMatchingColumn(oldColumnMetaData).isEmpty())
-                .forEach(missingInNewColumnMetaData -> this.columnMetadataList.add(missingInNewColumnMetaData.getNewVoidedColumnMetaData()));
+        if (!OrgIdentityContextHolder.getOrganisationIdentity().isPartOfGroup()) {
+            oldTableMetadata.getColumnMetadataList()
+                    .stream().filter(oldColumnMetaData -> this.findMatchingColumn(oldColumnMetaData).isEmpty())
+                    .forEach(missingInNewColumnMetaData -> this.columnMetadataList.add(missingInNewColumnMetaData.getNewVoidedColumnMetaData()));
+        }
         getIndexMetadataList()
                 .forEach(newIndex ->
                         oldTableMetadata.findMatchingIndex(newIndex)
                                 .ifPresent(newIndex::mergeWith)
-                        );
+                );
+
     }
 
     public String getName() {
@@ -298,9 +305,9 @@ public class TableMetadata extends Model {
     }
 
     public static final Map<TableType, String> qgParentColumnIds = Map.of(TableType.IndividualProfile, "individual_id",
-                                                                            TableType.Encounter, "encounter_id",
-                                                                            TableType.ProgramEnrolment, "program_enrolment_id",
-                                                                            TableType.ProgramEncounter, "program_encounter_id");
+            TableType.Encounter, "encounter_id",
+            TableType.ProgramEnrolment, "program_enrolment_id",
+            TableType.ProgramEncounter, "program_encounter_id");
 
     public boolean isSubjectTable() {
         return Arrays.asList(Type.Individual, Type.Person, Type.Household, Type.Group).contains(this.type);

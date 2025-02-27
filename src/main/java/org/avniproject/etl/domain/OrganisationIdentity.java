@@ -10,7 +10,7 @@ public class OrganisationIdentity {
     private final String schemaName;
     private final String schemaUser;
     private final String mediaDirectory;
-    private List<String> orgGroupOrgDbUsers;
+    private List<String> orgGroupOrgDbUsers = new ArrayList<>();
     private Date startTime;
 
     private OrganisationIdentity(String dbUser, String schemaName, String schemaUser, String mediaDirectory) {
@@ -77,5 +77,9 @@ public class OrganisationIdentity {
 
     public String getMediaDirectory() {
         return mediaDirectory;
+    }
+
+    public boolean isPartOfGroup() {
+        return this.orgGroupOrgDbUsers.size() > 1;
     }
 }
