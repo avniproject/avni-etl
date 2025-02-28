@@ -1,4 +1,4 @@
-insert into <schemaName>.<tableName> (entity_id, uuid, is_voided, created_by_id, last_modified_by_id, created_date_time,
+insert into "<schemaName>".<tableName> (entity_id, uuid, is_voided, created_by_id, last_modified_by_id, created_date_time,
                                   last_modified_date_time,organisation_id,
                                   address_id, image_url, sync_parameter_key1, sync_parameter_value1,
                                   sync_parameter_key2,
@@ -37,7 +37,7 @@ select entity.id,
        <else>
             null
        <endif>
-from <schemaName>.<fromTableName> entity
-    inner join <schemaName>.<subjectTableName> subject on entity.<individualId> = subject.id
+from "<schemaName>".<fromTableName> entity
+    inner join "<schemaName>".<subjectTableName> subject on entity.<individualId> = subject.id
 where entity.last_modified_date_time > '<startTime>'
   and entity.last_modified_date_time \<= '<endTime>';

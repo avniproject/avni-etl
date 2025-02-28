@@ -1,4 +1,4 @@
-INSERT INTO <schemaName>.<tableName> (id, uuid, username, organisation_id, created_by_id,
+INSERT INTO "<schemaName>".<tableName> (id, uuid, username, organisation_id, created_by_id,
     last_modified_by_id, created_date_time, last_modified_date_time, catchment_id,
    email, phone_number, name, is_voided)
 SELECT entity.id,
