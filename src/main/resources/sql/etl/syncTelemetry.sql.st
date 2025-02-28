@@ -1,4 +1,4 @@
-INSERT INTO "<schemaName>".<tableName> (id, uuid, user_id, organisation_id, created_by_id,
+INSERT INTO <schemaName>.<tableName> (id, uuid, user_id, organisation_id, created_by_id,
     last_modified_by_id, created_date_time, last_modified_date_time, sync_status,
    sync_start_time, sync_end_time, device_name, android_version, app_version, device_info, sync_source)
 

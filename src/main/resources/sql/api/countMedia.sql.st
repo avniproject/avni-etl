@@ -1,9 +1,9 @@
 SELECT count(*)
-FROM "<schemaName>".media media
-         <if(request.addresses)>JOIN "<schemaName>".address address ON address.id = media.address_id<endif>
+FROM <schemaName>.media media
+         <if(request.addresses)>JOIN <schemaName>.address address ON address.id = media.address_id<endif>
          <if(joinTablesAndColumns)>
            <joinTablesAndColumns:{joinTableAndColumn |
-           RIGHT JOIN "<schemaName>".<joinTableAndColumn.tableName> <joinTableAndColumn.tableName> ON media.entity_id = <joinTableAndColumn.tableName>.id
+           RIGHT JOIN <schemaName>.<joinTableAndColumn.tableName> <joinTableAndColumn.tableName> ON media.entity_id = <joinTableAndColumn.tableName>.id
            <if(joinTableAndColumn.exactSearch)>
              AND <joinTableAndColumn.tableName>."<joinTableAndColumn.columnName>"
                <if(joinTableAndColumn.columnValues)>

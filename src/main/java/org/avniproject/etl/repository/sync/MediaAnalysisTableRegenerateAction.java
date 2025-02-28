@@ -31,7 +31,7 @@ public class MediaAnalysisTableRegenerateAction {
     public static final String ADHOC_MOBILE_DB_BACKUP_PATTERN = "Adhoc|MobileDbBackup";
     public static final String UUID_V4_PATTERN = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
     public static final String STRING_CONST_SEPARATOR = "/";
-    public static final String TRUNCATE_MEDIA_ANALYSIS_TABLE_SQL = "delete from \"<schemaName>\".<mediaAnalysisTable> where uuid is not null;";
+    public static final String TRUNCATE_MEDIA_ANALYSIS_TABLE_SQL = "delete from <schemaName>.<mediaAnalysisTable> where uuid is not null;";
     public static final String SCHEMA_NAME = "schemaName";
     public static final String MEDIA_ANALYSIS_TABLE = "mediaAnalysisTable";
     public static final int INT_CONSTANT_ZERO = 0;
