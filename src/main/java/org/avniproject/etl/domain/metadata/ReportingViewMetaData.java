@@ -8,6 +8,7 @@ public interface ReportingViewMetaData {
 
     String SCHEMA_PARAM_NAME = "schema_name";
     String VIEW_PARAM_NAME = "view_name";
+    String ADDRESS_COLUMNS_PARAM_NAME = "address_columns";
     String USER_PARAM_NAME = "user_name";
 
     enum Type{

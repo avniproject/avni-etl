@@ -9,10 +9,12 @@ SELECT
     ind.first_name,
     ind.last_name,
     pe.enrolment_date_time,
-    pe.created_date_time AS enrolment_created_date_time,
-    pe.last_modified_date_time AS enrolment_last_modified_date_time,
-    <schema_name>.address.*
-FROM public.individual ind
-JOIN public.program_enrolment pe ON ind.id = pe.individual_id
-JOIN public.program p ON pe.program_id = p.id
+    pe.created_date_time AS created_date_time,
+    pe.last_modified_date_time AS last_modified_date_time,
+    pe.is_voided,
+    pe.program_exit_date_time AS program_exit_date_time,
+    <address_columns>
+FROM public.program_enrolment pe
+JOIN public.individual ind ON pe.individual_id = ind.id and ind.is_voided=false
+JOIN public.program p ON pe.program_id = p.id and p.is_voided=false
 JOIN <schema_name>.address ON ind.address_id = address.id;
