@@ -1,4 +1,5 @@
-CREATE OR REPLACE VIEW <schema_name>.<schema_name>_<postfix> AS
+drop view if exists <schema_name>.<view_name>;
+CREATE OR REPLACE VIEW <schema_name>.<view_name> AS
 SELECT
     pe.id AS enrolment_id,
     pe.uuid AS enrolment_uuid,
@@ -9,7 +10,8 @@ SELECT
     ind.last_name,
     pe.enrolment_date_time,
     pe.created_date_time AS enrolment_created_date_time,
-    pe.last_modified_date_time AS enrolment_last_modified_date_time
+    pe.last_modified_date_time AS enrolment_last_modified_date_time,
+    <schema_name>.address.*
 FROM public.individual ind
 JOIN public.program_enrolment pe ON ind.id = pe.individual_id
 JOIN public.program p ON pe.program_id = p.id
