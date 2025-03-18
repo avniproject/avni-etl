@@ -99,11 +99,15 @@ ifndef dbUser
 	@echo "Provde the dbUser variable"
 	exit 1
 endif
+ifndef dbOwner
+	@echo "Provde the dbOwner variable"
+	exit 1
+endif
 ifndef db
 	@echo "Provde the db variable"
 	exit 1
 endif
-	-psql -h localhost -Uopenchs $(db) -c "select delete_etl_metadata_for_schema('$(schemaName)', '$(dbUser)', '$(dbUser)')"
+	-psql -h localhost -Uopenchs $(db) -c "select delete_etl_metadata_for_schema('$(schemaName)','$(dbUser)','$(dbOwner)' )"
 
 delete-etl-metadata-for-org:
 ifndef schemaName
