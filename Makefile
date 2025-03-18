@@ -15,7 +15,7 @@ build_jar: ## Builds the jar file
 	./gradlew clean build -x test
 
 test:
-	./gradlew clean test --stacktrace
+	MAVEN_OPTS="-Xmx3200m" ./gradlew clean test --stacktrace
 test-server: test
 test_server: test
 

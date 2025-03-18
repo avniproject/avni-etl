@@ -17,7 +17,7 @@ public class ColumnMetadataMapper implements RowMapper<ColumnMetadata> {
             isVoided = false;
         }
 
-        boolean isQuestionGroup = column.get("parent_concept_name") != null && !TableMetadata.Type.RepeatableQuestionGroup.equals(column.get("table_type"));
+        boolean isQuestionGroup = column.get("parent_concept_name") != null && !TableMetadata.Type.RepeatableQuestionGroup.name().equals(column.get("table_type"));
         if (isQuestionGroup) {
             return new ColumnMetadata(
                     null,
