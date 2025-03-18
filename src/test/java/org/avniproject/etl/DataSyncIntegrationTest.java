@@ -149,21 +149,18 @@ public class DataSyncIntegrationTest extends BaseIntegrationTest {
     @Sql({"/test-data-teardown.sql", "/test-data.sql"})
     @Sql(scripts = "/test-data-teardown.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void changeDataTypeOfConcept_UsingVoiding_ButBetweenTwoRuns_RepeatableQuestionGroup() {
-        String questionGroupName = "Asset Info";
         String conceptName = "Beneficiary Parent";
-        String columnName = questionGroupName + " " + conceptName;
 
         runDataSync();
-        ColumnMetadata columnMetadata = this.columnMetadataRepository.findByName(columnName);
+        ColumnMetadata columnMetadata = this.columnMetadataRepository.findByName(conceptName);
         assertFalse(columnMetadata.isConceptVoided());
 
         String voidedConceptName = "Beneficiary Parent (voided)";
-        String voidedColumnName = questionGroupName + " " + voidedConceptName;
         jdbcTemplate.execute(format("update concept set name = '%s', is_voided = true, last_modified_date_time = '%s' where name = '%s'",
                 voidedConceptName, getCurrentTime(), conceptName));
         runDataSync();
         columnMetadata = this.columnMetadataRepository.findByUuid(columnMetadata.getConceptUuid());
-        assertEquals(voidedColumnName, columnMetadata.getName());
+        assertEquals(voidedConceptName, columnMetadata.getName());
         assertTrue(columnMetadata.isConceptVoided());
 
         String newConceptUuid = "a379fcef-f0a1-4ac2-8555-400041162fee";
@@ -172,7 +169,7 @@ public class DataSyncIntegrationTest extends BaseIntegrationTest {
         runDataSync();
         ColumnMetadata newColumnMetaData = this.columnMetadataRepository.findByUuid(newConceptUuid);
         assertFalse(newColumnMetaData.isConceptVoided());
-        assertEquals(columnName, newColumnMetaData.getName());
+        assertEquals(conceptName, newColumnMetaData.getName());
     }
 
     @Test
@@ -302,8 +299,8 @@ public class DataSyncIntegrationTest extends BaseIntegrationTest {
         runDataSync();
         List<Map<String, Object>> list = jdbcTemplate.queryForList(format("select * from orgc.person_general_encounter_asset_info where encounter_id = %d", 2001));
         assertEquals(2, list.size());
-        assertEquals(100, ((BigDecimal) (list.get(0).get("Asset Info Bitcoin"))).intValue());
-        assertEquals("FTX", list.get(0).get("Asset Info Exchange"));
+        assertEquals(100, ((BigDecimal) (list.get(0).get("Bitcoin"))).intValue());
+        assertEquals("FTX", list.get(0).get("Exchange"));
 
         jdbcTemplate.execute("update encounter set last_modified_date_time = current_timestamp where id = 2001");
         runDataSync();

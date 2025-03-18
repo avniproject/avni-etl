@@ -113,10 +113,6 @@ public class TableMetadata extends Model {
         return this.getColumnMetadataList().stream().filter(columnMetadata -> Arrays.stream(conceptTypes).anyMatch(conceptType -> nullSafeEquals(columnMetadata.getConceptType(), conceptType))).collect(Collectors.toList());
     }
 
-    public Optional<ColumnMetadata> findColumnMatchingConcept(String conceptUuid) {
-        return this.getColumnMetadataList().stream().filter(columnMetadata -> columnMetadata.getConceptUuid() != null && columnMetadata.getConceptUuid().equals(conceptUuid)).findFirst();
-    }
-
     public void mergeWith(TableMetadata oldTableMetadata) {
         setId(oldTableMetadata.getId());
         getColumnMetadataList()
