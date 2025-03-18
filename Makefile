@@ -16,8 +16,11 @@ build_jar: ## Builds the jar file
 
 test:
 	./gradlew clean test --stacktrace
+test-server: test
+test_server: test
 
 build_server: build_jar
+build-server: build_server
 
 # <server>
 start_server: build_server
@@ -96,11 +99,15 @@ ifndef dbUser
 	@echo "Provde the dbUser variable"
 	exit 1
 endif
+ifndef dbOwner
+	@echo "Provde the dbOwner variable"
+	exit 1
+endif
 ifndef db
 	@echo "Provde the db variable"
 	exit 1
 endif
-	-psql -h localhost -Uopenchs $(db) -c "select delete_etl_metadata_for_schema('$(schemaName)', '$(dbUser)')"
+	-psql -h localhost -Uopenchs $(db) -c "select delete_etl_metadata_for_schema('$(schemaName)','$(dbUser)','$(dbOwner)' )"
 
 delete-etl-metadata-for-org:
 ifndef schemaName
