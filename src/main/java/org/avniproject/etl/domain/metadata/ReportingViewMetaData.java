@@ -3,26 +3,41 @@ package org.avniproject.etl.domain.metadata;
 import org.avniproject.etl.domain.OrganisationIdentity;
 
 public interface ReportingViewMetaData {
-    String SUBJECT_VIEW_NAME = "subject_view";
-    String ENROLMENT_VIEW_NAME = "enrolment_view";
-
     String SCHEMA_PARAM_NAME = "schema_name";
     String VIEW_PARAM_NAME = "view_name";
     String ADDRESS_COLUMNS_PARAM_NAME = "address_columns";
+    String WHERE_CLAUSE = "where_clause";
+    String EXTRA_COLUMNS = "extra_columns";
     String USER_PARAM_NAME = "user_name";
 
-    enum Type{
-        SUBJECT,
-        ENROLMENT
-    }
 
-    default String getViewName(Type type){
-        return switch (type) {
-            case SUBJECT -> SUBJECT_VIEW_NAME;
-            case ENROLMENT -> ENROLMENT_VIEW_NAME;
-        };
-
-    }
 
     void createOrReplaceView(OrganisationIdentity organisationIdentity);
+
+    class ViewConfig {
+        private final String viewName;
+        private final String whereClause;
+        private final String extraColumns;
+        private final String sqlTemplateFile;
+
+        public ViewConfig(String viewName, String whereClause, String extraColumns, String sqlTemplateFile) {
+            this.viewName = viewName;
+            this.whereClause = whereClause;
+            this.extraColumns = extraColumns != null ? extraColumns : "";
+            this.sqlTemplateFile = sqlTemplateFile;
+        }
+
+        public String getViewName() {
+            return viewName;
+        }
+        public String getWhereClause() {
+            return whereClause;
+        }
+        public String getExtraColumns() {
+            return extraColumns;
+        }
+        public String getSqlTemplateFile() {
+            return sqlTemplateFile;
+        }
+    }
 }
