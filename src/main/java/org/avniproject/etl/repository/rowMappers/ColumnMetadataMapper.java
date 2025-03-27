@@ -2,6 +2,7 @@ package org.avniproject.etl.repository.rowMappers;
 
 import org.avniproject.etl.domain.metadata.Column;
 import org.avniproject.etl.domain.metadata.ColumnMetadata;
+import org.avniproject.etl.domain.metadata.TableMetadata;
 import org.springframework.jdbc.core.RowMapper;
 
 import java.sql.ResultSet;
@@ -16,7 +17,7 @@ public class ColumnMetadataMapper implements RowMapper<ColumnMetadata> {
             isVoided = false;
         }
 
-        boolean isQuestionGroup = column.get("parent_concept_name") != null && !"RepeatableQuestionGroup".equals(column.get("table_type"));
+        boolean isQuestionGroup = column.get("parent_concept_name") != null && !TableMetadata.Type.RepeatableQuestionGroup.name().equals(column.get("table_type"));
         if (isQuestionGroup) {
             return new ColumnMetadata(
                     null,
