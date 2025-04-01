@@ -19,17 +19,20 @@ public class EtlService {
     private final SyncService syncService;
     private final EtlServiceConfig etlServiceConfig;
     private final ReportingViewService reportingViewService;
+    private final PostETLSyncService postETLSyncService;
     private static final Logger log = Logger.getLogger(EtlService.class);
 
     @Autowired
     public EtlService(OrganisationRepository organisationRepository, OrganisationFactory organisationFactory,
-                      SchemaMigrationService schemaMigrationService, SyncService syncService, EtlServiceConfig etlServiceConfig, ReportingViewService reportingViewService) {
+                      SchemaMigrationService schemaMigrationService, SyncService syncService, EtlServiceConfig etlServiceConfig, 
+                      ReportingViewService reportingViewService, PostETLSyncService postETLSyncService) {
         this.organisationRepository = organisationRepository;
         this.organisationFactory = organisationFactory;
         this.schemaMigrationService = schemaMigrationService;
         this.syncService = syncService;
         this.etlServiceConfig = etlServiceConfig;
         this.reportingViewService = reportingViewService;
+        this.postETLSyncService = postETLSyncService;
     }
 
     public void runFor(String organisationUUID) {
@@ -48,14 +51,15 @@ public class EtlService {
 
     public void runFor(OrganisationIdentity organisationIdentity) {
         log.info(String.format("Running ETL for %s", organisationIdentity.toString()));
-        OrgIdentityContextHolder.setContext(organisationIdentity, etlServiceConfig);
-        Organisation organisation = organisationFactory.create(organisationIdentity);
-        log.info(String.format("Old organisation schema summary %s", organisation.getSchemaMetadata().getCountsByType()));
-        Organisation newOrganisation = schemaMigrationService.migrate(organisation);
-        log.info(String.format("New organisation after migration, schema summary %s", newOrganisation.getSchemaMetadata().getCountsByType()));
-        reportingViewService.processMetabaseViews(newOrganisation);
-        syncService.sync(newOrganisation);
-        log.info(String.format("Completed ETL for %s", organisationIdentity.toString()));
-        OrgIdentityContextHolder.setContext(organisationIdentity, etlServiceConfig);
+            OrgIdentityContextHolder.setContext(organisationIdentity, etlServiceConfig);
+            Organisation organisation = organisationFactory.create(organisationIdentity);
+            log.info(String.format("Old organisation schema summary %s", organisation.getSchemaMetadata().getCountsByType()));
+            Organisation newOrganisation = schemaMigrationService.migrate(organisation);
+            log.info(String.format("New organisation after migration, schema summary %s", newOrganisation.getSchemaMetadata().getCountsByType()));
+            reportingViewService.processMetabaseViews(newOrganisation);
+            syncService.sync(newOrganisation);
+            postETLSyncService.executePostETLScripts(newOrganisation);
+            log.info(String.format("Completed ETL for %s", organisationIdentity.toString()));
+            OrgIdentityContextHolder.setContext(organisationIdentity, etlServiceConfig);
     }
 }

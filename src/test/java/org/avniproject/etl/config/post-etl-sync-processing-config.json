@@ -1,0 +1,47 @@
+{
+  "ddl": [
+    {
+      "table": "t_1",
+      "sql": "t1-create.sql"
+    },
+    {
+      "table": "t_2",
+      "sql": "t2-create.sql"
+    }
+  ],
+  "dml": [
+    {
+      "order": 1,
+      "table": "t_1",
+      "sqls": [
+        {
+          "order": 1,
+          "sourceTableName": "s1",
+          "insert-sql": "t1-s1-insert.sql",
+          "update-sqls": [
+            "t1-s1-update-1.sql",
+            "t1-s1-update-2.sql"
+          ]
+        },
+        {
+          "order": 2,
+          "sourceTableName": "s2",
+          "insert-sql": "",
+          "update-sqls": [
+            "t1-s2-update-1.sql",
+            "t1-s2-update-2.sql"
+          ]
+        },
+        {
+          "order": 3,
+          "sourceTableName": "s3",
+          "insert-sql": "",
+          "update-sqls": [
+            "t1-s3-update-1.sql",
+            "t1-s3-update-2.sql"
+          ]
+        }
+      ]
+    }
+  ]
+}

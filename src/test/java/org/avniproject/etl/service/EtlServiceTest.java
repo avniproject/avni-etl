@@ -35,6 +35,9 @@ public class EtlServiceTest {
     @Mock
     private SyncService syncService;
 
+    @Mock
+    private PostETLSyncService postETLSyncService;
+
     private AutoCloseable closeable;
 
     @BeforeEach
@@ -49,7 +52,8 @@ public class EtlServiceTest {
 
     @Test
     public void runForOrganisationShouldSetContextForOrganisation() {
-        EtlService etlService = new EtlService(organisationRepository, organisationFactory, schemaMigrationService, syncService, new StubEtlServiceConfig(), reportingViewService);
+        EtlService etlService = new EtlService(organisationRepository, organisationFactory, schemaMigrationService, 
+            syncService, new StubEtlServiceConfig(), reportingViewService, postETLSyncService);
         OrganisationIdentity organisationIdentity = new OrganisationIdentityBuilder().withId(1).withDbUser("a").build();
 
         Organisation organisation = mock(Organisation.class);
@@ -59,11 +63,13 @@ public class EtlServiceTest {
         etlService.runFor(organisationIdentity);
 
         assertThat(OrgIdentityContextHolder.getOrganisationIdentity(), is(organisationIdentity));
+        verify(postETLSyncService).executePostETLScripts(organisation);
     }
 
     @Test
     public void runForOrganisationShouldCreateOrganisationAndCallEtlServiceForMigration() {
-        EtlService etlService = new EtlService(organisationRepository, organisationFactory, schemaMigrationService, syncService, new StubEtlServiceConfig(), reportingViewService);
+        EtlService etlService = new EtlService(organisationRepository, organisationFactory, schemaMigrationService, 
+            syncService, new StubEtlServiceConfig(), reportingViewService, postETLSyncService);
 
         OrganisationIdentity organisationIdentity = new OrganisationIdentityBuilder().withId(1).withDbUser("a").build();
         Organisation organisation = mock(Organisation.class);
@@ -78,5 +84,6 @@ public class EtlServiceTest {
         verify(organisationFactory).create(organisationIdentity);
         verify(schemaMigrationService).migrate(organisation);
         verify(syncService).sync(newOrganisation);
+        verify(postETLSyncService).executePostETLScripts(newOrganisation);
     }
 }
