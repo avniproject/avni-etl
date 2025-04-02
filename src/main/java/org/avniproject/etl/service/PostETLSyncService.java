@@ -5,7 +5,7 @@ import org.apache.log4j.Logger;
 import org.avniproject.etl.domain.Organisation;
 import org.avniproject.etl.domain.OrgIdentityContextHolder;
 import org.avniproject.etl.domain.PostETLConfig;
-import org.avniproject.etl.repository.ETLMetadataRepository;
+import org.avniproject.etl.repository.PostETLSyncStatusRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -29,13 +29,13 @@ public class PostETLSyncService {
     private static final String CONFIG_FILE_NAME = "post-etl-sync-processing-config.json";
     private final JdbcTemplate jdbcTemplate;
     private final ObjectMapper objectMapper;
-    private final ETLMetadataRepository etlMetadataRepository;
+    private final PostETLSyncStatusRepository postETLSyncStatusRepository;
 
     @Autowired
-    public PostETLSyncService(JdbcTemplate jdbcTemplate, ETLMetadataRepository etlMetadataRepository) {
+    public PostETLSyncService(JdbcTemplate jdbcTemplate, PostETLSyncStatusRepository postETLSyncStatusRepository) {
         this.jdbcTemplate = jdbcTemplate;
         this.objectMapper = new ObjectMapper();
-        this.etlMetadataRepository = etlMetadataRepository;
+        this.postETLSyncStatusRepository = postETLSyncStatusRepository;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -47,8 +47,8 @@ public class PostETLSyncService {
             // Set schema
             jdbcTemplate.execute(String.format("SET search_path TO %s", schema));
 
-            // Create etl_metadata table if it doesn't exist
-            createETLMetadataTableIfNotExists();
+            // Create post_etl_sync_status table if it doesn't exist
+            postETLSyncStatusRepository.createTableIfNotExists();
             
             // Load and execute config
             PostETLConfig config = loadConfig(organisation);
@@ -57,7 +57,7 @@ public class PostETLSyncService {
                 return;
             }
 
-            ZonedDateTime previousCutoffDateTime = etlMetadataRepository.getPreviousCutoffDateTime(schema);
+            ZonedDateTime previousCutoffDateTime = postETLSyncStatusRepository.getPreviousCutoffDateTime();
             ZonedDateTime newCutoffDateTime = ZonedDateTime.now();
 
             // Execute DDL scripts first
@@ -67,7 +67,7 @@ public class PostETLSyncService {
             processDMLSqls(organisation, config, previousCutoffDateTime, newCutoffDateTime);
 
             // Update the cutoff datetime for next run
-            etlMetadataRepository.updateCutoffDateTime(schema, newCutoffDateTime);
+            postETLSyncStatusRepository.updateCutoffDateTime(newCutoffDateTime);
             
             log.info("Completed post-ETL SQL script execution");
         } catch (Throwable t) {
@@ -125,16 +125,6 @@ public class PostETLSyncService {
                                 });
                     }
                 });
-    }
-
-    private void createETLMetadataTableIfNotExists() {
-        String sql = "CREATE TABLE IF NOT EXISTS etl_metadata (" +
-                    "id SERIAL PRIMARY KEY, " +
-                    "previous_cutoff_datetime TIMESTAMP WITH TIME ZONE, " +
-                    "created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, " +
-                    "updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP" +
-                    ")";
-        jdbcTemplate.execute(sql);
     }
 
     private boolean tableExists(PostETLConfig.DDLConfig ddl) {
