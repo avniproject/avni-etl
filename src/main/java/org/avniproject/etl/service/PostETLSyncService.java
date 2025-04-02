@@ -61,41 +61,11 @@ public class PostETLSyncService {
             ZonedDateTime newCutoffDateTime = ZonedDateTime.now();
 
             // Execute DDL scripts first
-            if (config.getDdl() != null) {
-                for (PostETLConfig.DDLConfig ddl : config.getDdl()) {
-                    if (!tableExists(ddl)) {
-                        executeSqlFile(organisation, ddl.getSql());
-                    } else {
-                        log.info("Table " + ddl.getTable() + " already exists, skipping DDL");
-                    }
-                }
-            }
+            processDDLSqls(organisation, config);
 
             // Execute DML scripts in order
-            if (config.getDml() != null) {
-                config.getDml().stream()
-                        .sorted(Comparator.comparingInt(PostETLConfig.DMLConfig::getOrder))
-                        .forEach(dml -> {
-                            if (dml.getSqls() != null) {
-                                dml.getSqls().stream()
-                                        .sorted(Comparator.comparingInt(PostETLConfig.DMLSourceConfig::getOrder))
-                                        .forEach(sourceConfig -> {
-                                            // Execute insert SQL if present
-                                            if (StringUtils.hasText(sourceConfig.getInsertSql())) {
-                                                executeSqlFileWithParams(organisation, sourceConfig.getInsertSql(), 
-                                                    previousCutoffDateTime, newCutoffDateTime, sourceConfig.getSqlParams());
-                                            }
-                                            // Execute update SQLs in order
-                                            if (sourceConfig.getUpdateSqls() != null) {
-                                                sourceConfig.getUpdateSqls().forEach(sql -> 
-                                                    executeSqlFileWithParams(organisation, sql, 
-                                                        previousCutoffDateTime, newCutoffDateTime, sourceConfig.getSqlParams()));
-                                            }
-                                        });
-                            }
-                        });
-            }
-            
+            processDMLSqls(organisation, config, previousCutoffDateTime, newCutoffDateTime);
+
             // Update the cutoff datetime for next run
             etlMetadataRepository.updateCutoffDateTime(schema, newCutoffDateTime);
             
@@ -103,7 +73,58 @@ public class PostETLSyncService {
         } catch (Throwable t) {
             log.error("Error executing post-ETL scripts", t);
             throw new RuntimeException("Failed to execute post-ETL scripts", t);
+        } finally {
+            // Reset search path
+            try {
+                jdbcTemplate.execute(String.format("SET search_path TO %s", "PUBLIC"));
+            } catch (Exception e) {
+                log.error("Failed to reset search path in the end", e);
+            }
         }
+    }
+
+    private void processDDLSqls(Organisation organisation, PostETLConfig config) {
+        if (config.getDdl() == null)
+            return;
+        for (PostETLConfig.DDLConfig ddl : config.getDdl()) {
+            if (!tableExists(ddl)) {
+                executeSqlFile(organisation, ddl.getSql());
+            } else {
+                log.info("Table " + ddl.getTable() + " already exists, skipping DDL");
+            }
+        }
+    }
+
+    private void processDMLSqls(Organisation organisation, PostETLConfig config, ZonedDateTime previousCutoffDateTime, ZonedDateTime newCutoffDateTime) {
+        if (config.getDml() == null) return;
+        
+        config.getDml().stream()
+                .sorted(Comparator.comparingInt(PostETLConfig.DMLConfig::getOrder))
+                .forEach(dml -> {
+                    if (dml.getSqls() != null) {
+                        dml.getSqls().stream()
+                                .sorted(Comparator.comparingInt(PostETLConfig.DMLSourceConfig::getOrder))
+                                .forEach(sourceConfig -> {
+                                    // Execute insert SQL if present
+                                    if (StringUtils.hasText(sourceConfig.getInsertSql())) {
+                                        executeSqlFileWithParams(organisation, 
+                                                sourceConfig.getInsertSql(), 
+                                                previousCutoffDateTime, 
+                                                newCutoffDateTime, 
+                                                sourceConfig.getSqlParams());
+                                    }
+                                    // Execute update SQLs in order
+                                    if (sourceConfig.getUpdateSqls() != null) {
+                                        sourceConfig.getUpdateSqls()
+                                                .forEach(sql -> executeSqlFileWithParams(organisation, 
+                                                        sql, 
+                                                        previousCutoffDateTime, 
+                                                        newCutoffDateTime, 
+                                                        sourceConfig.getSqlParams()));
+                                    }
+                                });
+                    }
+                });
     }
 
     private void createETLMetadataTableIfNotExists() {

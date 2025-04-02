@@ -18,9 +18,7 @@ public class ETLMetadataRepository {
 
     public ZonedDateTime getPreviousCutoffDateTime(String schema) {
         try {
-            // Set schema for this query
-            jdbcTemplate.execute(String.format("SET search_path TO %s", schema));
-            
+
             String sql = "SELECT previous_cutoff_datetime FROM etl_metadata LIMIT 1";
             return jdbcTemplate.queryForObject(sql, ZonedDateTime.class);
         } catch (EmptyResultDataAccessException e) {
@@ -29,9 +27,6 @@ public class ETLMetadataRepository {
     }
 
     public void updateCutoffDateTime(String schema, ZonedDateTime cutoffDateTime) {
-        // Set schema for this query
-        jdbcTemplate.execute(String.format("SET search_path TO %s", schema));
-        
         // Delete existing record (since we only maintain one record per schema)
         jdbcTemplate.execute("DELETE FROM etl_metadata");
         
