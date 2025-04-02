@@ -13,11 +13,14 @@ public class PostETLConfig {
     public void setDml(List<DMLConfig> dml) { this.dml = dml; }
 
     public static class DDLConfig {
+        private int order;
         private String table;
         private String sql;
         @JsonProperty("exists_check")
         private String existsCheck;
 
+        public int getOrder() { return order; }
+        public void setOrder(int order) { this.order = order; }
         public String getTable() { return table; }
         public void setTable(String table) { this.table = table; }
         public String getSql() { return sql; }

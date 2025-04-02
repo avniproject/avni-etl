@@ -86,18 +86,21 @@ public class PostETLSyncService {
     private void processDDLSqls(Organisation organisation, PostETLConfig config) {
         if (config.getDdl() == null)
             return;
-        for (PostETLConfig.DDLConfig ddl : config.getDdl()) {
+
+        // Sort DDL configs based on order before processing
+        config.getDdl().stream().sorted(Comparator.comparingInt(PostETLConfig.DDLConfig::getOrder)).forEach(ddl -> {
             if (!tableExists(ddl)) {
                 executeSqlFile(organisation, ddl.getSql());
             } else {
                 log.info("Table " + ddl.getTable() + " already exists, skipping DDL");
             }
-        }
+        });
     }
 
     private void processDMLSqls(Organisation organisation, PostETLConfig config, ZonedDateTime previousCutoffDateTime, ZonedDateTime newCutoffDateTime) {
         if (config.getDml() == null) return;
-        
+
+        // Sort DML configs based on order before processing
         config.getDml().stream()
                 .sorted(Comparator.comparingInt(PostETLConfig.DMLConfig::getOrder))
                 .forEach(dml -> {
