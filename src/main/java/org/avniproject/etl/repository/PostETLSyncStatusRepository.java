@@ -11,8 +11,7 @@ import org.springframework.stereotype.Repository;
 import java.time.ZonedDateTime;
 
 @Repository
-public class PostETLSyncStatusRepository {
-    private static final String CUTOFF_TIME_KEY = "previous_cutoff_datetime";
+public class PostETLSyncStatusRepository implements PostETLSyncStatusKeys {
     private final JdbcTemplate jdbcTemplate;
     private final ObjectMapper objectMapper;
 
