@@ -8,6 +8,8 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 @Repository
@@ -29,18 +31,19 @@ public class PostETLSyncStatusRepository implements PostETLSyncStatusKeys {
     }
 
     public ZonedDateTime getPreviousCutoffDateTime() {
+        final ZonedDateTime longPastZonedDateTime = ZonedDateTime.ofInstant(Instant.MIN, ZoneId.systemDefault());
         try {
             String sql = "SELECT value::text FROM post_etl_sync_status WHERE key = ?";
             String jsonValue = jdbcTemplate.queryForObject(sql, String.class, CUTOFF_TIME_KEY);
-            if (jsonValue == null) return null;
+            if (jsonValue == null) return longPastZonedDateTime;
             
             // Parse the timestamp string from JSON
             JsonNode node = objectMapper.readTree(jsonValue);
-            if (node == null || !node.isTextual()) return null;
+            if (node == null || !node.isTextual()) return longPastZonedDateTime;
             
             return ZonedDateTime.parse(node.asText());
         } catch (EmptyResultDataAccessException e) {
-            return null;
+            return longPastZonedDateTime;
         } catch (Exception e) {
             throw new RuntimeException("Error parsing timestamp from JSON", e);
         }
