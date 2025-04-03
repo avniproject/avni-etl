@@ -1,101 +1,55 @@
 package org.avniproject.etl.repository;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.TextNode;
-import org.avniproject.etl.util.ObjectMapperSingleton;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+
+import org.avniproject.etl.domain.OrgIdentityContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-
 @Repository
-public class PostETLSyncStatusRepository implements PostETLSyncStatusKeys {
+public class PostETLSyncStatusRepository {
     private final JdbcTemplate jdbcTemplate;
-    private final ObjectMapper objectMapper;
 
     @Autowired
     public PostETLSyncStatusRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
-        this.objectMapper = ObjectMapperSingleton.getObjectMapper();
     }
 
     public void createTableIfNotExists() {
-        String sql = "CREATE TABLE IF NOT EXISTS post_etl_sync_status (" +
-                    "key TEXT PRIMARY KEY, " +
-                    "value JSONB)";
-        jdbcTemplate.execute(sql);
+        String createTableSql = "CREATE TABLE IF NOT EXISTS post_etl_sync_status (" +
+                "id SERIAL PRIMARY KEY, " +
+                "cutoff_datetime TIMESTAMP WITH TIME ZONE NOT NULL)";
+        jdbcTemplate.execute(createTableSql);
+
+        // Grant permissions to the current user
+        String currentUser = OrgIdentityContextHolder.getDbUser();
+        String grantSql = String.format("GRANT ALL PRIVILEGES ON TABLE post_etl_sync_status TO %s", currentUser);
+        jdbcTemplate.execute(grantSql);
+        
+        // Also grant permissions on the sequence
+        String grantSeqSql = String.format("GRANT USAGE, SELECT ON SEQUENCE post_etl_sync_status_id_seq TO %s", currentUser);
+        jdbcTemplate.execute(grantSeqSql);
     }
 
     public ZonedDateTime getPreviousCutoffDateTime() {
         final ZonedDateTime longPastZonedDateTime = ZonedDateTime.ofInstant(Instant.EPOCH, ZoneId.systemDefault());
-        try {
-            String sql = "SELECT value::text FROM post_etl_sync_status WHERE key = ?";
-            String jsonValue = jdbcTemplate.queryForObject(sql, String.class, CUTOFF_TIME_KEY);
-            if (jsonValue == null) return longPastZonedDateTime;
-            
-            // Parse the timestamp string from JSON
-            JsonNode node = objectMapper.readTree(jsonValue);
-            if (node == null || !node.isTextual()) return longPastZonedDateTime;
-            
-            return ZonedDateTime.parse(node.asText());
-        } catch (EmptyResultDataAccessException e) {
+        String countSql = "SELECT COUNT(*) FROM post_etl_sync_status";
+        int count = jdbcTemplate.queryForObject(countSql, Integer.class);
+        if (count == 0) {
             return longPastZonedDateTime;
-        } catch (Exception e) {
-            throw new RuntimeException("Error parsing timestamp from JSON", e);
         }
+        String sql = "SELECT cutoff_datetime FROM post_etl_sync_status ORDER BY id DESC LIMIT 1";
+        Timestamp timestamp = jdbcTemplate.queryForObject(sql, Timestamp.class);
+        return timestamp.toInstant().atZone(java.time.ZoneId.systemDefault());
     }
 
-    public void updateCutoffDateTime(ZonedDateTime cutoffDateTime) {
-        try {
-            // Create a JSON string value for the timestamp
-            String jsonValue = objectMapper.writeValueAsString(TextNode.valueOf(cutoffDateTime.toString()));
-            
-            String sql = "INSERT INTO post_etl_sync_status (key, value) " +
-                        "VALUES (?, ?::jsonb) " +
-                        "ON CONFLICT (key) DO UPDATE " +
-                        "SET value = EXCLUDED.value";
-            jdbcTemplate.update(sql, CUTOFF_TIME_KEY, jsonValue);
-        } catch (Exception e) {
-            throw new RuntimeException("Error storing timestamp as JSON", e);
-        }
-    }
-    
-    /**
-     * Generic method to store any value as JSON
-     */
-    public <T> void setValue(String key, T value) {
-        try {
-            String jsonValue = objectMapper.writeValueAsString(value);
-            
-            String sql = "INSERT INTO post_etl_sync_status (key, value) " +
-                        "VALUES (?, ?::jsonb) " +
-                        "ON CONFLICT (key) DO UPDATE " +
-                        "SET value = EXCLUDED.value";
-            jdbcTemplate.update(sql, key, jsonValue);
-        } catch (Exception e) {
-            throw new RuntimeException("Error storing value as JSON", e);
-        }
-    }
-    
-    /**
-     * Generic method to retrieve a JSON value and convert it to the specified type
-     */
-    public <T> T getValue(String key, Class<T> type) {
-        try {
-            String sql = "SELECT value::text FROM post_etl_sync_status WHERE key = ?";
-            String jsonValue = jdbcTemplate.queryForObject(sql, String.class, key);
-            if (jsonValue == null) return null;
-            
-            return objectMapper.readValue(jsonValue, type);
-        } catch (EmptyResultDataAccessException e) {
-            return null;
-        } catch (Exception e) {
-            throw new RuntimeException("Error parsing JSON value", e);
-        }
+    public void updateCutoffDateTime(ZonedDateTime dateTime) {
+        String sql = "INSERT INTO post_etl_sync_status (cutoff_datetime) VALUES (?)";
+        jdbcTemplate.update(sql, Timestamp.from(dateTime.toInstant()));
     }
 }
