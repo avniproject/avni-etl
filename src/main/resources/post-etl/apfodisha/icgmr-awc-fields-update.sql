@@ -2,9 +2,9 @@ WITH awc_fields AS (SELECT awc."Project/Block",
                            awc."Sector",
                            awc."AWC",
                            ind.id                   AS "Individual ID"
-                    FROM apfodisha.individual ind
-                             LEFT JOIN apfodisha.individual_child_awc_mapping awc ON
-                                awc.individual_id = ind.id
+                    FROM apfodisha.awc_profile ind
+                             LEFT JOIN apfodisha.address awc ON
+                                awc.id = ind.address_id
                             AND awc.is_voided = false)
 UPDATE apfodisha.individual_child_growth_monitoring_report growth_report
 SET "Project/Block" = af."Project/Block",

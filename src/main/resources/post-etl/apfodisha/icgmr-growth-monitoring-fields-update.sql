@@ -25,20 +25,20 @@ WITH growth_monitoring_fields AS (SELECT CASE
                                          follow_up."Growth Faltering"  AS "Growth Falter Status (GF-1/GF-2)",
                                          follow_up."Height"            AS "Height",
                                          follow_up."Weight"            AS "Weight",
-                                         follow_up."Date of recording" AS "Date of Measurement",
+                                         follow_up."encounter_date_time" AS "Date of Measurement",
                                          ind.id                        AS "Individual ID",
-                                         follow_up."PPK"               AS "Is the child going to PPK?",
-                                         follow_up."Creche"            AS "Is the child going to Creche?",
-                                         follow_up."Exclusive breastfeeding" AS "Is the child being currently exclusively breastfed?",
-                                         follow_up."Breast feeding"    AS "Is the child being currently breastfed?",
-                                         follow_up."Number of days attended AWC" AS "Number of day attended AWC (last month)",
-                                         follow_up."Egg"               AS "Is the child receiving egg from AWC",
-                                         follow_up."THR"               AS "Is the child receiving THR from AWC",
-                                         follow_up."VHND"             AS "Did the child attended VHND last month",
-                                         follow_up."Treatment advice"  AS "What is the treatment advise for the SAM/MAM/GF2 child?",
-                                         follow_up."CMAM"             AS "Is the child enrolled in the CMAM program?",
-                                         follow_up."ATHR"             AS "Is the child availing benefits (ATHR) under the CMAM program?",
-                                         follow_up."MSPY"             AS "Did you receive additional THR (MSPY)?"
+                                         follow_up."Is the child going to PPK?"            AS "Is the child going to PPK?",
+                                         follow_up."Is the child going to Creche?"            AS "Is the child going to Creche?",
+                                         follow_up."Is the child being currently exclusively breastfed?" AS "Is the child being currently exclusively breastfed?",
+                                         follow_up."Is the child being currently breastfed?",
+                                         follow_up."Number of day attended AWC (last month)",
+                                         follow_up."Is the child receiving egg from AWC",
+                                         follow_up."Is the child receiving THR from AWC",
+                                         follow_up."Did the child attended VHND last month",
+                                         follow_up."What is the treatment advise for the SAM/MAM/GF2 child?",
+                                         follow_up."Is the child enrolled in the CMAM program?",
+                                         follow_up."Is the child availing benefits (ATHR) under the CMAM program?",
+                                         follow_up."Did you receive additional THR (MSPY)?"
                                   FROM apfodisha.individual ind
                                            JOIN apfodisha.individual_child enrl ON
                                               enrl.individual_id = ind.id

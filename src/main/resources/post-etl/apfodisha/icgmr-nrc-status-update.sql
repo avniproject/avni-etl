@@ -11,7 +11,7 @@ WITH cte_nrc_status AS (SELECT DISTINCT ind.id  AS "Individual ID",
                                            ON follow_up.program_enrolment_id = enrl.id
                                                AND follow_up.encounter_date_time IS NOT NULL
                                  LEFT JOIN apfodisha.individual_child_qrt_child qrt
-                                           ON ind.id = follow_up.individual_id
+                                           ON qrt.individual_id = follow_up.individual_id
                                                AND qrt.encounter_date_time IS NOT NULL
                                  LEFT JOIN apfodisha.individual_child_nrc_admission nrc
                                            ON nrc.individual_id = qrt.individual_id

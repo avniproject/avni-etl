@@ -3,9 +3,9 @@ WITH village_fields AS (SELECT village."Block",
                                village."Village/Hamlet",
                                ind.id                   AS "Individual ID"
                         FROM apfodisha.individual ind
-                                 LEFT JOIN apfodisha.address_level village ON
+                                 LEFT JOIN apfodisha.address village ON
                                     village.id = ind.address_id
-                                AND village.type = 'Village')
+                                )
 UPDATE apfodisha.individual_child_growth_monitoring_report growth_report
 SET "Block"          = vf."Block",
     "GP"            = vf."GP",
