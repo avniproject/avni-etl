@@ -1,11 +1,20 @@
 package org.avniproject.etl.service;
 
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.time.ZonedDateTime;
+import java.util.Comparator;
+import java.util.List;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.log4j.Logger;
-import org.avniproject.etl.domain.Organisation;
 import org.avniproject.etl.domain.OrgIdentityContextHolder;
+import org.avniproject.etl.domain.Organisation;
 import org.avniproject.etl.domain.PostETLConfig;
 import org.avniproject.etl.repository.PostETLSyncStatusRepository;
+import org.avniproject.etl.util.ObjectMapperSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -14,14 +23,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.util.StringUtils;
-
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
-import java.time.ZonedDateTime;
-import java.util.Comparator;
-import java.util.List;
 
 @Service
 public class PostETLSyncService {
@@ -34,7 +35,7 @@ public class PostETLSyncService {
     @Autowired
     public PostETLSyncService(JdbcTemplate jdbcTemplate, PostETLSyncStatusRepository postETLSyncStatusRepository) {
         this.jdbcTemplate = jdbcTemplate;
-        this.objectMapper = new ObjectMapper();
+        this.objectMapper = ObjectMapperSingleton.getObjectMapper();
         this.postETLSyncStatusRepository = postETLSyncStatusRepository;
     }
 
