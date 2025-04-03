@@ -3,6 +3,7 @@ package org.avniproject.etl.repository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.TextNode;
+import org.avniproject.etl.util.ObjectMapperSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -20,7 +21,7 @@ public class PostETLSyncStatusRepository implements PostETLSyncStatusKeys {
     @Autowired
     public PostETLSyncStatusRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
-        this.objectMapper = new ObjectMapper();
+        this.objectMapper = ObjectMapperSingleton.getObjectMapper();
     }
 
     public void createTableIfNotExists() {
@@ -31,7 +32,7 @@ public class PostETLSyncStatusRepository implements PostETLSyncStatusKeys {
     }
 
     public ZonedDateTime getPreviousCutoffDateTime() {
-        final ZonedDateTime longPastZonedDateTime = ZonedDateTime.ofInstant(Instant.MIN, ZoneId.systemDefault());
+        final ZonedDateTime longPastZonedDateTime = ZonedDateTime.ofInstant(Instant.EPOCH, ZoneId.systemDefault());
         try {
             String sql = "SELECT value::text FROM post_etl_sync_status WHERE key = ?";
             String jsonValue = jdbcTemplate.queryForObject(sql, String.class, CUTOFF_TIME_KEY);

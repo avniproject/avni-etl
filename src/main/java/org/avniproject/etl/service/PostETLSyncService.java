@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -171,10 +172,10 @@ public class PostETLSyncService {
                 
                 // Replace parameters in SQL
                 if (previousCutoffDateTime != null) {
-                    sql = sql.replace(":previousCutoffDateTime", "'" + previousCutoffDateTime + "'");
+                    sql = sql.replace(":previousCutoffDateTime", "'" + Timestamp.from(previousCutoffDateTime.toInstant()) + "'");
                 }
                 if (newCutoffDateTime != null) {
-                    sql = sql.replace(":newCutoffDateTime", "'" + newCutoffDateTime + "'");
+                    sql = sql.replace(":newCutoffDateTime", "'" + Timestamp.from(newCutoffDateTime.toInstant()) + "'");
                 }
                 if (additionalParams != null) {
                     for (int i = 0; i < additionalParams.size(); i++) {
