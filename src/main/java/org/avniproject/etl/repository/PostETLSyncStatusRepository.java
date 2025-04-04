@@ -22,7 +22,7 @@ public class PostETLSyncStatusRepository {
 
     public void createTableIfNotExists() {
         String createTableSql = "CREATE TABLE IF NOT EXISTS post_etl_sync_status (" +
-                "id SERIAL PRIMARY KEY, " +
+                "id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1), " +
                 "cutoff_datetime TIMESTAMP WITH TIME ZONE NOT NULL)";
         jdbcTemplate.execute(createTableSql);
 
@@ -31,25 +31,20 @@ public class PostETLSyncStatusRepository {
         String grantSql = String.format("GRANT ALL PRIVILEGES ON TABLE post_etl_sync_status TO %s", currentUser);
         jdbcTemplate.execute(grantSql);
         
-        // Also grant permissions on the sequence
-        String grantSeqSql = String.format("GRANT USAGE, SELECT ON SEQUENCE post_etl_sync_status_id_seq TO %s", currentUser);
-        jdbcTemplate.execute(grantSeqSql);
+        // Insert initial row if not exists
+        String insertSql = "INSERT INTO post_etl_sync_status (id, cutoff_datetime) " +
+                "VALUES (1, ?) ON CONFLICT (id) DO NOTHING";
+        jdbcTemplate.update(insertSql, Timestamp.from(Instant.EPOCH));
     }
 
     public ZonedDateTime getPreviousCutoffDateTime() {
-        final ZonedDateTime longPastZonedDateTime = ZonedDateTime.ofInstant(Instant.EPOCH, ZoneId.systemDefault());
-        String countSql = "SELECT COUNT(*) FROM post_etl_sync_status";
-        int count = jdbcTemplate.queryForObject(countSql, Integer.class);
-        if (count == 0) {
-            return longPastZonedDateTime;
-        }
-        String sql = "SELECT cutoff_datetime FROM post_etl_sync_status ORDER BY id DESC LIMIT 1";
+        String sql = "SELECT cutoff_datetime FROM post_etl_sync_status WHERE id = 1";
         Timestamp timestamp = jdbcTemplate.queryForObject(sql, Timestamp.class);
-        return timestamp.toInstant().atZone(java.time.ZoneId.systemDefault());
+        return timestamp.toInstant().atZone(ZoneId.systemDefault());
     }
 
     public void updateCutoffDateTime(ZonedDateTime dateTime) {
-        String sql = "INSERT INTO post_etl_sync_status (cutoff_datetime) VALUES (?)";
+        String sql = "UPDATE post_etl_sync_status SET cutoff_datetime = ? WHERE id = 1";
         jdbcTemplate.update(sql, Timestamp.from(dateTime.toInstant()));
     }
 }
