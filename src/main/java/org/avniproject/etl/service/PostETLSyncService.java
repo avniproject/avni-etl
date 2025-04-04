@@ -44,40 +44,60 @@ public class PostETLSyncService {
     public void executePostETLScripts(Organisation organisation) {
         try {
             String schema = OrgIdentityContextHolder.getDbSchema();
-            log.info("Starting post-ETL SQL script execution for organisation schema: " + schema);
+            log.info(String.format("Starting post-ETL SQL script execution for organisation schema: %s", schema));
             
             // Set schema
+            log.info(String.format("Setting search path to schema: %s", schema));
             jdbcTemplate.execute(String.format("SET search_path TO %s", schema));
 
             // Create post_etl_sync_status table if it doesn't exist
+            log.info("Creating/verifying post_etl_sync_status table");
             postETLSyncStatusRepository.createTableIfNotExists();
             
             // Load and execute config
+            log.info("Loading post-ETL configuration");
             PostETLConfig config = loadConfig(organisation);
             if (config == null) {
-                log.info("No post-ETL config found for organisation: " + organisation.getOrganisationIdentity().getSchemaName());
+                log.info(String.format("No post-ETL config found for organisation: %s, skipping execution", 
+                    organisation.getOrganisationIdentity().getSchemaName()));
                 return;
             }
 
             ZonedDateTime previousCutoffDateTime = postETLSyncStatusRepository.getPreviousCutoffDateTime();
             ZonedDateTime newCutoffDateTime = ZonedDateTime.now();
+            log.info(String.format("Processing post-ETL scripts from %s to %s", 
+                previousCutoffDateTime, newCutoffDateTime));
 
             // Execute DDL scripts first
-            processDDLSqls(organisation, config);
+            if (config.getDdl() != null && !config.getDdl().isEmpty()) {
+                log.info(String.format("Starting DDL execution for %d scripts", config.getDdl().size()));
+                processDDLSqls(organisation, config);
+                log.info("Completed DDL execution");
+            } else {
+                log.info("No DDL scripts to execute");
+            }
 
             // Execute DML scripts in order
-            processDMLSqls(organisation, config, previousCutoffDateTime, newCutoffDateTime);
+            if (config.getDml() != null && !config.getDml().isEmpty()) {
+                log.info(String.format("Starting DML execution for %d configurations", config.getDml().size()));
+                processDMLSqls(organisation, config, previousCutoffDateTime, newCutoffDateTime);
+                log.info("Completed DML execution");
+            } else {
+                log.info("No DML scripts to execute");
+            }
 
             // Update the cutoff datetime for next run
+            log.info("Updating cutoff datetime for next run");
             postETLSyncStatusRepository.updateCutoffDateTime(newCutoffDateTime);
             
-            log.info("Completed post-ETL SQL script execution");
+            log.info("Successfully completed post-ETL SQL script execution");
         } catch (Throwable t) {
             log.error("Error executing post-ETL scripts", t);
             throw new RuntimeException("Failed to execute post-ETL scripts", t);
         } finally {
             // Reset search path
             try {
+                log.info("Resetting search path to PUBLIC");
                 jdbcTemplate.execute(String.format("SET search_path TO %s", "PUBLIC"));
             } catch (Exception e) {
                 log.error("Failed to reset search path in the end", e);
@@ -91,28 +111,38 @@ public class PostETLSyncService {
 
         // Sort DDL configs based on order before processing
         config.getDdl().stream().sorted(Comparator.comparingInt(PostETLConfig.DDLConfig::getOrder)).forEach(ddl -> {
-            if (!tableExists(ddl)) {
-                executeSqlFile(organisation, ddl.getSql());
-            } else {
-                log.info("Table " + ddl.getTable() + " already exists, skipping DDL");
+            try {
+                log.info(String.format("Processing DDL for table: %s (order: %d)", ddl.getTable(), ddl.getOrder()));
+                if (!tableExists(ddl)) {
+                    log.info(String.format("Creating table: %s", ddl.getTable()));
+                    executeSqlFile(organisation, ddl.getSql());
+                    log.info(String.format("Successfully created table: %s", ddl.getTable()));
+                } else {
+                    log.info(String.format("Table %s already exists, skipping creation", ddl.getTable()));
+                }
+            } catch (Exception e) {
+                log.error(String.format("Error processing DDL for table: %s", ddl.getTable()), e);
+                throw e;
             }
         });
     }
 
     private void processDMLSqls(Organisation organisation, PostETLConfig config, ZonedDateTime previousCutoffDateTime, ZonedDateTime newCutoffDateTime) {
-        if (config.getDml() == null) return;
+        if (config.getDml() == null)
+            return;
 
-        // Sort DML configs based on order before processing
         config.getDml().stream()
                 .sorted(Comparator.comparingInt(PostETLConfig.DMLConfig::getOrder))
-                .forEach(dml -> {
-                    if (dml.getSqls() != null) {
-                        dml.getSqls().stream()
+                .forEach(dmlConfig -> {
+                    log.info(String.format("Processing DML for table: %s (order: %d)", dmlConfig.getTable(), dmlConfig.getOrder()));
+                    if (dmlConfig.getSqls() != null) {
+                        dmlConfig.getSqls().stream()
                                 .sorted(Comparator.comparingInt(PostETLConfig.DMLSourceConfig::getOrder))
                                 .forEach(sourceConfig -> {
+                                    log.info(String.format("Processing source table: %s (order: %d)", sourceConfig.getSourceTableName(), sourceConfig.getOrder()));
                                     // Execute insert SQL if present
                                     if (StringUtils.hasText(sourceConfig.getInsertSql())) {
-                                        executeSqlFileWithParams(organisation, 
+                                        executeSqlFileWithParams(organisation,
                                                 sourceConfig.getInsertSql(), 
                                                 previousCutoffDateTime, 
                                                 newCutoffDateTime, 
@@ -120,15 +150,20 @@ public class PostETLSyncService {
                                     }
                                     // Execute update SQLs in order
                                     if (sourceConfig.getUpdateSqls() != null) {
+                                        log.info(String.format("Executing %d update SQL(s)", sourceConfig.getUpdateSqls().size()));
                                         sourceConfig.getUpdateSqls()
-                                                .forEach(sql -> executeSqlFileWithParams(organisation, 
-                                                        sql, 
-                                                        previousCutoffDateTime, 
-                                                        newCutoffDateTime, 
-                                                        sourceConfig.getSqlParams()));
+                                                .forEach(sql -> {
+                                                    executeSqlFileWithParams(organisation,
+                                                            sql, 
+                                                            previousCutoffDateTime, 
+                                                            newCutoffDateTime, 
+                                                            sourceConfig.getSqlParams());
+                                                });
                                     }
+                                    log.info(String.format("Completed processing source table: %s", sourceConfig.getSourceTableName()));
                                 });
                     }
+                    log.info(String.format("Completed processing DML for table: %s", dmlConfig.getTable()));
                 });
     }
 
