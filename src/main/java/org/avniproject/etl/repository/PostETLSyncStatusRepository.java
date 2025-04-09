@@ -18,25 +18,15 @@ import java.time.ZonedDateTime;
 @Transactional
 public class PostETLSyncStatusRepository {
     private static final Logger log = Logger.getLogger(PostETLSyncStatusRepository.class);
-    
-    private static final String CREATE_TABLE_SQL = 
-            "CREATE TABLE IF NOT EXISTS post_etl_sync_status (" +
-            "id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1), " +
-            "cutoff_datetime TIMESTAMP WITH TIME ZONE NOT NULL)";
-    
-    private static final String INSERT_INITIAL_ROW_SQL = 
-            "INSERT INTO post_etl_sync_status (id, cutoff_datetime) " +
-            "VALUES (1, ?) ON CONFLICT (id) DO NOTHING";
-    
+    private static final String UPSERT_SQL = 
+            "INSERT INTO public.post_etl_sync_status (cutoff_datetime, db_user) " +
+            "VALUES (?, ?) " +
+            "ON CONFLICT ON CONSTRAINT post_etl_sync_status_db_user_key " +
+            "DO UPDATE SET cutoff_datetime = EXCLUDED.cutoff_datetime " +
+            "WHERE post_etl_sync_status.db_user = ?";
     private static final String SELECT_CUTOFF_SQL = 
-            "SELECT cutoff_datetime FROM post_etl_sync_status WHERE id = 1";
+            "SELECT cutoff_datetime FROM public.post_etl_sync_status WHERE db_user = ?";
     
-    private static final String UPDATE_CUTOFF_SQL = 
-            "UPDATE post_etl_sync_status SET cutoff_datetime = ? WHERE id = 1";
-    
-    private static final String GRANT_PERMISSIONS_SQL = 
-            "GRANT ALL PRIVILEGES ON TABLE post_etl_sync_status TO %s";
-
     private final JdbcTemplate jdbcTemplate;
 
     @Autowired
@@ -45,41 +35,27 @@ public class PostETLSyncStatusRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public void createTableIfNotExists() {
-        try {
-            jdbcTemplate.execute(CREATE_TABLE_SQL);
-
-            // Grant permissions to the current user
-            String currentUser = OrgIdentityContextHolder.getDbUser();
-            String grantSql = String.format(GRANT_PERMISSIONS_SQL, currentUser);
-            jdbcTemplate.execute(grantSql);
-            
-            // Insert initial row with EPOCH timestamp
-            jdbcTemplate.update(INSERT_INITIAL_ROW_SQL, Timestamp.from(Instant.EPOCH));
-        } catch (DataAccessException e) {
-            log.error("Failed to create post_etl_sync_status table", e);
-            throw new PostETLSyncException("Failed to create post_etl_sync_status table", e);
-        }
-    }
-
     public ZonedDateTime getPreviousCutoffDateTime() {
         try {
-            Timestamp timestamp = jdbcTemplate.queryForObject(SELECT_CUTOFF_SQL, Timestamp.class);
+            String currentUser = OrgIdentityContextHolder.getDbUser();
+            Timestamp timestamp = jdbcTemplate.queryForObject(SELECT_CUTOFF_SQL, Timestamp.class, currentUser);
             if (timestamp == null) {
-                log.warn("No cutoff datetime found, returning EPOCH");
+                log.warn(String.format("No cutoff datetime found for user {}, returning EPOCH", currentUser));
                 return ZonedDateTime.ofInstant(Instant.EPOCH, ZoneId.systemDefault());
             }
             return timestamp.toInstant().atZone(ZoneId.systemDefault());
         } catch (DataAccessException e) {
             log.error("Failed to get previous cutoff datetime", e);
-            throw new PostETLSyncException("Failed to get previous cutoff datetime", e);
+            return ZonedDateTime.ofInstant(Instant.EPOCH, ZoneId.systemDefault());
         }
     }
 
     public void updateCutoffDateTime(ZonedDateTime dateTime) {
         Assert.notNull(dateTime, "DateTime must not be null");
         try {
-            int updated = jdbcTemplate.update(UPDATE_CUTOFF_SQL, Timestamp.from(dateTime.toInstant()));
+            String currentUser = OrgIdentityContextHolder.getDbUser();
+            Timestamp timestamp = Timestamp.from(dateTime.toInstant());
+            int updated = jdbcTemplate.update(UPSERT_SQL, timestamp, currentUser, currentUser);
             if (updated != 1) {
                 throw new PostETLSyncException("Failed to update cutoff datetime: no row was updated");
             }

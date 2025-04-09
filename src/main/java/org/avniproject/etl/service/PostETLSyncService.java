@@ -50,10 +50,6 @@ public class PostETLSyncService {
             log.info(String.format("Setting search path to schema: %s", schema));
             jdbcTemplate.execute(String.format("SET search_path TO %s", schema));
 
-            // Create post_etl_sync_status table if it doesn't exist
-            log.info("Creating/verifying post_etl_sync_status table");
-            postETLSyncStatusRepository.createTableIfNotExists();
-            
             // Load and execute config
             log.info("Loading post-ETL configuration");
             PostETLConfig config = loadConfig(organisation);
