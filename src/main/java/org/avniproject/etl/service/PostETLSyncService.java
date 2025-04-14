@@ -45,23 +45,23 @@ public class PostETLSyncService {
         try {
             String schema = OrgIdentityContextHolder.getDbSchema();
             log.info(String.format("Starting post-ETL SQL script execution for organisation schema: %s", schema));
-            
+
             // Set schema
             log.info(String.format("Setting search path to schema: %s", schema));
-            jdbcTemplate.execute(String.format("SET search_path TO %s", schema));
+            jdbcTemplate.execute(String.format("SET search_path TO \"%s\"", schema));
 
             // Load and execute config
             log.info("Loading post-ETL configuration");
             PostETLConfig config = loadConfig(organisation);
             if (config == null) {
-                log.info(String.format("No post-ETL config found for organisation: %s, skipping execution", 
+                log.info(String.format("No post-ETL config found for organisation: %s, skipping execution",
                     organisation.getOrganisationIdentity().getSchemaName()));
                 return;
             }
 
             ZonedDateTime previousCutoffDateTime = postETLSyncStatusRepository.getPreviousCutoffDateTime();
             ZonedDateTime newCutoffDateTime = ZonedDateTime.now();
-            log.info(String.format("Processing post-ETL scripts from %s to %s", 
+            log.info(String.format("Processing post-ETL scripts from %s to %s",
                 previousCutoffDateTime, newCutoffDateTime));
 
             // Execute DDL scripts first
@@ -73,7 +73,7 @@ public class PostETLSyncService {
             // Update the cutoff datetime for next run
             log.info("Updating cutoff datetime for next run");
             postETLSyncStatusRepository.updateCutoffDateTime(newCutoffDateTime);
-            
+
             log.info("Successfully completed post-ETL SQL script execution");
         } catch (Throwable t) {
             log.error("Error executing post-ETL scripts", t);
@@ -188,14 +188,14 @@ public class PostETLSyncService {
         executeSqlFileWithParams(organisation, sqlFileName, null, null, null);
     }
 
-    private void executeSqlFileWithParams(Organisation organisation, String sqlFileName, 
+    private void executeSqlFileWithParams(Organisation organisation, String sqlFileName,
             ZonedDateTime previousCutoffDateTime, ZonedDateTime newCutoffDateTime, List<String> additionalParams) {
         try {
             String sqlPath = String.format("post-etl/%s/%s", organisation.getOrganisationIdentity().getSchemaName().toLowerCase(), sqlFileName);
             ClassPathResource resource = new ClassPathResource(sqlPath);
             try (Reader reader = new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8)) {
                 String sql = FileCopyUtils.copyToString(reader);
-                
+
                 // Replace parameters in SQL
                 if (previousCutoffDateTime != null) {
                     sql = sql.replace(":previousCutoffDateTime", "'" + Timestamp.from(previousCutoffDateTime.toInstant()) + "'");
@@ -208,7 +208,7 @@ public class PostETLSyncService {
                         sql = sql.replace(":param" + (i + 1), additionalParams.get(i));
                     }
                 }
-                
+
                 jdbcTemplate.execute(sql);
             }
         } catch (IOException e) {

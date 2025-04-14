@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW <schema_name>.<view_name> AS
+CREATE OR REPLACE VIEW "<schema_name>".<view_name> AS
 SELECT
     pe.id AS enrolment_id,
     pe.uuid AS enrolment_uuid,
@@ -13,4 +13,4 @@ SELECT
 FROM public.individual ind
 JOIN public.program_enrolment pe ON ind.id = pe.individual_id
 JOIN public.program p ON pe.program_id = p.id
-JOIN <schema_name>.address ON ind.address_id = address.id;
+JOIN "<schema_name>".address ON ind.address_id = address.id;

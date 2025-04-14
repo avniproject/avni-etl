@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW <schema_name>.<view_name> AS
+CREATE OR REPLACE VIEW "<schema_name>".<view_name> AS
 SELECT
     ind.id AS individual_id,
     st.name AS subject_type,
@@ -14,5 +14,5 @@ SELECT
     address.*
 FROM public.individual ind
          JOIN public.subject_type st ON ind.subject_type_id = st.id
-         JOIN <schema_name>.address ON ind.address_id = address.id
+         JOIN "<schema_name>".address ON ind.address_id = address.id
     LEFT JOIN public.gender g ON ind.gender_id = g.id;
