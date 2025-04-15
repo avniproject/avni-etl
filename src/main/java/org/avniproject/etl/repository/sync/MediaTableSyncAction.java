@@ -26,7 +26,8 @@ import static org.avniproject.etl.repository.sql.SqlFile.readSqlFile;
 public class MediaTableSyncAction implements EntitySyncAction {
     private final JdbcTemplate jdbcTemplate;
     private final AvniMetadataRepository avniMetadataRepository;
-    private static final String medialSql = readSqlFile("media.sql.st");
+    private static final String mediaSql = readSqlFile("media.sql.st");
+    private static final String mediaV2Sql = readSqlFile("mediaV2.sql.st");
     private static final String deleteDuplicateMediaSql = readSqlFile("deleteDuplicateMedia.sql.st");
 
     @Autowired
@@ -49,17 +50,21 @@ public class MediaTableSyncAction implements EntitySyncAction {
         currentSchemaMetadata.getTableMetadata().forEach(thisTableMetadata -> {
             List<ColumnMetadata> mediaColumns = thisTableMetadata.findColumnsMatchingConceptType(ColumnMetadata.ConceptType.Image, ColumnMetadata.ConceptType.Video, ColumnMetadata.ConceptType.Audio, ColumnMetadata.ConceptType.File);
             mediaColumns.forEach(mediaColumn -> {
-                insertData(tableMetadata, thisTableMetadata, mediaColumn, lastSyncTime, dataSyncBoundaryTime);
+                insertData(tableMetadata, thisTableMetadata, mediaColumn, lastSyncTime, dataSyncBoundaryTime, false);
+            });
+            List<ColumnMetadata> mediaV2Columns = thisTableMetadata.findColumnsMatchingConceptType(ColumnMetadata.ConceptType.ImageV2);
+            mediaV2Columns.forEach(mediaColumn -> {
+                insertData(tableMetadata, thisTableMetadata, mediaColumn, lastSyncTime, dataSyncBoundaryTime, true);
             });
         });
         deleteDuplicateRows(lastSyncTime);
     }
 
-    private void insertData(TableMetadata mediaTableMetadata, TableMetadata tableMetadata, ColumnMetadata mediaColumn, Date lastSyncTime, Date dataSyncBoundaryTime) {
-        syncNewerRows(mediaTableMetadata, tableMetadata, mediaColumn, lastSyncTime, dataSyncBoundaryTime);
+    private void insertData(TableMetadata mediaTableMetadata, TableMetadata tableMetadata, ColumnMetadata mediaColumn, Date lastSyncTime, Date dataSyncBoundaryTime, boolean isV2) {
+        syncNewerRows(mediaTableMetadata, tableMetadata, mediaColumn, lastSyncTime, dataSyncBoundaryTime, isV2);
     }
 
-    private void syncNewerRows(TableMetadata mediaTableMetadata, TableMetadata tableMetadata, ColumnMetadata mediaColumn, Date lastSyncTime, Date dataSyncBoundaryTime) {
+    private void syncNewerRows(TableMetadata mediaTableMetadata, TableMetadata tableMetadata, ColumnMetadata mediaColumn, Date lastSyncTime, Date dataSyncBoundaryTime, boolean isV2) {
         String fromTableName = tableMetadata.getName();
         String subjectTypeName = avniMetadataRepository.subjectTypeName(tableMetadata.getSubjectTypeUuid());
         String programName = avniMetadataRepository.programName(tableMetadata.getProgramUuid());
@@ -79,7 +84,7 @@ public class MediaTableSyncAction implements EntitySyncAction {
             }
         });
 
-        ST template = new ST(medialSql)
+        ST template = new ST(isV2 ? mediaV2Sql : mediaSql)
                 .add("schemaName", wrapInQuotes(OrgIdentityContextHolder.getDbSchema()))
                 .add("tableName", wrapInQuotes(mediaTableMetadata.getName()))
                 .add("conceptColumnName", wrapInQuotes(conceptColumnName))

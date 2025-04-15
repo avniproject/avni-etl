@@ -80,6 +80,9 @@ public class TransactionDataSyncHelper {
                 case Location: {
                     return String.format("(%s%s) as \"%s\"", obsColumn, column.getTextExtractor(), columnName);
                 }
+                case ImageV2: {
+                    return String.format("(%s%s)::JSONB as \"%s\"", obsColumn, column.getTextExtractor(), columnName);
+                }
                 default: {
                     return String.format("(%s%s)::TEXT as \"%s\"", obsColumn, column.getTextExtractor(), columnName);
                 }
