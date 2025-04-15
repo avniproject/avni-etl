@@ -17,7 +17,6 @@ import static org.avniproject.etl.repository.sql.SqlFile.readFile;
 
 @Repository
 public class ReportingViewRepository implements ReportingViewMetaData {
-    private static final String ALL_ADDRESS_COLUMNS = "address.*";
     private static final Logger log = Logger.getLogger(ReportingViewRepository.class);
     private final JdbcTemplate jdbcTemplate;
     private final String addressLevelTypeNamesFile = readFile("/sql/etl/view/addressLevelTypeNames.sql.st");
@@ -65,13 +64,9 @@ public class ReportingViewRepository implements ReportingViewMetaData {
     private String getAddressColumnNames(OrganisationIdentity organisationIdentity) {
         ST st = new ST(addressLevelTypeNamesFile);
         st.add(SCHEMA_PARAM_NAME, organisationIdentity.getSchemaName());
+        st.add(DB_USER, organisationIdentity.getDbUser());
         String query = st.render();
-        try {
-            return jdbcTemplate.queryForObject(query, String.class);
-        } catch (DataAccessException exception) {
-            log.debug("Unable to fetch addressLevelType names", exception);
-        }
-        return ALL_ADDRESS_COLUMNS;
+        return jdbcTemplate.queryForObject(query, String.class);
     }
 
     private void createViewAndGrantPermission(ViewConfig config, String schemaName, List<String> users, String addressColumns) {

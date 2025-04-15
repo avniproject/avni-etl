@@ -5,6 +5,13 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * Important when OrganisationIdentity is used as an organisation group.
+ * In case of organisations group n+1 schemas are maintained. n = one for each organisation in the group and 1 for the group itself. Hence it is important to know how the fields are used for organisation group.
+ * dbUser = This is database user that will be used to QUERY the source data and hence that user's RLS will be applied. So this will the organisation's dbUser and not the group dbUser.
+ * schemaName = The schema name that will be created/updated. This is not the same as the schema of the organisation in which the data resides. This is not the schema of the organisation but the schema of organisation group
+ * schemaUser = The schema user is the db user for the organisation group. This is the user that will be used to INSERT/UPDATE/DELETE the data during ETL sync.
+ */
 public class OrganisationIdentity {
     private final String dbUser;
     private final String schemaName;

@@ -1,5 +1,5 @@
-drop view if exists "<schema_name>".<view_name>;
-CREATE OR REPLACE VIEW "<schema_name>".<view_name> AS
+drop view if exists "<schema_name>".subject_view;
+CREATE OR REPLACE VIEW "<schema_name>".subject_view AS
 SELECT
     ind.id AS individual_id,
     st.name AS subject_type,

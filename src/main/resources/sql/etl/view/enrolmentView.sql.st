@@ -1,5 +1,5 @@
-drop view if exists "<schema_name>".<view_name>;
-CREATE OR REPLACE VIEW "<schema_name>".<view_name> AS
+drop view if exists "<schema_name>".enrolment_view;
+CREATE OR REPLACE VIEW "<schema_name>".enrolment_view AS
 SELECT
     pe.id AS enrolment_id,
     pe.uuid AS enrolment_uuid,
