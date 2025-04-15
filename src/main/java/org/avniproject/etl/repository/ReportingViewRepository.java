@@ -83,13 +83,9 @@ public class ReportingViewRepository implements ReportingViewMetaData {
         st.add(EXTRA_COLUMNS, config.getExtraColumns());
 
         String query = st.render();
-        try {
-            jdbcTemplate.execute(query);
-            log.info(String.format("%s view created", config.getViewName()));
-            users.forEach(user -> grantPermissionToView(schemaName, config.getViewName(), user));
-        } catch (Exception e) {
-            log.error(String.format("Unable to create view %s", config.getViewName()), e);
-        }
+        jdbcTemplate.execute(query);
+        log.info(String.format("%s view created", config.getViewName()));
+        users.forEach(user -> grantPermissionToView(schemaName, config.getViewName(), user));
     }
 
     private void grantPermissionToView(String schemaName, String viewName, String userName) {
@@ -98,10 +94,6 @@ public class ReportingViewRepository implements ReportingViewMetaData {
         st.add(VIEW_PARAM_NAME, viewName);
         st.add(USER_PARAM_NAME, userName);
         String query = st.render();
-        try {
-            jdbcTemplate.execute(query);
-        } catch (DataAccessException exception) {
-            log.debug(String.format("Unable to grant permission of %s to %s", viewName, userName), exception);
-        }
+        jdbcTemplate.execute(query);
     }
 }
