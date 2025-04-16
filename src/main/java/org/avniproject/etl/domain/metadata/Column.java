@@ -88,7 +88,8 @@ public class Column {
         timestampWithTimezone,
         numeric,
         time,
-        integer;
+        integer,
+        jsonb;
 
         public String typeString() {
             switch (this) {
@@ -112,6 +113,8 @@ public class Column {
                     return "timestamp";
                 case timestampWithTimezone:
                     return "timestamp with time zone";
+                case jsonb:
+                    return "jsonb";
                 default:
                     throw new RuntimeException("column_name is not defined for this type"); //Not an expected scenario
             }

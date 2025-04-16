@@ -48,7 +48,8 @@ public class ColumnMetadata extends Model {
         Text,
         Time,
         QuestionGroup,
-        Video;
+        Video,
+        ImageV2;
 
         public Column.Type getColumnDatatype() {
             switch (this) {
@@ -60,6 +61,8 @@ public class ColumnMetadata extends Model {
                     return Column.Type.timestamp;
                 case Time:
                     return Column.Type.time;
+                case ImageV2:
+                    return Column.Type.jsonb;
                 default:
                     return Column.Type.text;
             }
