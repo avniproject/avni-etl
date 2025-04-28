@@ -81,3 +81,53 @@ from (select uuid organisationUUID from organisation) foo
         right join qrtz_job_details qjd on organisationUUID = qjd.job_name
 where qjd.job_group = 'SyncJobs'
    or qjd is null;
+
+-- SQL Function to Cleanup ETL Data for a Table in a Schema
+
+CREATE OR REPLACE FUNCTION cleanup_etl_data(p_schema_name TEXT, p_table_name TEXT)
+    RETURNS VOID AS
+$$
+DECLARE
+    v_table_id INT;
+    v_drop_table_sql TEXT;
+BEGIN
+    -- Get the table ID
+    SELECT id INTO v_table_id
+    FROM public.table_metadata
+    WHERE schema_name = p_schema_name AND name = p_table_name;
+
+    IF v_table_id IS NULL THEN
+        RAISE EXCEPTION 'Table metadata not found for schema: %, table: %', p_schema_name, p_table_name;
+    END IF;
+
+    -- Delete from index_metadata
+    DELETE FROM public.index_metadata
+    WHERE column_id IN (
+        SELECT id FROM public.column_metadata WHERE table_id = v_table_id
+    );
+
+    -- Delete from entity_sync_status
+    DELETE FROM public.entity_sync_status
+    WHERE table_metadata_id = v_table_id;
+
+    -- Delete from column_metadata
+    DELETE FROM public.column_metadata
+    WHERE table_id = v_table_id;
+
+    -- Delete from table_metadata
+    DELETE FROM public.table_metadata
+    WHERE id = v_table_id;
+
+    -- Drop the actual table
+    v_drop_table_sql := FORMAT('DROP TABLE IF EXISTS %I.%I', p_schema_name, p_table_name);
+    EXECUTE v_drop_table_sql;
+
+    RAISE NOTICE 'Cleanup completed for %.%', p_schema_name, p_table_name;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ### How to Use the above Function
+-- reset role;
+-- select * from apfodishauat.individual_child_qrt_child; -- table is present
+-- SELECT cleanup_etl_data('apfodishauat', 'individual_child_qrt_child');
+-- select * from apfodishauat.individual_child_qrt_child; -- table is not found anymore
