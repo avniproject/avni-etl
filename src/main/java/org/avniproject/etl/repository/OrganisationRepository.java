@@ -60,4 +60,21 @@ public class OrganisationRepository {
         if (organisationUUIDs.size() == 0) return null;
         return this.getOrganisation(organisationUUIDs.get(0));
     }
+
+    public List<Long> getOrganisationIds(OrganisationIdentity organisationIdentity) {
+        if (organisationIdentity.isPartOfGroup()) {
+            return jdbcTemplate.query("select o.id from organisation o\n" +
+                    "join organisation_group_organisation ogo on o.id = ogo.organisation_id\n" +
+                    "join organisation_group og on ogo.organisation_group_id = og.id\n" +
+                    "where og.schema_name = ?",
+                    ps -> ps.setString(1, organisationIdentity.getSchemaName()),
+                    (rs, rowNum) -> rs.getLong(1));
+        } else {
+            String query = "select o.id from organisation o\n" +
+                    "where o.schema_name = ?";
+            return jdbcTemplate.query(query,
+                    ps -> ps.setString(1, organisationIdentity.getSchemaName()),
+                    (rs, rowNum) -> rs.getLong(1));
+        }
+    }
 }
