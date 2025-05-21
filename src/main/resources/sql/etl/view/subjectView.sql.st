@@ -17,4 +17,5 @@ SELECT
 FROM public.individual ind
          JOIN public.subject_type st ON ind.subject_type_id = st.id and st.is_voided=false
          JOIN "<schema_name>".address ON ind.address_id = address.id
-    LEFT JOIN public.gender g ON ind.gender_id = g.id;
+    LEFT JOIN public.gender g ON ind.gender_id = g.id
+<where_clause>;

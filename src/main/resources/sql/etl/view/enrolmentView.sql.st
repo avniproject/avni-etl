@@ -17,4 +17,5 @@ SELECT
 FROM public.program_enrolment pe
 JOIN public.individual ind ON pe.individual_id = ind.id and ind.is_voided=false
 JOIN public.program p ON pe.program_id = p.id and p.is_voided=false
-JOIN "<schema_name>".address ON ind.address_id = address.id;
+JOIN "<schema_name>".address ON ind.address_id = address.id
+<where_clause>;

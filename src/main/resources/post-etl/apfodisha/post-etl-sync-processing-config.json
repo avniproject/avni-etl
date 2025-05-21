@@ -1,6 +1,11 @@
 {
   "ddl": [
     {
+      "order": 2,
+      "table": "individual_child_growth_monitoring_report_2",
+      "sql": "icgmr-table-create-2.sql"
+    },
+    {
       "order": 1,
       "table": "individual_child_growth_monitoring_report",
       "sql": "icgmr-table-create.sql"
