@@ -29,7 +29,9 @@ public class EntitySyncStatusRepository {
         String sql = "select ash.id                as id,\n" +
                 "       ash.table_metadata_id as table_metadata_id,\n" +
                 "       ash.last_sync_time   as last_sync_time,\n" +
-                "       ash.sync_status       as sync_status\n" +
+                "       ash.sync_status       as sync_status,\n" +
+                "       ash.db_user as db_user,\n" +
+                "       ash.schema_name as schema_name\n" +
                 "from entity_sync_status ash\n" +
                 "where ash.schema_name = :schema";
 
@@ -39,7 +41,10 @@ public class EntitySyncStatusRepository {
                 rs.getInt("id"),
                 rs.getInt("table_metadata_id"),
                 rs.getTimestamp("last_sync_time"),
-                EntitySyncStatus.Status.valueOf(rs.getString("sync_status")))), jdbcTemplate);
+                EntitySyncStatus.Status.valueOf(rs.getString("sync_status")),
+                rs.getString("db_user"),
+                rs.getString("schema_name"))
+        ), jdbcTemplate);
 
         return new SchemaDataSyncStatus(entitySyncStatuses);
     }
