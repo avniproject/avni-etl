@@ -23,13 +23,20 @@
           "insert-sql": "",
           "update-sqls": [
             "icgmr-sam-mam-update.sql",
-            "icgmr-nrc-status-update.sql",
             "icgmr-relapse-update.sql",
             "icgmr-growth-monitoring-fields-update.sql"
           ]
         },
         {
           "order": 3,
+          "sourceTableName": "individual_child_nrc_admission",
+          "insert-sql": "",
+          "update-sqls": [
+            "icgmr-nrc-status-update.sql"
+          ]
+        },
+        {
+          "order": 4,
           "sourceTableName": "address_level",
           "insert-sql": "",
           "update-sqls": [
@@ -37,7 +44,7 @@
           ]
         },
         {
-          "order": 4,
+          "order": 5,
           "sourceTableName": "individual",
           "insert-sql": "",
           "update-sqls": [
