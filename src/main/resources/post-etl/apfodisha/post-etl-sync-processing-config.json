@@ -1,11 +1,6 @@
 {
   "ddl": [
     {
-      "order": 2,
-      "table": "individual_child_growth_monitoring_report_2",
-      "sql": "icgmr-table-create-2.sql"
-    },
-    {
       "order": 1,
       "table": "individual_child_growth_monitoring_report",
       "sql": "icgmr-table-create.sql"
@@ -43,14 +38,6 @@
         },
         {
           "order": 4,
-          "sourceTableName": "individual_child_awc_mapping",
-          "insert-sql": "",
-          "update-sqls": [
-            "icgmr-awc-fields-update.sql"
-          ]
-        },
-        {
-          "order": 5,
           "sourceTableName": "individual",
           "insert-sql": "",
           "update-sqls": [
