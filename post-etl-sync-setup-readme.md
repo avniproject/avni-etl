@@ -181,6 +181,13 @@ The system currently implements transformations for:
 
 ## Troubleshooting and Security
 
+### Delete previous version of specific post_etl_sync_processing_config database table. An example is shown below
+
+```sql
+DELETE FROM public.post_etl_sync_status WHERE db_user = 'apfodisha';
+DROP TABLE apfodisha.individual_child_growth_monitoring_report;
+```
+
 ### Troubleshooting
 
 - Check application logs for detailed execution information
