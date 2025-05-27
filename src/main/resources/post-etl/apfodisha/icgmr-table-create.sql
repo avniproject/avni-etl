@@ -19,10 +19,16 @@ CREATE TABLE apfodisha.individual_child_growth_monitoring_report
     "Severely Underweight"                                          text    null,
     "Moderately Underweight"                                        text    null,
     "SAM"                                                           text    null,
+    "Was the Child SAM in the Last 1 month"                         text    null,
+    "Was the Child SAM in the Last 2 month"                         text    null,
+    "Was the Child SAM in the Last 3 Months"                        text    null,
     "Is it a relapse child (Yes/No)"                                text    null,
     "To be monitored by QRT"                                        text    null,
     "Was the child admitted to NRC before"                          text    null,
     "MAM"                                                           text    null,
+    "Was the Child MAM in the Last 1 Month"                         text    null,
+    "Was the Child MAM in the Last 2 Months"                        text    null,
+    "Was the Child MAM in the Last 3 Months"                        text    null,
     "Moderately Stunted"                                            text    null,
     "Severely Stunted"                                              text    null,
     "Growth Falter Status (GF-1/GF-2)"                              text    null,
@@ -40,6 +46,5 @@ CREATE TABLE apfodisha.individual_child_growth_monitoring_report
     "Is the child enrolled in the CMAM program?"                    text    NULL,
     "Is the child availing benefits (ATHR) under the CMAM program?" text    NULL,
     "Did you receive additional THR (MSPY)?"                        text    NULL,
-    "Date of Last SAM"                                              date    null,
-    "Date of Last MAM"                                              date    null
+    "Program Exited"                                                text    NULL
 );

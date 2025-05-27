@@ -1,5 +1,5 @@
 WITH growth_monitoring_fields AS (
-    SELECT DISTINCT ON (ind.id)
+    SELECT
         CASE
             WHEN follow_up."Weight for age Status" = 'Severely Underweight' THEN 'Yes'
             ELSE 'No'
@@ -27,6 +27,7 @@ WITH growth_monitoring_fields AS (
         follow_up."Growth Faltering" AS "Growth Falter Status (GF-1/GF-2)",
         follow_up."Height",
         follow_up."Weight",
+        follow_up."Nutritional Status",
         follow_up."encounter_date_time" AS "Date of Measurement",
         ind.id AS "Individual ID",
         follow_up."Is the child going to PPK?",
@@ -41,7 +42,11 @@ WITH growth_monitoring_fields AS (
         follow_up."What is the treatment advise for the SAM/MAM/GF2 child?",
         follow_up."Is the child enrolled in the CMAM program?",
         follow_up."Is the child availing benefits (ATHR) under the CMAM program?",
-        follow_up."Did you receive additional THR (MSPY)?"
+        follow_up."Did you receive additional THR (MSPY)?",
+        CASE
+            WHEN enrl.program_exit_date_time IS NULL THEN 'No'
+            ELSE 'Yes'
+        END AS "Program Exited"
     FROM apfodisha.individual ind
     JOIN apfodisha.individual_child enrl
         ON enrl.individual_id = ind.id
@@ -53,7 +58,6 @@ WITH growth_monitoring_fields AS (
         AND follow_up.is_voided = false
         AND follow_up.last_modified_date_time > :previousCutoffDateTime
         AND follow_up.last_modified_date_time <= :newCutoffDateTime
-    ORDER BY ind.id, follow_up.encounter_date_time DESC
 )
 UPDATE apfodisha.individual_child_growth_monitoring_report growth_report
 SET "Severely Underweight"                                          = fld."Severely Underweight",
@@ -65,6 +69,7 @@ SET "Severely Underweight"                                          = fld."Sever
     "Growth Falter Status (GF-1/GF-2)"                              = fld."Growth Falter Status (GF-1/GF-2)",
     "Height"                                                        = fld."Height",
     "Weight"                                                        = fld."Weight",
+    "Nutritional Status"                                            = fld."Nutritional Status",
     "Date of Measurement"                                           = fld."Date of Measurement",
     "Is the child going to PPK?"                                    = fld."Is the child going to PPK?",
     "Is the child going to Creche?"                                 = fld."Is the child going to Creche?",
@@ -78,6 +83,7 @@ SET "Severely Underweight"                                          = fld."Sever
     "What is the treatment advise for the SAM/MAM/GF2 child?"       = fld."What is the treatment advise for the SAM/MAM/GF2 child?",
     "Is the child enrolled in the CMAM program?"                    = fld."Is the child enrolled in the CMAM program?",
     "Is the child availing benefits (ATHR) under the CMAM program?" = fld."Is the child availing benefits (ATHR) under the CMAM program?",
-    "Did you receive additional THR (MSPY)?"                        = fld."Did you receive additional THR (MSPY)?"
+    "Did you receive additional THR (MSPY)?"                        = fld."Did you receive additional THR (MSPY)?",
+    "Program Exited"                                                = fld."Program Exited"
 FROM growth_monitoring_fields fld
 WHERE growth_report."Beneficiary ID" = fld."Individual ID";

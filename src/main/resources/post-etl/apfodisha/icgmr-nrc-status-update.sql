@@ -1,6 +1,6 @@
 WITH cte_nrc_status AS (
     SELECT individual_id AS "Individual ID",
-    MAX(CASE WHEN "Admission Status" = 'Admitted' THEN 1 ELSE 0 END) AS "Was the child admitted to NRC before"
+    MAX(CASE WHEN "Admission Status" = 'Admited' THEN 'Yes' ELSE 'No' END) AS "Was the child admitted to NRC before"
     FROM apfodisha.individual_child_nrc_admission nrc
     WHERE is_voided = FALSE
     AND (nrc.last_modified_date_time > :previousCutoffDateTime AND nrc.last_modified_date_time <= :newCutoffDateTime)
