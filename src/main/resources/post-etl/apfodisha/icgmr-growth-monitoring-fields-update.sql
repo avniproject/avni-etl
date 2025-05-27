@@ -21,7 +21,7 @@ WITH growth_monitoring_fields AS (
             ELSE 'No'
         END AS "Moderately Stunted",
         CASE
-            WHEN follow_up."Height for age Status" = 'Severely Stunted' THEN 'Yes'
+            WHEN follow_up."Height for age Status" = 'Severely stunted' THEN 'Yes'
             ELSE 'No'
         END AS "Severely Stunted",
         follow_up."Growth Faltering" AS "Growth Falter Status (GF-1/GF-2)",
