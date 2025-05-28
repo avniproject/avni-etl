@@ -29,7 +29,7 @@ WITH growth_monitoring_fields AS (
         follow_up."Weight",
         follow_up."Nutritional Status",
         follow_up."encounter_date_time" AS "Date of Measurement",
-        ind.id AS "Individual ID",
+        ind.id AS "Beneficiary ID",
         follow_up."Is the child going to PPK?",
         follow_up."Is the child going to Creche?",
         follow_up."Is the child being currently exclusively breastfed?",
@@ -87,4 +87,4 @@ SET "Severely Underweight"                                          = fld."Sever
     "Did you receive additional THR (MSPY)?"                        = fld."Did you receive additional THR (MSPY)?",
     "Program Exited"                                                = fld."Program Exited"
 FROM growth_monitoring_fields fld
-WHERE growth_report."Beneficiary ID" = fld."Individual ID";
+WHERE growth_report."Beneficiary ID" = fld."Beneficiary ID";
