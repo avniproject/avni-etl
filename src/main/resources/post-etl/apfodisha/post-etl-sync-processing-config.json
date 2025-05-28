@@ -13,18 +13,19 @@
       "sqls": [
         {
           "order": 1,
-          "sourceTableName": "individual",
-          "insert-sql": "icgmr-individual-insert.sql",
-          "update-sqls": []
+          "sourceTableName": "individual_child_growth_monitoring",
+          "insert-sql": "icgmr-growth-monitoring-fields-insert.sql",
+          "update-sqls": [
+            "icgmr-sam-mam-update.sql",
+            "icgmr-relapse-update.sql"
+          ]
         },
         {
           "order": 2,
-          "sourceTableName": "individual_child_growth_monitoring",
+          "sourceTableName": "individual",
           "insert-sql": "",
           "update-sqls": [
-            "icgmr-sam-mam-update.sql",
-            "icgmr-relapse-update.sql",
-            "icgmr-growth-monitoring-fields-update.sql"
+            "icgmr-individual-fields-update.sql"
           ]
         },
         {
@@ -41,14 +42,6 @@
           "insert-sql": "",
           "update-sqls": [
             "icgmr-village-fields-update.sql"
-          ]
-        },
-        {
-          "order": 5,
-          "sourceTableName": "individual",
-          "insert-sql": "",
-          "update-sqls": [
-            "icgmr-individual-fields-update.sql"
           ]
         }
       ]
