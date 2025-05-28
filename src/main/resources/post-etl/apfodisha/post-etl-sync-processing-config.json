@@ -16,6 +16,7 @@
           "sourceTableName": "individual_child_growth_monitoring",
           "insert-sql": "icgmr-growth-monitoring-fields-insert.sql",
           "update-sqls": [
+            "icgmr-growth-monitoring-fields-update.sql",
             "icgmr-sam-mam-update.sql",
             "icgmr-relapse-update.sql"
           ]

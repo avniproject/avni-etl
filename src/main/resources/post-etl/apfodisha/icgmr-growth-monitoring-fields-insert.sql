@@ -56,8 +56,8 @@ WITH growth_monitoring_fields AS (
         ON follow_up.program_enrolment_id = enrl.id
         AND follow_up.encounter_date_time IS NOT NULL
         AND follow_up.is_voided = false
-        AND follow_up.last_modified_date_time > :previousCutoffDateTime
-        AND follow_up.last_modified_date_time <= :newCutoffDateTime
+        AND follow_up.created_date_time > :previousCutoffDateTime
+        AND follow_up.created_date_time <= :newCutoffDateTime
 )
 INSERT INTO apfodisha.individual_child_growth_monitoring_report
 ("Severely Underweight",
