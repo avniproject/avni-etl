@@ -87,4 +87,5 @@ SET "Severely Underweight"                                          = fld."Sever
     "Did you receive additional THR (MSPY)?"                        = fld."Did you receive additional THR (MSPY)?",
     "Program Exited"                                                = fld."Program Exited"
 FROM growth_monitoring_fields fld
-WHERE growth_report."Beneficiary ID" = fld."Beneficiary ID";
+WHERE growth_report."Beneficiary ID" = fld."Beneficiary ID"
+AND growth_report."Date of Measurement" = fld."Date of Measurement";
