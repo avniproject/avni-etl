@@ -1,4 +1,4 @@
-select STRING_AGG('address."' || alt.name || '"', ', ')
+select alt.name
 from public.address_level_type alt
          join organisation o on alt.organisation_id = o.id
 where
