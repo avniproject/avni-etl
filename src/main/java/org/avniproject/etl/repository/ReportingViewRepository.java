@@ -50,7 +50,7 @@ public class ReportingViewRepository implements ReportingViewMetaData {
                 "", baseVisitsViewFile));
         viewConfigs.put(Type.COMPLETED_VISITS, new ViewConfig("completed_visits_view",
                 "WHERE e.organisation_id in (%s) AND e.encounter_date_time IS NOT NULL AND e.cancel_date_time IS NULL",
-                "", baseVisitsViewFile));
+                "e.encounter_date_time,", baseVisitsViewFile));
         viewConfigs.put(Type.OVERDUE_VISITS, new ViewConfig("overdue_visits_view",
                 "WHERE e.organisation_id in (%s) AND CURRENT_DATE > e.max_visit_date_time",
                 "", baseVisitsViewFile));
@@ -59,7 +59,7 @@ public class ReportingViewRepository implements ReportingViewMetaData {
     @Override
     public void createOrReplaceView(OrganisationIdentity organisationIdentity) {
         String schemaName = organisationIdentity.getSchemaName();
-        List<String> addressColumns = getAddressColumnNames(organisationIdentity);
+        String addressColumns = getAddressColumnNames(organisationIdentity);
         List<String> usersWithSchemaAccess = organisationIdentity.getUsersWithSchemaAccess();
         for (Type type : Type.values()) {
             ViewConfig config = viewConfigs.get(type);
@@ -67,15 +67,15 @@ public class ReportingViewRepository implements ReportingViewMetaData {
         }
     }
 
-    private List<String> getAddressColumnNames(OrganisationIdentity organisationIdentity) {
+    private String getAddressColumnNames(OrganisationIdentity organisationIdentity) {
         ST st = new ST(addressLevelTypeNamesFile);
         st.add(SCHEMA_PARAM_NAME, organisationIdentity.getSchemaName());
         st.add(DB_USER, organisationIdentity.getDbUser());
         String query = st.render();
-        return jdbcTemplate.queryForList(query, String.class);
+        return jdbcTemplate.queryForObject(query, String.class);
     }
 
-    private void createViewAndGrantPermission(ViewConfig config, String schemaName, List<String> users, List<String> addressColumns, OrganisationIdentity organisationIdentity) {
+    private void createViewAndGrantPermission(ViewConfig config, String schemaName, List<String> users, String addressColumns, OrganisationIdentity organisationIdentity) {
         ST st = new ST(config.getSqlTemplateFile());
         st.add(SCHEMA_PARAM_NAME, schemaName);
         st.add(VIEW_PARAM_NAME, config.getViewName());
