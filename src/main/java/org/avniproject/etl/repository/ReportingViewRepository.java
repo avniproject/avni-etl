@@ -2,14 +2,15 @@ package org.avniproject.etl.repository;
 
 import jakarta.annotation.PostConstruct;
 import org.apache.log4j.Logger;
-import org.assertj.core.util.Strings;
 import org.avniproject.etl.domain.OrganisationIdentity;
 import org.avniproject.etl.domain.metadata.ReportingViewMetaData;
-import org.springframework.dao.DataAccessException;
+import org.avniproject.etl.domain.metadata.TableMetadata;
+import org.avniproject.etl.dto.TableMetadataST;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.stringtemplate.v4.ST;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,58 +30,68 @@ public class ReportingViewRepository implements ReportingViewMetaData {
 
     private final Map<Type, ViewConfig> viewConfigs = new HashMap<>();
     private final OrganisationRepository organisationRepository;
+    private final TableMetadataRepository tableMetadataRepository;
 
     public enum Type {
         SUBJECT, ENROLMENT, DUE_VISITS, COMPLETED_VISITS, OVERDUE_VISITS
     }
 
-    public ReportingViewRepository(JdbcTemplate jdbcTemplate, OrganisationRepository organisationRepository) {
+    public ReportingViewRepository(JdbcTemplate jdbcTemplate, OrganisationRepository organisationRepository, TableMetadataRepository tableMetadataRepository) {
         this.jdbcTemplate = jdbcTemplate;
         this.organisationRepository = organisationRepository;
+        this.tableMetadataRepository = tableMetadataRepository;
     }
 
     @PostConstruct
     public void init() {
         viewConfigs.put(Type.SUBJECT, new ViewConfig("subject_view",
-                "where ind.organisation_id in (%s)", "", subjectViewFile));
+                "and st.organisation_id in (%s)", "", subjectViewFile));
         viewConfigs.put(Type.ENROLMENT, new ViewConfig("enrolment_view",
-                "where pe.organisation_id in (%s)", "", enrolmentViewFile));
+                "and p.organisation_id in (%s)", "", enrolmentViewFile));
         viewConfigs.put(Type.DUE_VISITS, new ViewConfig("due_visits_view",
-                "WHERE e.organisation_id in (%s) AND e.earliest_visit_date_time < CURRENT_DATE AND CURRENT_DATE < e.max_visit_date_time",
+                "WHERE earliest_visit_date_time < CURRENT_DATE AND CURRENT_DATE < max_visit_date_time AND is_voided IS false",
                 "", baseVisitsViewFile));
         viewConfigs.put(Type.COMPLETED_VISITS, new ViewConfig("completed_visits_view",
-                "WHERE e.organisation_id in (%s) AND e.encounter_date_time IS NOT NULL AND e.cancel_date_time IS NULL",
-                "e.encounter_date_time,", baseVisitsViewFile));
+                "WHERE encounter_date_time IS NOT NULL AND cancel_date_time IS NULL AND is_voided IS false",
+                "", baseVisitsViewFile));
         viewConfigs.put(Type.OVERDUE_VISITS, new ViewConfig("overdue_visits_view",
-                "WHERE e.organisation_id in (%s) AND CURRENT_DATE > e.max_visit_date_time",
+                "WHERE CURRENT_DATE > max_visit_date_time AND is_voided IS false",
                 "", baseVisitsViewFile));
     }
 
     @Override
     public void createOrReplaceView(OrganisationIdentity organisationIdentity) {
         String schemaName = organisationIdentity.getSchemaName();
-        String addressColumns = getAddressColumnNames(organisationIdentity);
+        List<String> addressColumns = getAddressColumnNames(organisationIdentity);
         List<String> usersWithSchemaAccess = organisationIdentity.getUsersWithSchemaAccess();
         for (Type type : Type.values()) {
             ViewConfig config = viewConfigs.get(type);
-            createViewAndGrantPermission(config, schemaName, usersWithSchemaAccess, addressColumns, organisationIdentity);
+            createViewAndGrantPermission(type, config, schemaName, usersWithSchemaAccess, addressColumns, organisationIdentity);
         }
     }
 
-    private String getAddressColumnNames(OrganisationIdentity organisationIdentity) {
+    private List<String> getAddressColumnNames(OrganisationIdentity organisationIdentity) {
         ST st = new ST(addressLevelTypeNamesFile);
         st.add(SCHEMA_PARAM_NAME, organisationIdentity.getSchemaName());
         st.add(DB_USER, organisationIdentity.getDbUser());
         String query = st.render();
-        return jdbcTemplate.queryForObject(query, String.class);
+        return jdbcTemplate.queryForList(query, String.class);
     }
 
-    private void createViewAndGrantPermission(ViewConfig config, String schemaName, List<String> users, String addressColumns, OrganisationIdentity organisationIdentity) {
+    private void createViewAndGrantPermission(Type type, ViewConfig config, String schemaName, List<String> users, List<String> addressColumns, OrganisationIdentity organisationIdentity) {
+        List<TableMetadataST> tableMetadata = switch (type) {
+            case SUBJECT ->
+                    tableMetadataRepository.fetchByType(List.of(TableMetadata.Type.Individual, TableMetadata.Type.Person, TableMetadata.Type.Household, TableMetadata.Type.Group));
+            case ENROLMENT -> tableMetadataRepository.fetchByType(List.of(TableMetadata.Type.ProgramEnrolment));
+            case DUE_VISITS, COMPLETED_VISITS, OVERDUE_VISITS ->
+                    tableMetadataRepository.fetchByType(List.of(TableMetadata.Type.Encounter, TableMetadata.Type.IndividualEncounterCancellation, TableMetadata.Type.ProgramEncounter, TableMetadata.Type.ProgramEncounterCancellation));
+        };
         ST st = new ST(config.getSqlTemplateFile());
         st.add(SCHEMA_PARAM_NAME, schemaName);
         st.add(VIEW_PARAM_NAME, config.getViewName());
         st.add(ADDRESS_COLUMNS_PARAM_NAME, addressColumns);
         st.add(EXTRA_COLUMNS, config.getExtraColumns());
+        st.add(TABLE_METADATA, tableMetadata);
 
         String whereClause = config.getWhereClause();
         List<Long> organisationIds = organisationRepository.getOrganisationIds(organisationIdentity);

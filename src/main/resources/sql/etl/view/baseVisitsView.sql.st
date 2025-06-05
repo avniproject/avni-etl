@@ -1,19 +1,29 @@
+DROP VIEW IF EXISTS "<schema_name>"."<view_name>";
+<if(table_metadata)>
 CREATE OR REPLACE VIEW "<schema_name>"."<view_name>" AS
+WITH visits AS (
+<table_metadata:{table |
+    SELECT
+    id,
+    uuid,
+    name,
+    individual_id,
+    earliest_visit_date_time,
+    max_visit_date_time,
+    created_date_time,
+    last_modified_date_time,
+    address_id
+from "<schema_name>"."<table.name>"
+<where_clause>
+}; separator="UNION ALL \n">
+)
 SELECT
-    e.id AS id,
-    e.uuid AS uuid,
-    et.name AS encounter_type_name,
+    visits.*,
     ind.uuid AS individual_uuid,
     ind.first_name,
     ind.last_name,
-    e.earliest_visit_date_time,
-    <extra_columns>
-    e.max_visit_date_time,
-    e.created_date_time,
-    e.last_modified_date_time,
-    <address_columns>
-FROM encounter e
-JOIN public.individual ind ON e.individual_id = ind.id
-JOIN public.encounter_type et ON e.encounter_type_id = et.id
-JOIN "<schema_name>".address ON ind.address_id = address.id
-<where_clause>
+    <address_columns:{col | a."<col>"}; separator=", ">
+FROM visits
+JOIN public.individual ind ON visits.individual_id = ind.id
+JOIN "<schema_name>".address a ON visits.address_id = a.id;
+<endif>

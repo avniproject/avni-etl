@@ -1,21 +1,31 @@
 drop view if exists "<schema_name>".enrolment_view;
+<if(table_metadata)>
 CREATE OR REPLACE VIEW "<schema_name>".enrolment_view AS
+WITH all_enrolments AS (
+<table_metadata:{table |
 SELECT
-    pe.id AS enrolment_id,
-    pe.uuid AS enrolment_uuid,
+    id AS enrolment_id,
+    uuid AS enrolment_uuid,
+    '<table.programUuid>' AS program_uuid,
+    individual_id,
+    enrolment_date_time,
+    created_date_time,
+    last_modified_date_time,
+    is_voided,
+    program_exit_date_time,
+    address_id
+from "<schema_name>"."<table.name>"
+where is_voided is false
+}; separator="UNION ALL \n">
+)
+SELECT all_enrolments.*,
     p.name AS program_name,
-    ind.id AS individual_id,
     ind.uuid AS individual_uuid,
     ind.first_name,
     ind.last_name,
-    pe.enrolment_date_time,
-    pe.created_date_time AS created_date_time,
-    pe.last_modified_date_time AS last_modified_date_time,
-    pe.is_voided,
-    pe.program_exit_date_time AS program_exit_date_time,
-    <address_columns>
-FROM public.program_enrolment pe
-JOIN public.individual ind ON pe.individual_id = ind.id and ind.is_voided=false
-JOIN public.program p ON pe.program_id = p.id and p.is_voided=false
-JOIN "<schema_name>".address ON ind.address_id = address.id
-<where_clause>;
+     <address_columns:{col | a."<col>"}; separator=", ">
+FROM all_enrolments
+JOIN public.program p ON all_enrolments.program_uuid = p.uuid <where_clause>
+JOIN "<schema_name>".address a ON all_enrolments.address_id = a.id
+JOIN public.individual ind ON all_enrolments.individual_id = ind.id;
+<endif>

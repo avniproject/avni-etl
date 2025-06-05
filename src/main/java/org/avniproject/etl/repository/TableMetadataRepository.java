@@ -2,6 +2,7 @@ package org.avniproject.etl.repository;
 
 import org.avniproject.etl.domain.OrgIdentityContextHolder;
 import org.avniproject.etl.domain.metadata.TableMetadata;
+import org.avniproject.etl.dto.TableMetadataST;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -9,7 +10,10 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import static org.avniproject.etl.repository.JdbcContextWrapper.runInOrgContext;
 
 @Repository
 public class TableMetadataRepository {
@@ -79,4 +83,22 @@ public class TableMetadataRepository {
 
         return parameters;
     }
+
+    public List<TableMetadataST> fetchByType(List<TableMetadata.Type> types) {
+        List<String> list = types.stream().map(Enum::name).toList();
+        String sql = "SELECT * FROM table_metadata WHERE type IN (:types)";
+
+        HashMap<String, Object> params = new HashMap<>();
+        params.put("types", list);
+        return runInOrgContext(() -> new NamedParameterJdbcTemplate(jdbcTemplate)
+                .query(sql, params, (rs, rowNum) ->
+                        new TableMetadataST(rs.getString("name"),
+                                rs.getString("type"),
+                                rs.getString("subject_type_uuid"),
+                                rs.getString("program_uuid"),
+                                rs.getString("encounter_type_uuid"),
+                                rs.getString("type").equals("Person")
+                        )), jdbcTemplate);
+    }
+
 }

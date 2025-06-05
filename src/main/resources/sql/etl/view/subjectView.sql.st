@@ -1,21 +1,29 @@
-drop view if exists "<schema_name>".subject_view;
+DROP VIEW IF EXISTS "<schema_name>".subject_view;
+<if(table_metadata)>
 CREATE OR REPLACE VIEW "<schema_name>".subject_view AS
+WITH all_subjects AS (
+<table_metadata:{table |
 SELECT
-    ind.id AS individual_id,
-    st.name AS subject_type,
-    ind.uuid AS individual_uuid,
-    ind.first_name,
-    ind.last_name,
-    ind.middle_name,
-    ind.date_of_birth,
-    g.name AS gender,
-    ind.registration_date AS registration_date,
-    ind.created_date_time AS created_date_time,
-    ind.last_modified_date_time As last_modified_date_time,
-    ind.is_voided,
-    <address_columns>
-FROM public.individual ind
-         JOIN public.subject_type st ON ind.subject_type_id = st.id and st.is_voided=false
-         JOIN "<schema_name>".address ON ind.address_id = address.id
-    LEFT JOIN public.gender g ON ind.gender_id = g.id
-<where_clause>;
+    id as individual_id,
+    uuid as indvidual_uuid,
+    first_name,
+<if(table.isPerson)> date_of_birth <else> null <endif> as date_of_birth,
+    last_name,
+<if(table.isPerson)> gender <else> null <endif> as gender,
+    registration_date,
+    created_date_time,
+    last_modified_date_time,
+    is_voided,
+    '<table.subjectTypeUuid>' as subject_type_uuid,
+    address_id
+from "<schema_name>"."<table.name>"
+where is_voided is false
+}; separator="UNION ALL \n">
+)
+SELECT all_subs.*,
+ st.name as subject_type,
+ <address_columns:{col | a."<col>"}; separator=", ">
+ FROM all_subjects all_subs
+  JOIN public.subject_type st on st.uuid = all_subs.subject_type_uuid <where_clause>
+  JOIN "<schema_name>".address a ON all_subs.address_id = a.id;
+ <endif>

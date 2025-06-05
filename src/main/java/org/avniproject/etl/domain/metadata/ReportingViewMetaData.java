@@ -9,6 +9,7 @@ public interface ReportingViewMetaData {
     String WHERE_CLAUSE = "where_clause";
     String EXTRA_COLUMNS = "extra_columns";
     String USER_PARAM_NAME = "user_name";
+    String TABLE_METADATA = "table_metadata";
     String DB_USER = "db_user";
 
 
