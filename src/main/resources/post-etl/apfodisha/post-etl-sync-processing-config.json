@@ -1,11 +1,6 @@
 {
   "ddl": [
     {
-      "order": 2,
-      "table": "individual_child_growth_monitoring_report_2",
-      "sql": "icgmr-table-create-2.sql"
-    },
-    {
       "order": 1,
       "table": "individual_child_growth_monitoring_report",
       "sql": "icgmr-table-create.sql"
@@ -18,43 +13,36 @@
       "sqls": [
         {
           "order": 1,
-          "sourceTableName": "individual",
-          "insert-sql": "icgmr-individual-insert.sql",
-          "update-sqls": []
+          "sourceTableName": "individual_child_growth_monitoring",
+          "insert-sql": "icgmr-growth-monitoring-fields-insert.sql",
+          "update-sqls": [
+            "icgmr-growth-monitoring-fields-update.sql",
+            "icgmr-sam-mam-update.sql",
+            "icgmr-relapse-update.sql"
+          ]
         },
         {
           "order": 2,
-          "sourceTableName": "individual_child_growth_monitoring",
-          "insert-sql": "",
-          "update-sqls": [
-            "icgmr-sam-mam-update.sql",
-            "icgmr-nrc-status-update.sql",
-            "icgmr-relapse-update.sql",
-            "icgmr-growth-monitoring-fields-update.sql"
-          ]
-        },
-        {
-          "order": 3,
-          "sourceTableName": "address_level",
-          "insert-sql": "",
-          "update-sqls": [
-            "icgmr-village-fields-update.sql"
-          ]
-        },
-        {
-          "order": 4,
-          "sourceTableName": "individual_child_awc_mapping",
-          "insert-sql": "",
-          "update-sqls": [
-            "icgmr-awc-fields-update.sql"
-          ]
-        },
-        {
-          "order": 5,
           "sourceTableName": "individual",
           "insert-sql": "",
           "update-sqls": [
             "icgmr-individual-fields-update.sql"
+          ]
+        },
+        {
+          "order": 3,
+          "sourceTableName": "individual_child_nrc_admission",
+          "insert-sql": "",
+          "update-sqls": [
+            "icgmr-nrc-status-update.sql"
+          ]
+        },
+        {
+          "order": 4,
+          "sourceTableName": "address_level",
+          "insert-sql": "",
+          "update-sqls": [
+            "icgmr-village-fields-update.sql"
           ]
         }
       ]
