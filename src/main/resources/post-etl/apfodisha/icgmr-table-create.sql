@@ -2,12 +2,12 @@ set role apfodisha;
 
 CREATE TABLE apfodisha.individual_child_growth_monitoring_report
 (
-    "Block"                                                         text    NULL,
-    "GP"                                                            text    NULL,
-    "Village/Hamlet"                                                text    NULL,
     "Project/Block"                                                 text    NULL,
+    "Block"                                                         text    NULL,
     "Sector"                                                        text    NULL,
+    "GP"                                                            text    NULL,
     "AWC"                                                           text    NULL,
+    "Village/Hamlet"                                                text    NULL,
     "HH ID"                                                         int4    NULL,
     "Beneficiary ID"                                                int4    NULL,
     "Name of Child Benefeciaries"                                   text    NULL,
@@ -15,13 +15,20 @@ CREATE TABLE apfodisha.individual_child_growth_monitoring_report
     "Father's name"                                                 text    NULL,
     "Mother's Name"                                                 text    NULL,
     "Date of Measurement"                                           date    null,
+    "Nutritional Status"                                            text    null,
     "Severely Underweight"                                          text    null,
     "Moderately Underweight"                                        text    null,
     "SAM"                                                           text    null,
+    "Was the Child SAM in the Last 1 month"                         text    null,
+    "Was the Child SAM in the Last 2 month"                         text    null,
+    "Was the Child SAM in the Last 3 Months"                        text    null,
     "Is it a relapse child (Yes/No)"                                text    null,
-    "Was the child facilitated to CHC by QRT"                       text    null,
+    "To be monitored by QRT"                                        text    null,
     "Was the child admitted to NRC before"                          text    null,
     "MAM"                                                           text    null,
+    "Was the Child MAM in the Last 1 Month"                         text    null,
+    "Was the Child MAM in the Last 2 Months"                        text    null,
+    "Was the Child MAM in the Last 3 Months"                        text    null,
     "Moderately Stunted"                                            text    null,
     "Severely Stunted"                                              text    null,
     "Growth Falter Status (GF-1/GF-2)"                              text    null,
@@ -39,6 +46,5 @@ CREATE TABLE apfodisha.individual_child_growth_monitoring_report
     "Is the child enrolled in the CMAM program?"                    text    NULL,
     "Is the child availing benefits (ATHR) under the CMAM program?" text    NULL,
     "Did you receive additional THR (MSPY)?"                        text    NULL,
-    "Date of Last SAM"                                              date    null,
-    "Date of Last MAM"                                              date    null
+    "Program Exited"                                                text    NULL
 );
