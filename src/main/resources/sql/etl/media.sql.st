@@ -13,16 +13,16 @@ select entity.id,
        entity.last_modified_date_time,
        entity.organisation_id,
        entity.address_id,
-       json_array_elements_text(case when entity.<conceptColumnName> is null then null when entity.<conceptColumnName> like '[%' then entity.<conceptColumnName>::json else ('["' || entity.<conceptColumnName> || '"]')::json end),
+       json_array_elements_text(case when entity."<conceptColumnName>" is null then null when entity."<conceptColumnName>" like '[%' then entity."<conceptColumnName>"::json else ('["' || entity."<conceptColumnName>" || '"]')::json end),
        <if(syncRegistrationConcept1ColumnName)>
             <syncRegistrationConcept1Name>,
-            entity.<syncRegistrationConcept1ColumnName>,
+            entity."<syncRegistrationConcept1ColumnName>",
        <else>
             null, null,
        <endif>
        <if(syncRegistrationConcept2ColumnName)>
             <syncRegistrationConcept2Name>,
-            entity.<syncRegistrationConcept2ColumnName>,
+            entity."<syncRegistrationConcept2ColumnName>",
        <else>
             null, null,
        <endif>
@@ -38,6 +38,6 @@ select entity.id,
             null
        <endif>
 from <schemaName>.<fromTableName> entity
-    inner join <schemaName>.<subjectTableName> subject on entity.<individualId> = subject.id
-where entity.last_modified_date_time > '<startTime>'
-  and entity.last_modified_date_time \<= '<endTime>';
+     inner join <schemaName>.<subjectTableName> subject on entity."<individualId>" = subject.id
+where entity."last_modified_date_time" > '<startTime>'
+  and entity."last_modified_date_time" \<= '<endTime>';

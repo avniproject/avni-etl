@@ -109,7 +109,7 @@ ifndef db
 endif
 	-psql -h localhost -Uopenchs $(db) -c "select delete_etl_metadata_for_schema('$(schemaName)','$(dbUser)','$(dbOwner)' )"
 
-delete-etl-metadata-for-org:
+delete-etl-metadata-for-org-group:
 ifndef schemaName
 	@echo "Provde the schemaName variable"
 	exit 1

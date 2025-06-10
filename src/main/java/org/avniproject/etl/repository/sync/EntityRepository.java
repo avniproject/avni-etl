@@ -21,6 +21,7 @@ public class EntityRepository {
                             EntityApprovalStatusSyncAction entityApprovalStatusSyncAction,
                             AnswerConceptSync answerConceptSync,
                             MediaTableSyncAction mediaTableSyncAction,
+                            MediaForRepeatableGroupsSyncAction mediaForRepeatableGroupsSyncAction,
                             SyncTelemetryTableSyncAction syncTelemetryTableSyncAction,
                             UserTableSyncAction userTableSyncAction,
                             CleanEnrolmentExitTableAction cleanEnrolmentExitTableAction,
@@ -32,6 +33,7 @@ public class EntityRepository {
         entitySyncRepositories.add(entityApprovalStatusSyncAction);
         entitySyncRepositories.add(answerConceptSync);
         entitySyncRepositories.add(mediaTableSyncAction);
+        entitySyncRepositories.add(mediaForRepeatableGroupsSyncAction);
         entitySyncRepositories.add(syncTelemetryTableSyncAction);
         entitySyncRepositories.add(userTableSyncAction);
         entitySyncRepositories.add(duplicateRowDeleteAction);

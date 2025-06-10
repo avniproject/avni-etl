@@ -11,18 +11,18 @@ select entity.id,
        entity.last_modified_by_id,
        entity.created_date_time,
        entity.last_modified_date_time,
-       entity.organisation_id,
-       entity.address_id,
-       json_array_elements_text(entity.<conceptColumnName>::json)::json->>'uri',
+       entity."organisation_id",
+       entity."address_id",
+       json_array_elements_text(entity."<conceptColumnName>"::json)::json->>'uri',
        <if(syncRegistrationConcept1ColumnName)>
             <syncRegistrationConcept1Name>,
-            entity.<syncRegistrationConcept1ColumnName>,
+            entity."<syncRegistrationConcept1ColumnName>",
        <else>
             null, null,
        <endif>
        <if(syncRegistrationConcept2ColumnName)>
             <syncRegistrationConcept2Name>,
-            entity.<syncRegistrationConcept2ColumnName>,
+            entity."<syncRegistrationConcept2ColumnName>",
        <else>
             null, null,
        <endif>
@@ -37,8 +37,8 @@ select entity.id,
        <else>
             null
        <endif>,
-       json_array_elements_text(entity.<conceptColumnName>::json)::jsonb
+       json_array_elements_text(entity."<conceptColumnName>"::json)::jsonb
 from <schemaName>.<fromTableName> entity
-    inner join <schemaName>.<subjectTableName> subject on entity.<individualId> = subject.id
-where entity.last_modified_date_time > '<startTime>'
-  and entity.last_modified_date_time \<= '<endTime>';
+    inner join <schemaName>.<subjectTableName> subject on entity."<individualId>" = subject.id
+where entity."last_modified_date_time" > '<startTime>'
+  and entity."last_modified_date_time" \<= '<endTime>';
