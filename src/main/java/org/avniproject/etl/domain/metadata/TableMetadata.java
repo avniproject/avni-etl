@@ -15,6 +15,7 @@ import static org.springframework.util.ObjectUtils.nullSafeEquals;
 public class TableMetadata extends Model {
     private String name;
     private Type type;
+    private Type parentType;
     private String subjectTypeUuid;
     private String programUuid;
     private String encounterTypeUuid;
@@ -155,6 +156,14 @@ public class TableMetadata extends Model {
 
     public void setType(Type type) {
         this.type = type;
+    }
+
+    public Type getParentType() {
+        return parentType;
+    }
+
+    public void setParentType(Type parentType) {
+        this.parentType = parentType;
     }
 
     public String getSubjectTypeUuid() {

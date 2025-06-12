@@ -2,14 +2,12 @@ package org.avniproject.etl.repository.rowMappers.tableMappers.repeatableQuestio
 
 import org.avniproject.etl.domain.metadata.Column;
 import org.avniproject.etl.repository.rowMappers.tableMappers.Columns;
-import org.avniproject.etl.repository.rowMappers.tableMappers.EncounterTable;
 import org.avniproject.etl.repository.rowMappers.tableMappers.Table;
 
 import java.util.List;
 import java.util.Map;
 
 import static org.avniproject.etl.repository.rowMappers.TableNameGenerator.ProgramEncounterRepeatableQuestionGroup;
-import static org.avniproject.etl.repository.rowMappers.TableNameGenerator.RegistrationRepeatableQuestionGroup;
 import static org.avniproject.etl.repository.rowMappers.tableMappers.CommonColumns.*;
 
 public class ProgramEncounterRepeatableQuestionGroupTable extends Table {
