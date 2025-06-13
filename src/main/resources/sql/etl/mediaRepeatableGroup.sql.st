@@ -50,15 +50,15 @@ from
     LATERAL (
         -- JSON array case
         SELECT json_array_elements_text(entity."<conceptColumnName>"::json) as media_element
-        WHERE entity."<conceptColumnName>" IS NOT NULL AND entity."<conceptColumnName>" LIKE '[%'
+        WHERE entity."<conceptColumnName>" IS NOT NULL AND entity."<conceptColumnName>"::text LIKE '[%'
         
         UNION ALL
         
         -- Direct URL case
-        SELECT entity."<conceptColumnName>" as media_element
+        SELECT entity."<conceptColumnName>"::text as media_element
         WHERE entity."<conceptColumnName>" IS NOT NULL 
-          AND entity."<conceptColumnName>" NOT LIKE '[%' 
-          AND entity."<conceptColumnName>" LIKE 'http%'
+          AND entity."<conceptColumnName>"::text NOT LIKE '[%' 
+          AND entity."<conceptColumnName>"::text LIKE 'http%'
     ) as expanded_media
 where 
     entity.last_modified_date_time > '<startTime>'

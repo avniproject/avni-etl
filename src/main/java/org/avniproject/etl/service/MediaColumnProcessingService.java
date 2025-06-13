@@ -2,8 +2,6 @@ package org.avniproject.etl.service;
 
 import org.avniproject.etl.domain.OrgIdentityContextHolder;
 import org.avniproject.etl.domain.metadata.*;
-import org.avniproject.etl.domain.metadata.TableMetadata.TableType;
-import org.avniproject.etl.repository.rowMappers.TableNameGenerator;
 import org.avniproject.etl.repository.rowMappers.tableMappers.EncounterTable;
 import org.avniproject.etl.repository.rowMappers.tableMappers.ProgramEncounterTable;
 import org.avniproject.etl.repository.rowMappers.tableMappers.ProgramEnrolmentTable;
@@ -18,11 +16,9 @@ import org.stringtemplate.v4.ST;
 
 import static org.avniproject.etl.repository.sql.SqlFile.readSqlFile;
 
-import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Service
@@ -38,14 +34,12 @@ public class MediaColumnProcessingService {
     /**
      * Process a single media column with its own transaction
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.READ_COMMITTED)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.READ_UNCOMMITTED)
     public void processMediaColumn(TableMetadata mediaTableMetadata, TableMetadata tableData,
                                    ColumnMetadata mediaColumn, Date lastSyncTime, Date dataSyncBoundaryTime) {
         System.out.println("[MEDIA_RQG_SYNC] Starting transaction for media column: " + mediaColumn.getName());
         String dbSchema = OrgIdentityContextHolder.getDbSchema();
         try {
-            // Reset connection state to ensure clean transaction
-            jdbcTemplate.execute("RESET ALL;");
             jdbcTemplate.execute("SET search_path TO " + dbSchema);
             
             // Process the media column
@@ -57,6 +51,7 @@ public class MediaColumnProcessingService {
             throw e; // Re-throw to trigger transaction rollback
         }
     }
+    
     private void syncMediaFromRepeatableQuestionGroup(TableMetadata mediaTableMetadata, TableMetadata tableMetadata,
                                                       ColumnMetadata mediaColumn, Date lastSyncTime, Date dataSyncBoundaryTime) {
         // Get the required parameters for the SQL template
@@ -192,8 +187,8 @@ public class MediaColumnProcessingService {
             // Query the database for the actual names if we have the subject type UUID
             if (tableMetadata.getSubjectTypeUuid() != null) {
                 // For schema-specific queries, we use the schema name and RLS will filter by organization
-                String subjectTypeSql = "SELECT ost.name AS subject_type_name FROM " + "subject_type st " +
-                        "LEFT JOIN " + "operational_subject_type ost ON st.id = ost.subject_type_id " +
+                String subjectTypeSql = "SELECT ost.name AS subject_type_name FROM public.subject_type st " +
+                        "LEFT JOIN public.operational_subject_type ost ON st.id = ost.subject_type_id " +
                         "JOIN public.organisation org ON st.organisation_id = org.id " +
                         "WHERE st.uuid = ? AND (st.is_voided = false OR st.is_voided IS NULL) AND org.schema_name = ?";
 
@@ -219,8 +214,8 @@ public class MediaColumnProcessingService {
             // Query for program name if we have program UUID
             if (tableMetadata.getProgramUuid() != null) {
                 // Use schema-qualified table names
-                String programSql = "SELECT op.name AS program_name FROM " + "program p " +
-                        "LEFT JOIN " + "operational_program op ON p.id = op.program_id " +
+                String programSql = "SELECT op.name AS program_name FROM public.program p " +
+                        "LEFT JOIN public.operational_program op ON p.id = op.program_id " +
                         "JOIN public.organisation org ON p.organisation_id = org.id " +
                         "WHERE p.uuid = ? AND (p.is_voided = false OR p.is_voided IS NULL) AND org.schema_name = ?";
 
@@ -244,8 +239,8 @@ public class MediaColumnProcessingService {
             // Query for encounter type name if we have encounter type UUID
             if (tableMetadata.getEncounterTypeUuid() != null) {
                 // Use schema-qualified table names
-                String encounterTypeSql = "SELECT oet.name AS encounter_type_name FROM " + "encounter_type et " +
-                        "LEFT JOIN " + "operational_encounter_type oet ON et.id = oet.encounter_type_id " +
+                String encounterTypeSql = "SELECT oet.name AS encounter_type_name FROM public.encounter_type et " +
+                        "LEFT JOIN public.operational_encounter_type oet ON et.id = oet.encounter_type_id " +
                         "JOIN public.organisation org ON et.organisation_id = org.id " +
                         "WHERE et.uuid = ? AND (et.is_voided = false OR et.is_voided IS NULL) AND org.schema_name = ?";
 
