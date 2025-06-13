@@ -1,0 +1,201 @@
+# Avni ETL Windsurf Rules
+version = 1.0.0
+
+# Tech Stack
+- it uses JPA, Spring Security, Spring Batch, and Spring Rest
+- it connects to multiple Postgres databases (source and target)
+- uses Quartz for job scheduling
+- uses AWS S3 for media storage
+- uses Keycloak or Cognito for authentication
+
+# Language usage
+- Do not add comments and null checks unless asked
+- Java version is 17 (check from build.gradle)
+- always add new methods at the end of the file
+
+# Code organization
+- Repository code handles database operations and external service calls
+- Service code contains business logic
+- Controller code exposes REST APIs
+- Domain contains the core domain models
+- DTO objects for request/response data transfer
+- Config contains application configuration
+
+#----------------------------------------------
+# PROJECT INFORMATION
+#----------------------------------------------
+project.name = avni-etl
+project.type = java
+project.framework = spring-boot
+
+#----------------------------------------------
+# PROJECT STRUCTURE
+#----------------------------------------------
+structure.sourceRoot = src/main/java
+structure.resourceRoot = src/main/resources
+structure.testRoot = src/test
+structure.packagePrefix = org.avniproject.etl
+
+#----------------------------------------------
+# BUILD CONFIGURATION
+#----------------------------------------------
+build.tool = gradle
+build.mainClass = org.avniproject.etl.EtlApplication
+build.javaVersion = 17
+build.command.build = ./gradlew clean bootJar
+build.command.test = ./gradlew test
+build.command.run = java -jar build/libs/avni-etl-1.0.0-SNAPSHOT.jar
+
+#----------------------------------------------
+# TECH STACK AND DEPENDENCIES
+#----------------------------------------------
+# Core Technologies
+tech.frameworks = JPA, Spring Security, Spring Batch, Spring Rest, Quartz
+tech.database = postgresql
+tech.storage = AWS S3
+tech.authentication = Keycloak, Cognito
+
+# Basic Dependencies
+dependencies.database = postgresql
+dependencies.security = spring-security
+dependencies.scheduling = quartz
+dependencies.cloud = aws-java-sdk-s3
+
+# API Dependencies
+api.dependencies.spring-boot-version = 3.1.0
+api.dependencies.spring-boot-web = org.springframework.boot:spring-boot-starter-web
+api.dependencies.spring-boot-security = org.springframework.boot:spring-boot-starter-security
+api.dependencies.spring-boot-data-jpa = org.springframework.boot:spring-boot-starter-data-jpa
+api.dependencies.spring-boot-jdbc = org.springframework.boot:spring-boot-starter-jdbc
+api.dependencies.spring-boot-quartz = org.springframework.boot:spring-boot-starter-quartz
+api.dependencies.keycloak = org.keycloak:keycloak-spring-boot-starter:21.0.2
+api.dependencies.keycloak-admin = org.keycloak:keycloak-admin-client:21.0.2
+api.dependencies.aws-s3 = com.amazonaws:aws-java-sdk-s3:1.11.971
+api.dependencies.jackson = com.fasterxml.jackson.core:jackson-databind:2.12.6
+
+# Library Usage
+library.datetime = Use Joda Time (joda-time:joda-time:2.9.4) for all date and time handling
+
+#----------------------------------------------
+# CODE STYLE AND CONVENTIONS
+#----------------------------------------------
+# General Code Style
+codeStyle.indentation = spaces
+codeStyle.indentSize = 4
+codeStyle.lineLength = 120
+codeStyle.packageNaming = org.avniproject.etl.{component}
+
+# Java-specific Code Style
+codestyle.java.braces = same_line
+codestyle.java.imports_order = java,javax,org,com
+codestyle.java.static_imports = bottom
+codestyle.java.wildcard_imports = false
+
+# Coding Conventions
+coding.comments = add only when explicitly requested
+coding.nullchecks = add only when explicitly requested
+coding.methodplacement = add new methods at end of file
+
+# Documentation Guidelines
+documentation.principles = Avoid JavaDocs in favor of self-documenting code, Use clear method and variable names that explain their purpose, Only add inline comments for complex logic that cannot be made clear through refactoring
+
+#----------------------------------------------
+# ARCHITECTURE AND DESIGN PATTERNS
+#----------------------------------------------
+# Component Structure
+components.request = Controller, Service, Repository, DTO
+components.batch = Quartz Jobs using Service
+components.dto.types = Request, Response
+components.repository = basic database operations using JPA, external service calls (S3)
+components.service = business logic, can use repository or other services
+
+# Code Patterns
+patterns.controllers = **/*Controller.java
+patterns.services = **/*Service.java
+patterns.repositories = **/*Repository.java
+patterns.domain = org/avniproject/etl/domain/**/*.java
+
+# API Architecture
+api.pattern.controllers = org/avniproject/etl/controller/**/*.java
+api.pattern.repositories = org/avniproject/etl/repository/**/*.java
+api.pattern.services = org/avniproject/etl/service/**/*.java
+api.pattern.domain = org/avniproject/etl/domain/**/*.java
+api.pattern.dto = org/avniproject/etl/dto/**/*.java
+
+# API REST
+api.rest.base-path = /
+
+#----------------------------------------------
+# ARCHITECTURAL PRINCIPLES
+#----------------------------------------------
+# Code Structure and Modularity
+modularity.principles = Create small, focused methods with a single responsibility, Limit method size to improve readability and testability, Extract complex logic into separate utility classes
+
+# Service Layer Principles
+service.principles = Follow the Single Responsibility Principle, Inject dependencies rather than creating them, Keep business logic in service layer not controllers
+
+# Repository Layer Principles
+repository.principles = Use Spring JdbcTemplate for custom SQL queries, JdbcContextWrapper for executing SQL statements, Handle organization context properly with OrgIdentityContextHolder
+
+# Controller Layer Principles
+controller.principles = Keep controllers thin, Delegate business logic to services, Use proper authorization annotations (@PreAuthorize), Use DTOs for request/response objects
+
+# Domain Model Guidelines
+domain.principles = Keep domain models focused on their core responsibilities, Use appropriate data types
+
+#----------------------------------------------
+# ETL SPECIFIC PATTERNS
+#----------------------------------------------
+# ETL Processing
+etl.processing.pipeline = Schema migration, Data sync, Post-ETL operations
+etl.processing.context = Use OrgIdentityContextHolder for managing organization context during ETL
+etl.processing.scheduling = Use Quartz scheduler for periodic ETL jobs
+
+# Data Access
+data.access.pattern = Use JdbcContextWrapper for executing SQL statements with proper schema context
+data.access.schema = Use schema from OrgIdentityContextHolder for database operations
+data.access.multitenancy = Support multiple organizations with separate database schemas
+
+# Media Processing
+media.processing = Handle media uploads and downloads through MediaService
+media.storage = Use AWS S3 for media storage
+media.analysis = MediaAnalysisService for analyzing media usage
+
+#----------------------------------------------
+# TESTING
+#----------------------------------------------
+# Testing Frameworks
+testing.framework.unit = junit jupiter
+testing.framework.assertions = assertj
+testing.framework.spring = spring-boot-test
+
+# Test Patterns
+testing.naming.unitTests = *Test.java
+testing.naming.integrationTests = *IT.java
+
+#----------------------------------------------
+# INFRASTRUCTURE
+#----------------------------------------------
+# Database
+database.connection = Use Spring JDBC/JPA with multiple schema support
+
+# Security
+security.authentication = keycloak or cognito
+security.authorization = role-based
+
+# API Security
+api.security.provider = keycloak or cognito
+api.security.jwt = true
+api.security.role-based = true
+api.security.analytics_role = analytics_user required for reporting endpoints
+
+# Scheduling
+scheduling.framework = quartz
+scheduling.listeners = EtlJobListener for job status tracking
+
+#----------------------------------------------
+# DEPLOYMENT
+#----------------------------------------------
+deployment.containerization = docker
+deployment.baseImage = openjdk:17
+deployment.port = 8080
