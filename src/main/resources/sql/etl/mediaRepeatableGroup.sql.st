@@ -11,8 +11,8 @@ insert into <schemaName>.<tableName> (
     media_metadata, form_element_id, repeatable_question_group_index)
 select 
     -- Basic entity data
-    entity.id,
-    entity.id as uuid, -- Use ID as fallback since uuid column doesn't exist
+    parent.id as entity_id,
+    parent.uuid as uuid, -- Use parent UUID since repeatable groups don't have their own UUID
     COALESCE(entity.is_voided, parent.is_voided, false) as is_voided, -- Use parent value or default
     parent.created_by_id,  -- Get from parent
     parent.last_modified_by_id, -- Get from parent
@@ -49,7 +49,7 @@ from
     -- Lateral join to handle both JSON arrays and direct URLs
     LATERAL (
         -- JSON array case
-        SELECT json_array_elements_text(entity."<conceptColumnName>"::json) as media_element
+        SELECT json_array_elements_text(REPLACE(REPLACE(entity."<conceptColumnName>"::text, '\"', '"'), '"[', '[')::json) as media_element
         WHERE entity."<conceptColumnName>" IS NOT NULL AND entity."<conceptColumnName>"::text LIKE '[%'
         
         UNION ALL
