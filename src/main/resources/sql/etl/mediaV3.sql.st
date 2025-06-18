@@ -7,7 +7,7 @@ insert into <schemaName>.<tableName> (
     form_element_id, repeatable_question_group_index)
 select 
     entity.id,
-    entity.id as uuid, -- Use ID as fallback since uuid column doesn't exist
+    entity.uuid,
     COALESCE(entity.is_voided, subject.is_voided, false) as is_voided, -- Use parent value or default
     COALESCE(subject.created_by_id, null) as created_by_id, -- Get from parent
     COALESCE(subject.last_modified_by_id, null) as last_modified_by_id, -- Get from parent
@@ -39,7 +39,19 @@ from
     -- Join with the subject table to get missing columns
     inner join <schemaName>.<subjectTableName> subject 
         on entity."<subjectIdColumnName>" = subject.id,
-    json_array_elements_text(entity."<conceptColumnName>"::json) as media_json
+    -- Handle various data formats
+    json_array_elements_text(
+        CASE 
+            -- When content starts with http/https, treat as a direct URL and wrap in JSON array
+            WHEN entity."<conceptColumnName>"::text LIKE 'http%' 
+            THEN CONCAT('[{"uri": "', REPLACE(entity."<conceptColumnName>"::text, '"', '\"'), '"}]')
+            -- When content starts with [ and ends with ], assume it's already a valid JSON array
+            WHEN entity."<conceptColumnName>"::text ~ '^\\[.*\\]$' 
+            THEN entity."<conceptColumnName>"::text
+            -- For other values (UUIDs, plain text, etc), wrap as a simple JSON object
+            ELSE CONCAT('[{"uri": "', REPLACE(COALESCE(entity."<conceptColumnName>"::text, ''), '"', '\"'), '"}]')
+        END::json
+    ) as media_json
 where 
     entity."last_modified_date_time" > '<startTime>'
     and entity."last_modified_date_time" \<= '<endTime>'

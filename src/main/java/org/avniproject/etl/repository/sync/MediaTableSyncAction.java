@@ -56,26 +56,18 @@ public class MediaTableSyncAction implements EntitySyncAction {
                 return;
             }
             
-            // Legacy Image columns use the original SQL format
-            List<ColumnMetadata> legacyMediaColumns = thisTableMetadata.findColumnsMatchingConceptType(ColumnMetadata.ConceptType.Image);
-            legacyMediaColumns.forEach(mediaColumn -> {
-                insertData(tableMetadata, thisTableMetadata, mediaColumn, lastSyncTime, dataSyncBoundaryTime, 1);
-            });
-            
-            // All modern media types use V3 SQL which includes form element context for QuestionGroups
-            // ImageV2 columns
-            List<ColumnMetadata> mediaV2Columns = thisTableMetadata.findColumnsMatchingConceptType(ColumnMetadata.ConceptType.ImageV2);
-            mediaV2Columns.forEach(mediaColumn -> {
-                insertData(tableMetadata, thisTableMetadata, mediaColumn, lastSyncTime, dataSyncBoundaryTime, 3);
-            });
-            
-            // Audio, Video, and File columns
-            List<ColumnMetadata> otherMediaColumns = thisTableMetadata.findColumnsMatchingConceptType(
+            List<ColumnMetadata> allMediaColumns = thisTableMetadata.findColumnsMatchingConceptType(ColumnMetadata.ConceptType.Image,
+                ColumnMetadata.ConceptType.ImageV2,
                 ColumnMetadata.ConceptType.Video, 
                 ColumnMetadata.ConceptType.Audio, 
                 ColumnMetadata.ConceptType.File);
-            otherMediaColumns.forEach(mediaColumn -> {
-                insertData(tableMetadata, thisTableMetadata, mediaColumn, lastSyncTime, dataSyncBoundaryTime, 3);
+            allMediaColumns.forEach(mediaColumn -> {
+                int version = 3; //default for rest
+                // Legacy Image columns use the original SQL format
+                if(mediaColumn.getConceptType().equals(ColumnMetadata.ConceptType.Image) && mediaColumn.getParentConceptUuid() == null) {
+                    version = 1;
+                }
+                insertData(tableMetadata, thisTableMetadata, mediaColumn, lastSyncTime, dataSyncBoundaryTime, version);
             });
         });
         deleteDuplicateRows(lastSyncTime);
