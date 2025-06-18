@@ -1,5 +1,6 @@
 package org.avniproject.etl.service;
 
+import org.apache.log4j.Logger;
 import org.avniproject.etl.domain.OrgIdentityContextHolder;
 import org.avniproject.etl.domain.metadata.*;
 import org.avniproject.etl.repository.rowMappers.tableMappers.EncounterTable;
@@ -9,8 +10,6 @@ import org.avniproject.etl.repository.rowMappers.tableMappers.SubjectTable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.stringtemplate.v4.ST;
 
@@ -23,6 +22,7 @@ import java.util.Map;
 
 @Service
 public class MediaColumnProcessingService {
+    private static final Logger logger = Logger.getLogger(MediaColumnProcessingService.class);
     private static final String MEDIA_REPEATABLE_GROUP_SQL_TEMPLATE = "mediaRepeatableGroup.sql.st";
     private final JdbcTemplate jdbcTemplate;
 
@@ -34,10 +34,10 @@ public class MediaColumnProcessingService {
     /**
      * Process a single media column with its own transaction
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.READ_UNCOMMITTED)
+    @Transactional
     public void processMediaColumn(TableMetadata mediaTableMetadata, TableMetadata tableData,
                                    ColumnMetadata mediaColumn, Date lastSyncTime, Date dataSyncBoundaryTime) {
-        System.out.println("[MEDIA_RQG_SYNC] Starting transaction for media column: " + mediaColumn.getName());
+        logger.info("Starting transaction for media column: " + mediaColumn.getName());
         String dbSchema = OrgIdentityContextHolder.getDbSchema();
         try {
             jdbcTemplate.execute("SET search_path TO " + dbSchema);
@@ -45,10 +45,18 @@ public class MediaColumnProcessingService {
             // Process the media column
             syncMediaFromRepeatableQuestionGroup(mediaTableMetadata, tableData, mediaColumn, lastSyncTime, dataSyncBoundaryTime);
             
-            System.out.println("[MEDIA_RQG_SYNC] Transaction completed successfully for media column: " + mediaColumn.getName());
+            logger.info("Transaction completed successfully for media column: " + mediaColumn.getName());
         } catch (Exception e) {
-            System.out.println("[MEDIA_RQG_SYNC] Error in transaction for media column: " + mediaColumn.getName() + ", error: " + e.getMessage());
+            logger.error("Error in transaction for media column: " + mediaColumn.getName() + ", error: " + e.getMessage(), e);
             throw e; // Re-throw to trigger transaction rollback
+        } finally {
+            // Reset search path
+            try {
+                logger.info("Resetting search path to PUBLIC");
+                jdbcTemplate.execute(String.format("SET search_path TO %s", "PUBLIC"));
+            } catch (Exception e) {
+                logger.error("Failed to reset search path in the end", e);
+            }
         }
     }
     
@@ -63,7 +71,7 @@ public class MediaColumnProcessingService {
         String dataSyncBoundaryTimeStr = dateFormat.format(dataSyncBoundaryTime);
 
         String mediaConceptName = mediaColumn.getName();
-        System.out.println("[MEDIA_RQG_SYNC] Syncing media from column: " + mediaColumn.getName() + ", ConceptUUID: " + mediaColumn.getConceptUuid());
+        logger.info("Syncing media from column: " + mediaColumn.getName() + ", ConceptUUID: " + mediaColumn.getConceptUuid());
 
         try {
             // Use the mediaRepeatableGroup SQL template
@@ -109,44 +117,45 @@ public class MediaColumnProcessingService {
             template.add("endTime", dataSyncBoundaryTimeStr);
 
             // Log template parameters for debugging
-            System.out.println("[MEDIA_RQG_SYNC] Template parameters:");
-            System.out.println("  - schemaName: " + dbSchema);
-            System.out.println("  - tableName: " + mediaTableMetadata.getName());
-            System.out.println("  - fromTableName: " + tableMetadata.getName());
-            System.out.println("  - conceptColumnName: " + mediaConceptName);
-            System.out.println("  - subjectTypeName: " + subjectTypeName);
-            System.out.println("  - encounterTypeName: " + encounterTypeName);
-            System.out.println("  - programName: " + programName);
-            System.out.println("  - formElementUuid: " + mediaColumn.getConceptUuid());
+            if (logger.isDebugEnabled()) {
+                logger.debug("Template parameters:");
+                logger.debug("  - schemaName: " + dbSchema);
+                logger.debug("  - tableName: " + mediaTableMetadata.getName());
+                logger.debug("  - fromTableName: " + tableMetadata.getName());
+                logger.debug("  - conceptColumnName: " + mediaConceptName);
+                logger.debug("  - subjectTypeName: " + subjectTypeName);
+                logger.debug("  - encounterTypeName: " + encounterTypeName);
+                logger.debug("  - programName: " + programName);
+                logger.debug("  - formElementUuid: " + mediaColumn.getConceptUuid());
+            }
 
             // Render the SQL with parameters
             String sql;
             try {
                 sql = template.render();
                 // Log the rendered SQL for debugging
-                System.out.println("[MEDIA_RQG_SYNC] Generated SQL for table: " + tableMetadata.getName() + ", column: " + mediaConceptName);
-                System.out.println("-------- BEGIN SQL --------");
-                System.out.println(sql);
-                System.out.println("--------- END SQL ---------");
+                logger.info("Generated SQL for table: " + tableMetadata.getName() + ", column: " + mediaConceptName);
+                if (logger.isDebugEnabled()) {
+                    logger.debug("-------- BEGIN SQL --------");
+                    logger.debug(sql);
+                    logger.debug("--------- END SQL ---------");
+                }
 
                 if (sql == null || sql.isEmpty()) {
-                    System.out.println("[MEDIA_RQG_SYNC] WARNING: Generated SQL is empty or null");
+                    logger.warn("WARNING: Generated SQL is empty or null");
                     return;
                 }
 
                 // Execute SQL with proper schema context - removing the hardcoded role setting
                 String fullSql = "set search_path to " + dbSchema + "; " + sql;
                 jdbcTemplate.execute(fullSql);
-                System.out.println("[MEDIA_RQG_SYNC] Successfully executed SQL for column: " + mediaConceptName);
+                logger.info("Successfully executed SQL for column: " + mediaConceptName);
             } catch (Exception e) {
-                System.out.println("[MEDIA_RQG_SYNC] ERROR rendering SQL template: " + e.getMessage());
-                e.printStackTrace();
+                logger.error("ERROR rendering SQL template: " + e.getMessage(), e);
                 return;
             }
         } catch (Exception e) {
-            System.out.println("[MEDIA_RQG_SYNC] ERROR executing SQL for table: " + tableMetadata.getName() + ", column: " + mediaConceptName);
-            System.out.println("[MEDIA_RQG_SYNC] Exception: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("ERROR executing SQL for table: " + tableMetadata.getName() + ", column: " + mediaConceptName, e);
         }
     }
 
@@ -158,7 +167,6 @@ public class MediaColumnProcessingService {
      * @throws IllegalStateException if parent table cannot be determined
      */
     private Map<String, Object> determineParentTable(TableMetadata tableMetadata) {
-        System.out.println("[MEDIA_RQG_SYNC] Determining parent table for: " + tableMetadata.getName());
 
         // Create a map with all the details needed to generate the parent table name
         Map<String, Object> tableDetails = new HashMap<>();
@@ -166,7 +174,6 @@ public class MediaColumnProcessingService {
         // Use parent table type if available - this is the primary method
         TableMetadata.TableType parentTableType = tableMetadata.getParentTableType();
         if (parentTableType != null) {
-            System.out.println("[MEDIA_RQG_SYNC] Detected parent table type: " + parentTableType);
 
             // First populate with UUIDs that we definitely have
             if (tableMetadata.getSubjectTypeUuid() != null) {
@@ -182,7 +189,6 @@ public class MediaColumnProcessingService {
             // Get the current organization context
             String dbUser = OrgIdentityContextHolder.getDbUser();
             String schemaName = OrgIdentityContextHolder.getDbSchema();
-            System.out.println("[MEDIA_RQG_SYNC] Using organization dbUser: " + dbUser + ", schema: " + schemaName);
 
             // Query the database for the actual names if we have the subject type UUID
             if (tableMetadata.getSubjectTypeUuid() != null) {
@@ -199,13 +205,11 @@ public class MediaColumnProcessingService {
 
                     if (subjectTypeName != null) {
                         tableDetails.put("subject_type_name", subjectTypeName);
-                        System.out.println("[MEDIA_RQG_SYNC] Found subject_type_name: " + subjectTypeName);
                     } else {
                         // Fallback to using UUID
                         tableDetails.put("subject_type_name", tableMetadata.getSubjectTypeUuid());
                     }
                 } catch (Exception e) {
-                    System.out.println("[MEDIA_RQG_SYNC] Error querying for subject type name: " + e.getMessage());
                     // Fallback to using UUID
                     tableDetails.put("subject_type_name", tableMetadata.getSubjectTypeUuid());
                 }
@@ -224,13 +228,11 @@ public class MediaColumnProcessingService {
                     String programName = jdbcTemplate.queryForObject(programSql, String.class, tableMetadata.getProgramUuid(), schemaName);
                     if (programName != null) {
                         tableDetails.put("program_name", programName);
-                        System.out.println("[MEDIA_RQG_SYNC] Found program_name: " + programName);
                     } else {
                         // Fallback to using UUID
                         tableDetails.put("program_name", tableMetadata.getProgramUuid());
                     }
                 } catch (Exception e) {
-                    System.out.println("[MEDIA_RQG_SYNC] Error querying for program name: " + e.getMessage());
                     // Fallback to using UUID
                     tableDetails.put("program_name", tableMetadata.getProgramUuid());
                 }
@@ -251,12 +253,11 @@ public class MediaColumnProcessingService {
 
                     if (encounterTypeName != null) {
                         tableDetails.put("encounter_type_name", encounterTypeName);
-                        System.out.println("[MEDIA_RQG_SYNC] Found encounter_type_name: " + encounterTypeName);
                     } else {
                         tableDetails.put("encounter_type_name", tableMetadata.getEncounterTypeUuid());
                     }
                 } catch (Exception e) {
-                    System.out.println("[MEDIA_RQG_SYNC] Error querying for encounter type name: " + e.getMessage());
+                    logger.error("Error querying for encounter type name: " + e.getMessage(), e);
                     // Fallback to using UUID
                     tableDetails.put("encounter_type_name", tableMetadata.getEncounterTypeUuid());
                 }
@@ -282,11 +283,11 @@ public class MediaColumnProcessingService {
                     default:
                         throw new IllegalStateException("Unsupported parent table type: " + parentTableType);
                 }
-                System.out.println("[MEDIA_RQG_SYNC] Generated parent table name: " + parentTableName);
+                logger.info("Generated parent table name: " + parentTableName);
                 tableDetails.put("parent_table_name", parentTableName);
             } catch (Exception e) {
                 // If there's an error generating the table name, log it
-                System.out.println("[MEDIA_RQG_SYNC] Error generating parent table name: " + e.getMessage());
+                logger.error("Error generating parent table name: " + e.getMessage(), e);
                 throw e;
             }
         }
@@ -341,7 +342,7 @@ public class MediaColumnProcessingService {
         }
 
         // Default fallback
-        System.out.println("[MEDIA_RQG_SYNC] Warning: Could not determine subject ID column for " + tableMetadata.getName() + ". Using 'individual_id' as default.");
+        logger.warn("Warning: Could not determine subject ID column for " + tableMetadata.getName() + ". Using 'individual_id' as default.");
         throw new IllegalArgumentException("Unknown subject id column: " + tableMetadata.getSubjectTypeUuid());
     }
 }

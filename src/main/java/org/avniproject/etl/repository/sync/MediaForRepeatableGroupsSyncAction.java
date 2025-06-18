@@ -1,5 +1,6 @@
 package org.avniproject.etl.repository.sync;
 
+import org.apache.log4j.Logger;
 import org.avniproject.etl.domain.metadata.ColumnMetadata;
 import org.avniproject.etl.domain.metadata.SchemaMetadata;
 import org.avniproject.etl.domain.metadata.TableMetadata;
@@ -12,6 +13,7 @@ import java.util.List;
 
 @Repository
 public class MediaForRepeatableGroupsSyncAction implements EntitySyncAction {
+    private static final Logger logger = Logger.getLogger(MediaForRepeatableGroupsSyncAction.class);
     private final MediaColumnProcessingService mediaColumnProcessingService;
 
     @Autowired
@@ -28,15 +30,15 @@ public class MediaForRepeatableGroupsSyncAction implements EntitySyncAction {
     public void perform(TableMetadata tableMetadata, Date lastSyncTime, Date dataSyncBoundaryTime, SchemaMetadata currentSchemaMetadata) {
         // Only process if this is a media table sync job
         if (tableMetadata.getType() != TableMetadata.Type.Media) {
-            System.out.println("[MEDIA_RQG_SYNC] Skipping sync for non-media table: " + tableMetadata.getName());
+            logger.info("Skipping sync for non-media table: " + tableMetadata.getName());
             return;
         }
 
-        System.out.println("[MEDIA_RQG_SYNC] Starting sync from repeatable question groups for media table: " + tableMetadata.getName());
+        logger.info("Starting sync from repeatable question groups for media table: " + tableMetadata.getName());
         currentSchemaMetadata.getTableMetadata().forEach(table -> {
             boolean isRQG = isRepeatableQuestionGroupTable(table);
             if (isRQG) {
-                System.out.println("[MEDIA_RQG_SYNC] Processing repeatable question group table: " + table.getName());
+                logger.info("Processing repeatable question group table: " + table.getName());
                 processRepeatableQuestionGroupTable(tableMetadata, table, lastSyncTime, dataSyncBoundaryTime);
             }
         });
@@ -57,7 +59,7 @@ public class MediaForRepeatableGroupsSyncAction implements EntitySyncAction {
                 ColumnMetadata.ConceptType.File
         );
 
-        System.out.println("[MEDIA_RQG_SYNC] Found " + conceptMediaColumns.size() + " media columns in table: " + tableData.getName());
+        logger.info("Found " + conceptMediaColumns.size() + " media columns in table: " + tableData.getName());
 
         if (conceptMediaColumns.isEmpty()) {
             return; // No media columns found
@@ -65,7 +67,7 @@ public class MediaForRepeatableGroupsSyncAction implements EntitySyncAction {
 
         for (ColumnMetadata mediaColumn : conceptMediaColumns) {
             try {
-                System.out.println("[MEDIA_RQG_SYNC] Syncing media from column: " + mediaColumn.getName() +
+                logger.info("Syncing media from column: " + mediaColumn.getName() +
                         ", ConceptUUID: " + mediaColumn.getConceptUuid());
 
                 mediaColumnProcessingService.processMediaColumn(
@@ -75,8 +77,7 @@ public class MediaForRepeatableGroupsSyncAction implements EntitySyncAction {
                         lastSyncTime,
                         dataSyncBoundaryTime);
             } catch (Exception e) {
-                System.out.println("[MEDIA_RQG_SYNC] Transaction error for column " + mediaColumn.getName() + ": " + e.getMessage());
-                e.printStackTrace(); // Print stack trace for debugging
+                logger.error("Transaction error for column " + mediaColumn.getName() + ": " + e.getMessage(), e);
                 // Continue with the next column
             }
         }
