@@ -298,15 +298,15 @@ public class TableMetadata extends Model {
         Encounter,
         IndividualEncounterCancellation,
         Address,
-        Media,
-        MediaAnalysis,
         ManualProgramEnrolmentEligibility,
         GroupToMember,
         HouseholdToMember,
         RepeatableQuestionGroup,
         Checklist,
         SyncTelemetry,
-        User
+        User,
+        Media,
+        MediaAnalysis
     }
 
 
