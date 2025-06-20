@@ -110,10 +110,6 @@ public class TableMetadata extends Model {
     }
 
     public List<ColumnMetadata> findColumnsMatchingConceptType(ColumnMetadata.ConceptType... conceptTypes) {
-        // Note: Fixed critical issue - removed early return for RepeatableQuestionGroup type
-        // that was preventing media column detection
-        // if (type.equals(Type.RepeatableQuestionGroup)) return List.of();
-        
         List<ColumnMetadata> matchingColumns = this.getColumnMetadataList().stream()
             .filter(columnMetadata -> Arrays.stream(conceptTypes).anyMatch(conceptType -> 
                 nullSafeEquals(columnMetadata.getConceptType(), conceptType)))

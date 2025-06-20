@@ -19,7 +19,10 @@ SELECT media.id as id,
        media.program_name as program_name,
        media.concept_name as concept_name,
        row_to_json(address.*) as address,
-       media.entity_id as entity_id
+       media.entity_id as entity_id,
+       media.media_metadata as media_metadata,
+       media.form_element_id as form_element_id,
+       media.repeatable_question_group_index as repeatable_question_group_index
 FROM "<schemaName>".media media
          JOIN "<schemaName>".address address ON address.id = media.address_id
          <if(joinTablesAndColumns)>

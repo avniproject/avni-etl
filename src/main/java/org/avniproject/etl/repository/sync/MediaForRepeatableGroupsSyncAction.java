@@ -11,6 +11,8 @@ import org.springframework.stereotype.Repository;
 import java.util.Date;
 import java.util.List;
 
+import static org.avniproject.etl.domain.metadata.ColumnMetadata.MEDIA_COLUMN_CONCEPT_TYPES;
+
 @Repository
 public class MediaForRepeatableGroupsSyncAction implements EntitySyncAction {
     private static final Logger logger = Logger.getLogger(MediaForRepeatableGroupsSyncAction.class);
@@ -51,13 +53,7 @@ public class MediaForRepeatableGroupsSyncAction implements EntitySyncAction {
     }
 
     private void processRepeatableQuestionGroupTable(TableMetadata mediaTableMetadata, TableMetadata tableData, Date lastSyncTime, Date dataSyncBoundaryTime) {
-        List<ColumnMetadata> conceptMediaColumns = tableData.findColumnsMatchingConceptType(
-                ColumnMetadata.ConceptType.Image,
-                ColumnMetadata.ConceptType.ImageV2,
-                ColumnMetadata.ConceptType.Video,
-                ColumnMetadata.ConceptType.Audio,
-                ColumnMetadata.ConceptType.File
-        );
+        List<ColumnMetadata> conceptMediaColumns = tableData.findColumnsMatchingConceptType(MEDIA_COLUMN_CONCEPT_TYPES);
 
         logger.info("Found " + conceptMediaColumns.size() + " media columns in table: " + tableData.getName());
 

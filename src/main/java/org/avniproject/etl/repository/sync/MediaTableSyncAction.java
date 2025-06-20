@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Logger;
 
+import static org.avniproject.etl.domain.metadata.ColumnMetadata.MEDIA_COLUMN_CONCEPT_TYPES;
 import static org.avniproject.etl.repository.JdbcContextWrapper.runInOrgContext;
 import static org.avniproject.etl.repository.sql.SqlFile.readSqlFile;
 
@@ -56,11 +57,7 @@ public class MediaTableSyncAction implements EntitySyncAction {
                 return;
             }
             
-            List<ColumnMetadata> allMediaColumns = thisTableMetadata.findColumnsMatchingConceptType(ColumnMetadata.ConceptType.Image,
-                ColumnMetadata.ConceptType.ImageV2,
-                ColumnMetadata.ConceptType.Video, 
-                ColumnMetadata.ConceptType.Audio, 
-                ColumnMetadata.ConceptType.File);
+            List<ColumnMetadata> allMediaColumns = thisTableMetadata.findColumnsMatchingConceptType(MEDIA_COLUMN_CONCEPT_TYPES);
             allMediaColumns.forEach(mediaColumn -> {
                 int version = 3; //default for rest
                 // Legacy Image columns use the original SQL format

@@ -174,4 +174,12 @@ public class ColumnMetadata extends Model {
 
         return new ColumnMetadata(this.getId(), newColumn, this.getConceptId(), this.getConceptType(), this.getConceptUuid(), this.getParentConceptUuid(), true);
     }
+
+    public static final ColumnMetadata.ConceptType[] MEDIA_COLUMN_CONCEPT_TYPES = {
+            ColumnMetadata.ConceptType.Image,
+            ColumnMetadata.ConceptType.ImageV2,
+            ColumnMetadata.ConceptType.Video,
+            ColumnMetadata.ConceptType.Audio,
+            ColumnMetadata.ConceptType.File
+    };
 }

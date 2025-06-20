@@ -80,7 +80,10 @@ public class MediaTableRepositoryService {
                     rs.getString("sync_parameter_value1"),
                     rs.getString("sync_parameter_value2"),
                     rs.getString("address"),
-                    rs.getLong("entity_id")
+                    rs.getLong("entity_id"),
+                    rs.getString("media_metadata"),
+                    rs.getString("form_element_id"),
+                    rs.getLong("repeatable_question_group_index")
             );
         } catch (SQLException e) {
             throw new RuntimeException(e);
