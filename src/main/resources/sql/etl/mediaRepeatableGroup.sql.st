@@ -37,7 +37,7 @@ select
     subject.last_name,
     json_build_object('uri', media_element)::jsonb as media_metadata,
     '<questionGroupConceptName>' as question_group_concept_name,
-    (ROW_NUMBER() OVER (PARTITION BY entity."<subjectIdColumnName>" ORDER BY entity.id) - 1)::integer as repeatable_question_group_index
+    entity.repeatable_question_group_index as repeatable_question_group_index
 from 
     <schemaName>.<fromTableName> entity
     inner join <schemaName>.<subjectTableName> subject 

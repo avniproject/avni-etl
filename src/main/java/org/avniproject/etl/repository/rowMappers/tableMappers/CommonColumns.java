@@ -21,5 +21,6 @@ public class CommonColumns {
             OrganisationIdColumn
         );
 
-    public static final List<Column> CommonRepeatableGroupColumns = List.of(SerialIdColumn, LastModifiedDateTimeColumn, IsVoidedColumn, OrganisationIdColumn);
+    public static final Column RepeatableQuestionGroupIndexColumn = new Column("repeatable_question_group_index", Column.Type.integer);
+    public static final List<Column> CommonRepeatableGroupColumns = List.of(SerialIdColumn, LastModifiedDateTimeColumn, IsVoidedColumn, OrganisationIdColumn, RepeatableQuestionGroupIndexColumn);
 }

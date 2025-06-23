@@ -145,6 +145,10 @@ public class MediaTableSyncAction implements EntitySyncAction {
                 .add("hasMiddleName", true);
         }
 
+        // Add isRepeatable flag - only true for repeatable question group tables
+        template = template
+            .add("isRepeatable", tableMetadata.isRepeatableQuestionGroupTable());
+
         String sql;
         try {
             sql = template.render();

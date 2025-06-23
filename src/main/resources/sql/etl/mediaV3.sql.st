@@ -30,7 +30,7 @@ select
     <if(hasMiddleName)>subject.middle_name<else>null<endif>,
     media_json::jsonb as media_metadata,
     COALESCE('<questionGroupConceptName>', '<conceptColumnName>') as question_group_concept_name,
-    (ROW_NUMBER() OVER (PARTITION BY entity."<subjectIdColumnName>" ORDER BY entity.id) - 1)::integer as repeatable_question_group_index
+    <if(isRepeatable)>entity.repeatable_question_group_index<else>-1<endif> as repeatable_question_group_index
 from 
     <schemaName>.<fromTableName> entity
     -- Join with the subject table to get missing columns
