@@ -30,7 +30,6 @@ public class MediaTableSyncAction implements EntitySyncAction {
     private final JdbcTemplate jdbcTemplate;
     private final AvniMetadataRepository avniMetadataRepository;
     private static final String mediaSql = readSqlFile("media.sql.st");
-    private static final String mediaV2Sql = readSqlFile("mediaV2.sql.st");
     private static final String mediaV3Sql = readSqlFile("mediaV3.sql.st");
     private static final String deleteDuplicateMediaSql = readSqlFile("deleteDuplicateMedia.sql.st");
 
@@ -53,7 +52,7 @@ public class MediaTableSyncAction implements EntitySyncAction {
 
         currentSchemaMetadata.getTableMetadata().forEach(thisTableMetadata -> {
             // Skip RepeatableQuestionGroup tables - they're handled by MediaForRepeatableGroupsSyncAction
-            if (thisTableMetadata.getName().endsWith("_repeatable")) {
+            if (thisTableMetadata.isRepeatableQuestionGroupTable()) {
                 return;
             }
             
@@ -61,7 +60,7 @@ public class MediaTableSyncAction implements EntitySyncAction {
             allMediaColumns.forEach(mediaColumn -> {
                 int version = 3; //default for rest
                 // Legacy Image columns use the original SQL format
-                if(mediaColumn.getConceptType().equals(ColumnMetadata.ConceptType.Image) && mediaColumn.getParentConceptUuid() == null) {
+                if(!mediaColumn.getConceptType().equals(ColumnMetadata.ConceptType.ImageV2) && mediaColumn.getParentConceptUuid() == null) {
                     version = 1;
                 }
                 insertData(tableMetadata, thisTableMetadata, mediaColumn, lastSyncTime, dataSyncBoundaryTime, version);
@@ -99,21 +98,16 @@ public class MediaTableSyncAction implements EntitySyncAction {
         String sqlTemplate;
         String templateName;
         switch (version) {
-            case 1:
-                sqlTemplate = mediaSql;
-                templateName = "media.sql.st";
-                break;
             case 2:
-                sqlTemplate = mediaV2Sql;
-                templateName = "mediaV2.sql.st";
-                break;
             case 3:
                 sqlTemplate = mediaV3Sql;
                 templateName = "mediaV3.sql.st";
                 break;
+            case 1:
             default:
                 sqlTemplate = mediaSql;
                 templateName = "media.sql.st";
+                break;
         }
         
         logger.info("Using template file: " + templateName);

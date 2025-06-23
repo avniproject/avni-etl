@@ -346,6 +346,12 @@ public class TableMetadata extends Model {
         this.repeatableQuestionGroupConceptUuid = repeatableQuestionGroupConceptUuid;
     }
 
+    public boolean isRepeatableQuestionGroupTable() {
+        boolean isRqgType = getType() == TableMetadata.Type.RepeatableQuestionGroup;
+        boolean hasConceptUuid = getRepeatableQuestionGroupConceptUuid() != null;
+        return isRqgType && hasConceptUuid;
+    }
+
     @Override
     public String toString() {
         return "{" +

@@ -4,7 +4,7 @@ import org.apache.log4j.Logger;
 import org.avniproject.etl.domain.metadata.ColumnMetadata;
 import org.avniproject.etl.domain.metadata.SchemaMetadata;
 import org.avniproject.etl.domain.metadata.TableMetadata;
-import org.avniproject.etl.service.MediaColumnProcessingService;
+import org.avniproject.etl.service.RepeatableQuestionGroupMediaColumnProcessingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -16,11 +16,11 @@ import static org.avniproject.etl.domain.metadata.ColumnMetadata.MEDIA_COLUMN_CO
 @Repository
 public class MediaForRepeatableGroupsSyncAction implements EntitySyncAction {
     private static final Logger logger = Logger.getLogger(MediaForRepeatableGroupsSyncAction.class);
-    private final MediaColumnProcessingService mediaColumnProcessingService;
+    private final RepeatableQuestionGroupMediaColumnProcessingService repeatableQuestionGroupMediaColumnProcessingService;
 
     @Autowired
-    public MediaForRepeatableGroupsSyncAction(MediaColumnProcessingService mediaColumnProcessingService) {
-        this.mediaColumnProcessingService = mediaColumnProcessingService;
+    public MediaForRepeatableGroupsSyncAction(RepeatableQuestionGroupMediaColumnProcessingService repeatableQuestionGroupMediaColumnProcessingService) {
+        this.repeatableQuestionGroupMediaColumnProcessingService = repeatableQuestionGroupMediaColumnProcessingService;
     }
 
     @Override
@@ -31,25 +31,19 @@ public class MediaForRepeatableGroupsSyncAction implements EntitySyncAction {
     @Override
     public void perform(TableMetadata tableMetadata, Date lastSyncTime, Date dataSyncBoundaryTime, SchemaMetadata currentSchemaMetadata) {
         // Only process if this is a media table sync job
-        if (tableMetadata.getType() != TableMetadata.Type.Media) {
+        if (doesntSupport(tableMetadata)) {
             logger.info("Skipping sync for non-media table: " + tableMetadata.getName());
             return;
         }
 
         logger.info("Starting sync from repeatable question groups for media table: " + tableMetadata.getName());
         currentSchemaMetadata.getTableMetadata().forEach(table -> {
-            boolean isRQG = isRepeatableQuestionGroupTable(table);
+            boolean isRQG = table.isRepeatableQuestionGroupTable();
             if (isRQG) {
                 logger.info("Processing repeatable question group table: " + table.getName());
                 processRepeatableQuestionGroupTable(tableMetadata, table, lastSyncTime, dataSyncBoundaryTime);
             }
         });
-    }
-
-    private boolean isRepeatableQuestionGroupTable(TableMetadata tableMetadata) {
-        boolean isRqgType = tableMetadata.getType() == TableMetadata.Type.RepeatableQuestionGroup;
-        boolean hasConceptUuid = tableMetadata.getRepeatableQuestionGroupConceptUuid() != null;
-        return isRqgType && hasConceptUuid;
     }
 
     private void processRepeatableQuestionGroupTable(TableMetadata mediaTableMetadata, TableMetadata tableData, Date lastSyncTime, Date dataSyncBoundaryTime) {
@@ -66,7 +60,7 @@ public class MediaForRepeatableGroupsSyncAction implements EntitySyncAction {
                 logger.info("Syncing media from column: " + mediaColumn.getName() +
                         ", ConceptUUID: " + mediaColumn.getConceptUuid());
 
-                mediaColumnProcessingService.processMediaColumn(
+                repeatableQuestionGroupMediaColumnProcessingService.processMediaColumn(
                         mediaTableMetadata,
                         tableData,
                         mediaColumn,

@@ -21,13 +21,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
-public class MediaColumnProcessingService {
-    private static final Logger logger = Logger.getLogger(MediaColumnProcessingService.class);
+public class RepeatableQuestionGroupMediaColumnProcessingService {
+    private static final Logger logger = Logger.getLogger(RepeatableQuestionGroupMediaColumnProcessingService.class);
     private static final String MEDIA_REPEATABLE_GROUP_SQL_TEMPLATE = "mediaRepeatableGroup.sql.st";
     private final JdbcTemplate jdbcTemplate;
 
     @Autowired
-    public MediaColumnProcessingService(JdbcTemplate jdbcTemplate) {
+    public RepeatableQuestionGroupMediaColumnProcessingService(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 
@@ -112,7 +112,7 @@ public class MediaColumnProcessingService {
 
 
             // Always set mandatory template parameters with default values to avoid "attribute isn't defined" errors
-            template.add("formElementUuid", mediaColumn.getConceptUuid());
+            template.add("formElementUuid", tableMetadata.getName());
             template.add("startTime", lastSyncTimeStr);
             template.add("endTime", dataSyncBoundaryTimeStr);
 
@@ -126,7 +126,7 @@ public class MediaColumnProcessingService {
                 logger.debug("  - subjectTypeName: " + subjectTypeName);
                 logger.debug("  - encounterTypeName: " + encounterTypeName);
                 logger.debug("  - programName: " + programName);
-                logger.debug("  - formElementUuid: " + mediaColumn.getConceptUuid());
+                logger.debug("  - formElementUuid: " + tableMetadata.getName());
             }
 
             // Render the SQL with parameters
