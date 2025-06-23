@@ -8,7 +8,7 @@ insert into <schemaName>.<tableName> (
     subject_type_name, encounter_type_name, program_name, concept_name, 
     subject_first_name, subject_last_name, 
     -- Media metadata and form data
-    media_metadata, form_element_id, repeatable_question_group_index)
+    media_metadata, question_group_concept_name, repeatable_question_group_index)
 select 
     -- Basic entity data
     parent.id as entity_id,
@@ -35,10 +35,9 @@ select
     -- Subject information
     subject.first_name,
     subject.last_name,
-    -- Media metadata as JSON
     json_build_object('uri', media_element)::jsonb as media_metadata,
-    '<formElementUuid>' as form_element_id,
-    (ROW_NUMBER() OVER (PARTITION BY entity."<subjectIdColumnName>" ORDER BY parent.created_date_time) - 1)::integer as repeatable_question_group_index
+    '<questionGroupConceptName>' as question_group_concept_name,
+    (ROW_NUMBER() OVER (PARTITION BY entity."<subjectIdColumnName>" ORDER BY entity.id) - 1)::integer as repeatable_question_group_index
 from 
     <schemaName>.<fromTableName> entity
     inner join <schemaName>.<subjectTableName> subject 

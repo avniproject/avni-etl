@@ -82,7 +82,7 @@ public class MediaTableRepositoryService {
                     rs.getString("address"),
                     rs.getLong("entity_id"),
                     rs.getString("media_metadata"),
-                    rs.getString("form_element_id"),
+                    rs.getString("question_group_concept_name"),
                     rs.getLong("repeatable_question_group_index")
             );
         } catch (SQLException e) {

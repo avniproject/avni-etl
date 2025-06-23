@@ -112,7 +112,7 @@ public class RepeatableQuestionGroupMediaColumnProcessingService {
 
 
             // Always set mandatory template parameters with default values to avoid "attribute isn't defined" errors
-            template.add("formElementUuid", tableMetadata.getName());
+            template.add("questionGroupConceptName", mediaColumn.getParentConceptName());
             template.add("startTime", lastSyncTimeStr);
             template.add("endTime", dataSyncBoundaryTimeStr);
 
@@ -126,7 +126,7 @@ public class RepeatableQuestionGroupMediaColumnProcessingService {
                 logger.debug("  - subjectTypeName: " + subjectTypeName);
                 logger.debug("  - encounterTypeName: " + encounterTypeName);
                 logger.debug("  - programName: " + programName);
-                logger.debug("  - formElementUuid: " + tableMetadata.getName());
+                logger.debug("  - questionGroupConceptName: " + mediaColumn.getParentConceptName());
             }
 
             // Render the SQL with parameters

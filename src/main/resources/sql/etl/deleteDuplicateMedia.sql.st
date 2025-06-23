@@ -6,7 +6,7 @@ WHERE t2.id IN (
                  RANK() OVER (PARTITION BY 
                               entity_id, 
                               concept_name, 
-                              COALESCE(form_element_id, ''), 
+                              COALESCE(question_group_concept_name, ''), 
                               COALESCE(repeatable_question_group_index, -1) 
                               ORDER BY last_modified_date_time DESC) AS rank
           FROM "<schemaName>"."media" t1) AS duplicates

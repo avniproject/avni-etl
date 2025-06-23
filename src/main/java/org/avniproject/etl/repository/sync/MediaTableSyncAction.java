@@ -81,6 +81,7 @@ public class MediaTableSyncAction implements EntitySyncAction {
         String encounterTypeName = avniMetadataRepository.encounterTypeName(tableMetadata.getEncounterTypeUuid());
         String conceptName = avniMetadataRepository.conceptName(mediaColumn.getConceptUuid());
         String conceptColumnName = mediaColumn.getName();
+        String questionGroupConceptName = mediaColumn.getParentConceptName();
         SyncRegistrationConcept[] syncRegistrationConcepts = avniMetadataRepository.findSyncRegistrationConcepts(tableMetadata.getSubjectTypeUuid());
 
 
@@ -118,6 +119,7 @@ public class MediaTableSyncAction implements EntitySyncAction {
                 .add("schemaName", wrapInQuotes(OrgIdentityContextHolder.getDbSchema()))
                 .add("tableName", wrapInQuotes(mediaTableMetadata.getName()))
                 .add("conceptColumnName", conceptColumnName)
+                .add("questionGroupConceptName", questionGroupConceptName)
                 .add("subjectTypeName", wrapStringValue(subjectTypeName))
                 .add("encounterTypeName", wrapStringValue(encounterTypeName))
                 .add("programName", wrapStringValue(programName))

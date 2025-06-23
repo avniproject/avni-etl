@@ -17,6 +17,7 @@ public class ColumnMetadata extends Model {
     private final ConceptType conceptType;
     private final String conceptUuid;
     private final String parentConceptUuid;
+    private final String parentConceptName;
     private final boolean conceptVoided;
 
     public static String getVoidedName(String name) {
@@ -71,26 +72,27 @@ public class ColumnMetadata extends Model {
 
     }
 
-    public ColumnMetadata(Integer id, Column column, Integer conceptId, ConceptType conceptType, String conceptUuid, String parentConceptUuid, boolean conceptVoided) {
+    public ColumnMetadata(Integer id, Column column, Integer conceptId, ConceptType conceptType, String conceptUuid, String parentConceptUuid, String parentConceptName, boolean conceptVoided) {
         super(id);
         this.column = column;
         this.conceptId = conceptId;
         this.conceptType = conceptType;
         this.conceptUuid = conceptUuid;
         this.parentConceptUuid = parentConceptUuid;
+        this.parentConceptName = parentConceptName;
         this.conceptVoided = conceptVoided;
     }
-
+    
     public boolean isConceptVoided() {
         return conceptVoided;
     }
-
-    public ColumnMetadata(Integer id, String name, Integer conceptId, ConceptType conceptType, String conceptUuid, String parentConceptUuid, Column.ColumnType columnType, boolean conceptVoided) {
-        this(id, conceptType == null ? new Column(name, null, columnType) : new Column(name, conceptType.getColumnDatatype(), columnType), conceptId, conceptType, conceptUuid, parentConceptUuid, conceptVoided);
+    
+    public ColumnMetadata(Integer id, String name, Integer conceptId, ConceptType conceptType, String conceptUuid, String parentConceptUuid, String parentConceptName, Column.ColumnType columnType, boolean conceptVoided) {
+        this(id, conceptType == null ? new Column(name, null, columnType) : new Column(name, conceptType.getColumnDatatype(), columnType), conceptId, conceptType, conceptUuid, parentConceptUuid, parentConceptName, conceptVoided);
     }
 
     public ColumnMetadata(Column column, Integer conceptId, ConceptType conceptType, String conceptUuid, boolean conceptVoided) {
-        this(null, column, conceptId, conceptType, conceptUuid, null, conceptVoided);
+        this(null, column, conceptId, conceptType, conceptUuid, null, null, conceptVoided);
     }
 
     public Integer getConceptId() {
@@ -119,6 +121,10 @@ public class ColumnMetadata extends Model {
 
     public String getParentConceptUuid() {
         return parentConceptUuid;
+    }
+    
+    public String getParentConceptName() {
+        return parentConceptName;
     }
 
     public boolean matches(ColumnMetadata realColumn) {
@@ -172,7 +178,7 @@ public class ColumnMetadata extends Model {
         String newName = this.conceptVoided ? this.getName() : this.getVoidedName();
         Column newColumn = this.getColumn().getClonedColumn(newName);
 
-        return new ColumnMetadata(this.getId(), newColumn, this.getConceptId(), this.getConceptType(), this.getConceptUuid(), this.getParentConceptUuid(), true);
+        return new ColumnMetadata(this.getId(), newColumn, this.getConceptId(), this.getConceptType(), this.getConceptUuid(), this.getParentConceptUuid(), this.getParentConceptName(), true);
     }
 
     public static final ColumnMetadata.ConceptType[] MEDIA_COLUMN_CONCEPT_TYPES = {

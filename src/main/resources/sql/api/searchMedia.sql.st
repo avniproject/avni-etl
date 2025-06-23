@@ -21,7 +21,7 @@ SELECT media.id as id,
        row_to_json(address.*) as address,
        media.entity_id as entity_id,
        media.media_metadata as media_metadata,
-       media.form_element_id as form_element_id,
+       media.question_group_concept_name as question_group_concept_name,
        media.repeatable_question_group_index as repeatable_question_group_index
 FROM "<schemaName>".media media
          JOIN "<schemaName>".address address ON address.id = media.address_id

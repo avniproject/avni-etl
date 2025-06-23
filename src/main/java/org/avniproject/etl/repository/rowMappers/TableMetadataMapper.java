@@ -23,6 +23,7 @@ public class TableMetadataMapper {
                 map.get("concept_type") == null ? null : ColumnMetadata.ConceptType.valueOf((String) map.get("concept_type")),
                 (String) map.get("concept_uuid"),
                 (String) map.get("parent_concept_uuid"),
+                (String) map.get("parent_concept_name"),
                 (Boolean) map.get("concept_voided"));
     }
 

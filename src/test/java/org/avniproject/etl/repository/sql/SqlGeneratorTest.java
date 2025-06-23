@@ -18,7 +18,7 @@ import static org.hamcrest.Matchers.equalTo;
 class SqlGeneratorTest {
 
     private ColumnMetadata createColumnMetaData(Integer id, String name, Integer conceptId, ColumnMetadata.ConceptType conceptType, String conceptUuid) {
-        return new ColumnMetadata(id, conceptType == null ? new Column(name, null) : new Column(name, conceptType.getColumnDatatype()), conceptId, conceptType, conceptUuid, null, false);
+        return new ColumnMetadata(id, conceptType == null ? new Column(name, null) : new Column(name, conceptType.getColumnDatatype()), conceptId, conceptType, conceptUuid, null, null, false);
     }
 
     @Test

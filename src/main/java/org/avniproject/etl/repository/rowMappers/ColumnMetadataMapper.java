@@ -17,15 +17,18 @@ public class ColumnMetadataMapper implements RowMapper<ColumnMetadata> {
             isVoided = false;
         }
 
-        boolean isQuestionGroup = column.get("parent_concept_name") != null && !TableMetadata.Type.RepeatableQuestionGroup.name().equals(column.get("table_type"));
-        if (isQuestionGroup) {
+        boolean hasParentConcept = column.get("parent_concept_name") != null;
+        if (hasParentConcept) {
+            boolean isQuestionGroup = hasParentConcept && !TableMetadata.Type.RepeatableQuestionGroup.name().equals(column.get("table_type"));
+            String conceptName = isQuestionGroup ? column.get("parent_concept_name") + " " + column.get("concept_name") : (String) column.get("concept_name");
             return new ColumnMetadata(
                     null,
-                    column.get("parent_concept_name") + " " + column.get("concept_name"),
+                    conceptName,
                     (Integer) column.get("concept_id"),
                     ColumnMetadata.ConceptType.valueOf((String) column.get("element_type")),
                     (String) column.get("concept_uuid"),
-                    (String) column.get("parent_concept_uuid"),
+                    column.get("parent_concept_uuid") == null ? null : (String) column.get("parent_concept_uuid"),
+                    column.get("parent_concept_name") == null ? null : (String) column.get("parent_concept_name"),
                     null,
                     (Boolean) isVoided);
         }
@@ -35,6 +38,7 @@ public class ColumnMetadataMapper implements RowMapper<ColumnMetadata> {
                 (Integer) column.get("concept_id"),
                 ColumnMetadata.ConceptType.valueOf((String) column.get("element_type")),
                 (String) column.get("concept_uuid"),
+                null,
                 null,
                 null,
                 (Boolean) isVoided);
@@ -48,6 +52,7 @@ public class ColumnMetadataMapper implements RowMapper<ColumnMetadata> {
                 ColumnMetadata.ConceptType.valueOf((String) column.get("element_type")),
                 (String) column.get("concept_uuid"),
                 null,
+                null,
                 columnType, false);
     }
 
@@ -60,6 +65,7 @@ public class ColumnMetadataMapper implements RowMapper<ColumnMetadata> {
                 ColumnMetadata.ConceptType.valueOf(rs.getString("concept_type")),
                 rs.getString("concept_uuid"),
                 rs.getString("parent_concept_uuid"),
+                rs.getString("parent_concept_name"),
                 rs.getBoolean("concept_voided"));
     }
 }

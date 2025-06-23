@@ -32,7 +32,7 @@ public class MediaTable extends Table {
                 .withColumn(new Column("subject_last_name", Column.Type.text))
                 .withColumn(new Column("subject_middle_name", Column.Type.text))
                 .withColumn(new Column("media_metadata", Column.Type.jsonb))
-                .withColumn(new Column("form_element_id", Column.Type.text, Column.ColumnType.index))
+                .withColumn(new Column("question_group_concept_name", Column.Type.text))
                 .withColumn(new Column("repeatable_question_group_index", Column.Type.integer))
                 .build();
     }

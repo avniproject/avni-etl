@@ -4,7 +4,7 @@ insert into <schemaName>.<tableName> (
     image_url, sync_parameter_key1, sync_parameter_value1, sync_parameter_key2, sync_parameter_value2, 
     subject_type_name, encounter_type_name, program_name, concept_name, 
     subject_first_name, subject_last_name, subject_middle_name, media_metadata, 
-    form_element_id, repeatable_question_group_index)
+    question_group_concept_name, repeatable_question_group_index)
 select 
     entity.id,
     entity.uuid,
@@ -28,12 +28,9 @@ select
     subject.first_name,
     subject.last_name,
     <if(hasMiddleName)>subject.middle_name<else>null<endif>,
-    -- Media data
     media_json::jsonb as media_metadata,
-    -- Form element ID 
-    COALESCE(media_json::json->>'formElementId', '<conceptColumnName>') as form_element_id,
-    -- Question group index
-    NULLIF((media_json::json->>'repeatableQuestionGroupIndex')::integer, -1) as repeatable_question_group_index
+    COALESCE('<questionGroupConceptName>', '<conceptColumnName>') as question_group_concept_name,
+    (ROW_NUMBER() OVER (PARTITION BY entity."<subjectIdColumnName>" ORDER BY entity.id) - 1)::integer as repeatable_question_group_index
 from 
     <schemaName>.<fromTableName> entity
     -- Join with the subject table to get missing columns
