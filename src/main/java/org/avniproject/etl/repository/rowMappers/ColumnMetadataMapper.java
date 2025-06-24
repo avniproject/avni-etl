@@ -58,14 +58,23 @@ public class ColumnMetadataMapper implements RowMapper<ColumnMetadata> {
 
     @Override
     public ColumnMetadata mapRow(ResultSet rs, int rowNum) throws SQLException {
+        String parentConceptUuid = null, parentConceptName = null;
+
+        try {
+            parentConceptUuid = rs.getString("parent_concept_uuid");
+            parentConceptName = rs.getString("parent_concept_name");
+        } catch (SQLException e) {
+            // ignore
+        }
+        
         return new ColumnMetadata(
                 rs.getInt("id"),
                 new Column(rs.getString("name"), Column.Type.valueOf(rs.getString("type"))),
                 rs.getInt("concept_id"),
                 ColumnMetadata.ConceptType.valueOf(rs.getString("concept_type")),
                 rs.getString("concept_uuid"),
-                rs.getString("parent_concept_uuid"),
-                rs.getString("parent_concept_name"),
+                parentConceptUuid,
+                parentConceptName,
                 rs.getBoolean("concept_voided"));
     }
 }
