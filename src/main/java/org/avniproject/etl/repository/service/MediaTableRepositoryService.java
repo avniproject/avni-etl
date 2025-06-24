@@ -60,6 +60,7 @@ public class MediaTableRepositoryService {
             String uuid = rs.getString("uuid");
             String imageUUID = getImageUUID(imageUrl);
             String compositeUUID = uuid + "#" + imageUUID;
+            String repeatableQuestionGroupIndex = rs.getString("repeatable_question_group_index");
             return new MediaDTO(
                     compositeUUID,
                     rs.getString("subject_first_name"),
@@ -83,8 +84,7 @@ public class MediaTableRepositoryService {
                     rs.getLong("entity_id"),
                     rs.getString("media_metadata"),
                     rs.getString("question_group_concept_name"),
-                    rs.getLong("repeatable_question_group_index")
-            );
+                    repeatableQuestionGroupIndex == null ? null : Long.parseLong(repeatableQuestionGroupIndex));
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
