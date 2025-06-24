@@ -21,6 +21,7 @@ public class MediaTableRepositoryServiceTest {
         when(amazonClient.generateMediaDownloadUrl(anyString())).thenThrow(new IllegalArgumentException());
         ResultSet resultSet = mock(ResultSet.class);
         when(resultSet.getString(anyString())).thenReturn("dummy");
+        when(resultSet.getString("repeatable_question_group_index")).thenReturn("0");
         when(resultSet.getLong(anyString())).thenReturn(1L);
 
         MediaDTO mediaDTO = new MediaTableRepositoryService(amazonClient).setMediaDto(resultSet);
