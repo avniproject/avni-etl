@@ -50,6 +50,7 @@ CREATE OR REPLACE VIEW "<schema_name>"."<view_name>" AS
         null as individual_uuid,
         null as first_name,
         null as last_name,
-        null as encounter_type_name
+        null as encounter_type_name,
+        <address_columns:{col | null as "<col>"}; separator=", ">
     LIMIT 0;
 <endif>

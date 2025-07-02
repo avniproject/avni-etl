@@ -43,6 +43,7 @@ CREATE OR REPLACE VIEW "<schema_name>".enrolment_view AS
         null as program_name,
         null as individual_uuid,
         null as first_name,
-        null as last_name
+        null as last_name,
+        <address_columns:{col | null as "<col>"}; separator=", ">
     LIMIT 0;
 <endif>

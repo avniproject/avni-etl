@@ -40,6 +40,7 @@ CREATE OR REPLACE VIEW "<schema_name>".subject_view AS
         null as is_voided,
         null as subject_type_uuid,
         null as address_id,
-        null as subject_type
+        null as subject_type,
+        <address_columns:{col | null as "<col>"}; separator=", ">
     LIMIT 0;
 <endif>
