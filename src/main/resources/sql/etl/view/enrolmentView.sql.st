@@ -29,5 +29,20 @@ CREATE OR REPLACE VIEW "<schema_name>".enrolment_view AS
     JOIN "<schema_name>".address a ON all_enrolments.address_id = a.id
     JOIN public.individual ind ON all_enrolments.individual_id = ind.id;
 <else>
-    SELECT -1 as id;
+    SELECT
+        null as enrolment_id,
+        null as enrolment_uuid,
+        null as program_uuid,
+        null as individual_id,
+        null as enrolment_date_time,
+        null as created_date_time,
+        null as last_modified_date_time,
+        null as is_voided,
+        null as program_exit_date_time,
+        null as address_id,
+        null as program_name,
+        null as individual_uuid,
+        null as first_name,
+        null as last_name
+    LIMIT 0;
 <endif>

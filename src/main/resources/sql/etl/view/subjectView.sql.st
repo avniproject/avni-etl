@@ -27,5 +27,19 @@ CREATE OR REPLACE VIEW "<schema_name>".subject_view AS
       JOIN public.subject_type st on st.uuid = all_subs.subject_type_uuid <where_clause>
       JOIN "<schema_name>".address a ON all_subs.address_id = a.id;
 <else>
-    SELECT -1 as id;
+    SELECT
+        null as individual_id,
+        null as indvidual_uuid,
+        null as first_name,
+        null as date_of_birth,
+        null as last_name,
+        null as gender,
+        null as registration_date,
+        null as created_date_time,
+        null as last_modified_date_time,
+        null as is_voided,
+        null as subject_type_uuid,
+        null as address_id,
+        null as subject_type
+    LIMIT 0;
 <endif>
