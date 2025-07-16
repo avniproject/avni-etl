@@ -7,7 +7,7 @@ CREATE OR REPLACE VIEW "<schema_name>".subject_view AS
         id as individual_id,
         uuid as indvidual_uuid,
         first_name,
-    <if(table.isPerson)> date_of_birth <else> null <endif> as date_of_birth,
+    <if(table.isPerson)> date_of_birth <else> null::date <endif> as date_of_birth,
         last_name,
     <if(table.isPerson)> gender <else> null <endif> as gender,
         registration_date,
