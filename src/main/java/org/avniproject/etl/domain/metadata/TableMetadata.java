@@ -117,6 +117,12 @@ public class TableMetadata extends Model {
             
         return matchingColumns;
     }
+    
+    public boolean hasColumnsMatchingConceptType(ColumnMetadata.ConceptType... conceptTypes) {
+        return getColumnMetadataList().stream()
+            .anyMatch(columnMetadata -> Arrays.stream(conceptTypes)
+                .anyMatch(conceptType -> nullSafeEquals(columnMetadata.getConceptType(), conceptType)));
+    }
 
     public void mergeWith(TableMetadata oldTableMetadata) {
         setId(oldTableMetadata.getId());

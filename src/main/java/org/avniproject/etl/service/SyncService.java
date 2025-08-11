@@ -3,12 +3,14 @@ package org.avniproject.etl.service;
 import org.apache.log4j.Logger;
 import org.avniproject.etl.domain.OrgIdentityContextHolder;
 import org.avniproject.etl.domain.Organisation;
+import org.avniproject.etl.domain.OrganisationIdentity;
 import org.avniproject.etl.domain.metadata.SchemaMetadata;
 import org.avniproject.etl.domain.metadata.TableMetadata;
 import org.avniproject.etl.domain.syncstatus.EntitySyncStatus;
 import org.avniproject.etl.domain.syncstatus.SchemaDataSyncStatus;
 import org.avniproject.etl.repository.EntitySyncStatusRepository;
 import org.avniproject.etl.repository.sync.EntityRepository;
+import org.avniproject.etl.repository.sync.MultiSelectViewSyncAction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -19,25 +21,34 @@ public class SyncService {
 
     private final EntityRepository entityRepository;
     private final EntitySyncStatusRepository entitySyncStatusRepository;
+    private final MultiSelectViewSyncAction multiSelectViewSyncAction;
     private static final Logger log = Logger.getLogger(SyncService.class);
 
     @Autowired
-    public SyncService(EntityRepository entityRepository, EntitySyncStatusRepository entitySyncStatusRepository) {
+    public SyncService(EntityRepository entityRepository,
+                       EntitySyncStatusRepository entitySyncStatusRepository,
+                       MultiSelectViewSyncAction multiSelectViewSyncAction) {
         this.entityRepository = entityRepository;
         this.entitySyncStatusRepository = entitySyncStatusRepository;
+        this.multiSelectViewSyncAction = multiSelectViewSyncAction;
     }
 
     /**
      * In case of an error, we do not want the read only db to be in an inconsistent state wrt
      * related data because it can cause unexpected scenarios in reports. We roll back on an
      * organisation basis.
+     *
      * @param organisation
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void sync(Organisation organisation) {
         SchemaMetadata currentSchemaMetadata = organisation.getSchemaMetadata();
-        currentSchemaMetadata.getOrderedTableMetadata().stream().filter(TableMetadata::isPartOfRegularSync)
+
+        currentSchemaMetadata.getOrderedTableMetadata().stream()
+                .filter(TableMetadata::isPartOfRegularSync)
                 .forEach(tableMetadata -> migrateTable(tableMetadata, organisation.getSyncStatus(), currentSchemaMetadata));
+
+        createMultiselectViews(organisation.getOrganisationIdentity(), currentSchemaMetadata);
     }
 
     @Transactional
@@ -50,5 +61,15 @@ public class SyncService {
 
         entitySyncStatus.markSuccess(OrgIdentityContextHolder.dataSyncBoundaryTime());
         entitySyncStatusRepository.save(entitySyncStatus);
+    }
+
+    private void createMultiselectViews(OrganisationIdentity organisationIdentity, SchemaMetadata currentSchemaMetadata) {
+        try {
+            multiSelectViewSyncAction.createMultiselectViews(organisationIdentity, currentSchemaMetadata);
+            log.info("Successfully created multiselect views");
+        } catch (Exception e) {
+            log.error("Error creating multiselect views", e);
+            throw new RuntimeException("Failed to create multiselect views", e);
+        }
     }
 }
