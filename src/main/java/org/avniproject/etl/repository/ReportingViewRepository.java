@@ -10,7 +10,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.stringtemplate.v4.ST;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -106,7 +105,7 @@ public class ReportingViewRepository implements ReportingViewMetaData {
         users.forEach(user -> grantPermissionToView(schemaName, config.getViewName(), user));
     }
 
-    private void grantPermissionToView(String schemaName, String viewName, String userName) {
+    public void grantPermissionToView(String schemaName, String viewName, String userName) {
         ST st = new ST(grantViewFile);
         st.add(SCHEMA_PARAM_NAME, schemaName);
         st.add(VIEW_PARAM_NAME, viewName);
