@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.avniproject.etl.repository.JdbcContextWrapper.runInOrgContext;
 import static org.avniproject.etl.repository.sql.SqlFile.readFile;
 
 @Repository
@@ -101,7 +102,11 @@ public class ReportingViewRepository implements ReportingViewMetaData {
         st.add(WHERE_CLAUSE, String.format(whereClause, organisationIdsString));
 
         String query = st.render();
-        jdbcTemplate.execute(query);
+        runInOrgContext(() -> {
+            jdbcTemplate.execute(query);
+            return null;
+        }, jdbcTemplate);
+
         log.info(String.format("%s view created", config.getViewName()));
         users.forEach(user -> grantPermissionToView(schemaName, config.getViewName(), user));
     }
@@ -112,6 +117,9 @@ public class ReportingViewRepository implements ReportingViewMetaData {
         st.add(VIEW_PARAM_NAME, viewName);
         st.add(USER_PARAM_NAME, userName);
         String query = st.render();
-        jdbcTemplate.execute(query);
+        runInOrgContext(() -> {
+            jdbcTemplate.execute(query);
+            return null;
+        }, jdbcTemplate);
     }
 }
