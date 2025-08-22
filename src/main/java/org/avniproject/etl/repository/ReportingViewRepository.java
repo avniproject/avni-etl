@@ -2,6 +2,7 @@ package org.avniproject.etl.repository;
 
 import jakarta.annotation.PostConstruct;
 import org.apache.log4j.Logger;
+import org.avniproject.etl.domain.OrgIdentityContextHolder;
 import org.avniproject.etl.domain.OrganisationIdentity;
 import org.avniproject.etl.domain.metadata.ReportingViewMetaData;
 import org.avniproject.etl.domain.metadata.TableMetadata;
@@ -16,6 +17,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.avniproject.etl.repository.JdbcContextWrapper.runInOrgContext;
+import static org.avniproject.etl.repository.JdbcContextWrapper.runInSchemaUserContext;
 import static org.avniproject.etl.repository.sql.SqlFile.readFile;
 
 @Repository
@@ -78,6 +80,31 @@ public class ReportingViewRepository implements ReportingViewMetaData {
         return jdbcTemplate.queryForList(query, String.class);
     }
 
+    private boolean isOrganizationGroupSchema(OrganisationIdentity organisationIdentity) {
+        return !organisationIdentity.getSchemaName().equals(organisationIdentity.getDbUser());
+    }
+
+    private void executeQueryInContext(OrganisationIdentity organisationIdentity, String query, String operation, String viewName, String schemaName) {
+        try {
+            if (isOrganizationGroupSchema(organisationIdentity)) {
+                runInSchemaUserContext(() -> {
+                    jdbcTemplate.execute(query);
+                    return null;
+                }, jdbcTemplate);
+            } else {
+                runInOrgContext(() -> {
+                    jdbcTemplate.execute(query);
+                    return null;
+                }, jdbcTemplate);
+            }
+            log.info(String.format("%s view %s successfully", viewName, operation));
+        } catch (Exception e) {
+            log.error(String.format("Failed to %s view %s for schema %s. Error: %s", 
+                    operation, viewName, schemaName, e.getMessage()), e);
+            throw e;
+        }
+    }
+
     private void createViewAndGrantPermission(Type type, ViewConfig config, String schemaName, List<String> users, List<String> addressColumns, OrganisationIdentity organisationIdentity) {
         List<TableMetadataST> tableMetadata = switch (type) {
             case SUBJECT ->
@@ -101,12 +128,8 @@ public class ReportingViewRepository implements ReportingViewMetaData {
         st.add(WHERE_CLAUSE, String.format(whereClause, organisationIdsString));
 
         String query = st.render();
-        runInOrgContext(() -> {
-            jdbcTemplate.execute(query);
-            return null;
-        }, jdbcTemplate);
-
-        log.info(String.format("%s view created", config.getViewName()));
+        
+        executeQueryInContext(organisationIdentity, query, "created", config.getViewName(), schemaName);
         users.forEach(user -> grantPermissionToView(schemaName, config.getViewName(), user));
     }
 
@@ -116,9 +139,6 @@ public class ReportingViewRepository implements ReportingViewMetaData {
         st.add(VIEW_PARAM_NAME, viewName);
         st.add(USER_PARAM_NAME, userName);
         String query = st.render();
-        runInOrgContext(() -> {
-            jdbcTemplate.execute(query);
-            return null;
-        }, jdbcTemplate);
+        executeQueryInContext(OrgIdentityContextHolder.getOrganisationIdentity(), query, "granted permission to", viewName, schemaName);
     }
 }
