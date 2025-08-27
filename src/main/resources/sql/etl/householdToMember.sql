@@ -1,6 +1,6 @@
 insert into ${schema_name}.${table_name} ("id", "uuid", "is_voided", "created_by_id", "last_modified_by_id",
                                           "created_date_time", "last_modified_date_time", "organisation_id",
-                                          "group_subject_id", "member_subject_id", "role", "Head of household ID")
+                                          "group_subject_id", "member_subject_id", "role", "Head of household ID", "created_by_username", "last_modified_by_username")
     (
         select
             gs.id,
@@ -14,7 +14,9 @@ insert into ${schema_name}.${table_name} ("id", "uuid", "is_voided", "created_by
             grp.id                                             AS group_subject_id,
             member.id                                          AS member_subject_id,
             rr.role                                            AS role,
-            gs2.member_subject_id                            AS head_of_family_id
+            gs2.member_subject_id                            AS head_of_family_id,
+            created_user.username                              AS created_by_username,
+            modified_user.username                             AS last_modified_by_username
         FROM public.individual member
                  JOIN subject_type st ON member.subject_type_id = st.id AND st.type::text = 'Person'::text
                  JOIN group_subject gs ON gs.member_subject_id = member.id
@@ -23,6 +25,8 @@ insert into ${schema_name}.${table_name} ("id", "uuid", "is_voided", "created_by
                  LEFT JOIN group_role gr ON gs2.group_role_id = gr.id
                  JOIN subject_type gst ON grp.subject_type_id = gst.id
                  JOIN group_role rr ON gs.group_role_id = rr.id
+                 LEFT JOIN public.users created_user ON gs.created_by_id = created_user.id
+                 LEFT JOIN public.users modified_user ON gs.last_modified_by_id = modified_user.id
             AND member.subject_type_id = rr.member_subject_type_id
             AND grp.subject_type_id = rr.group_subject_type_id
         WHERE NOT gs2.is_voided

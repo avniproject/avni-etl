@@ -13,7 +13,9 @@ CREATE OR REPLACE VIEW "<schema_name>".enrolment_view AS
         last_modified_date_time,
         is_voided,
         program_exit_date_time,
-        address_id
+        address_id,
+        created_by_username,
+        last_modified_by_username
     from "<schema_name>"."<table.name>"
     where is_voided is false
     }; separator="UNION ALL \n">
@@ -40,6 +42,8 @@ CREATE OR REPLACE VIEW "<schema_name>".enrolment_view AS
         null as is_voided,
         null as program_exit_date_time,
         null as address_id,
+        null as created_by_username,
+        null as last_modified_by_username,
         null as program_name,
         null as individual_uuid,
         null as first_name,

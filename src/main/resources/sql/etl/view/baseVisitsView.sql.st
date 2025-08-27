@@ -16,7 +16,10 @@ CREATE OR REPLACE VIEW "<schema_name>"."<view_name>" AS
         max_visit_date_time,
         created_date_time,
         last_modified_date_time,
-        address_id
+        address_id,
+        created_by_username,
+        last_modified_by_username,
+        filled_by_username
     from "<schema_name>"."<table.name>"
     <where_clause>
     }; separator="UNION ALL \n">
@@ -47,6 +50,9 @@ CREATE OR REPLACE VIEW "<schema_name>"."<view_name>" AS
         null as created_date_time,
         null as last_modified_date_time,
         null as address_id,
+        null as created_by_username,
+        null as last_modified_by_username,
+        null as filled_by_username,
         null as individual_uuid,
         null as first_name,
         null as last_name,

@@ -15,7 +15,9 @@ CREATE OR REPLACE VIEW "<schema_name>".subject_view AS
         last_modified_date_time,
         is_voided,
         '<table.subjectTypeUuid>' as subject_type_uuid,
-        address_id
+        address_id,
+        created_by_username,
+        last_modified_by_username
     from "<schema_name>"."<table.name>"
     where is_voided is false
     }; separator="UNION ALL \n">
@@ -40,6 +42,8 @@ CREATE OR REPLACE VIEW "<schema_name>".subject_view AS
         null as is_voided,
         null as subject_type_uuid,
         null as address_id,
+        null as created_by_username,
+        null as last_modified_by_username,
         null as subject_type,
         <address_columns:{col | null as "<col>"}; separator=", ">
     LIMIT 0;
