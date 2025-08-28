@@ -25,10 +25,7 @@ public class EncounterTable extends Table {
                                 new Column("cancel_location", Column.Type.point),
                                 new Column("legacy_id", Column.Type.text),
                                 new Column("latest_approval_status", Column.Type.text),
-                                new Column("filled_by_id", Column.Type.integer, Column.ColumnType.index),
-                                new Column("created_by_username", Column.Type.text),
-                                new Column("last_modified_by_username", Column.Type.text),
-                                new Column("filled_by_username", Column.Type.text)
+                                new Column("filled_by_id", Column.Type.integer, Column.ColumnType.index)
                         )
                 ).build();
     }
