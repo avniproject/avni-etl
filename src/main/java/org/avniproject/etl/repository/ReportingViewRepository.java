@@ -57,7 +57,7 @@ public class ReportingViewRepository implements ReportingViewMetaData {
                 "WHERE encounter_date_time IS NOT NULL AND cancel_date_time IS NULL AND is_voided IS false",
                 "", baseVisitsViewFile));
         viewConfigs.put(Type.OVERDUE_VISITS, new ViewConfig("overdue_visits_view",
-                "WHERE CURRENT_DATE > max_visit_date_time AND is_voided IS false",
+                "WHERE CURRENT_DATE > max_visit_date_time AND encounter_date_time is NULL AND cancel_date_time is NULL AND is_voided IS false",
                 "", baseVisitsViewFile));
     }
 
@@ -99,7 +99,7 @@ public class ReportingViewRepository implements ReportingViewMetaData {
             }
             log.info(String.format("%s view %s successfully", viewName, operation));
         } catch (Exception e) {
-            log.error(String.format("Failed to %s view %s for schema %s. Error: %s", 
+            log.error(String.format("Failed to %s view %s for schema %s. Error: %s",
                     operation, viewName, schemaName, e.getMessage()), e);
             throw e;
         }
@@ -128,7 +128,7 @@ public class ReportingViewRepository implements ReportingViewMetaData {
         st.add(WHERE_CLAUSE, String.format(whereClause, organisationIdsString));
 
         String query = st.render();
-        
+
         executeQueryInContext(organisationIdentity, query, "created", config.getViewName(), schemaName);
         users.forEach(user -> grantPermissionToView(schemaName, config.getViewName(), user));
     }
