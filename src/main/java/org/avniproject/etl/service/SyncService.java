@@ -22,7 +22,8 @@ public class SyncService {
     private static final Logger log = Logger.getLogger(SyncService.class);
 
     @Autowired
-    public SyncService(EntityRepository entityRepository, EntitySyncStatusRepository entitySyncStatusRepository) {
+    public SyncService(EntityRepository entityRepository,
+                       EntitySyncStatusRepository entitySyncStatusRepository) {
         this.entityRepository = entityRepository;
         this.entitySyncStatusRepository = entitySyncStatusRepository;
     }
@@ -31,12 +32,15 @@ public class SyncService {
      * In case of an error, we do not want the read only db to be in an inconsistent state wrt
      * related data because it can cause unexpected scenarios in reports. We roll back on an
      * organisation basis.
+     *
      * @param organisation
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void sync(Organisation organisation) {
         SchemaMetadata currentSchemaMetadata = organisation.getSchemaMetadata();
-        currentSchemaMetadata.getOrderedTableMetadata().stream().filter(TableMetadata::isPartOfRegularSync)
+
+        currentSchemaMetadata.getOrderedTableMetadata().stream()
+                .filter(TableMetadata::isPartOfRegularSync)
                 .forEach(tableMetadata -> migrateTable(tableMetadata, organisation.getSyncStatus(), currentSchemaMetadata));
     }
 

@@ -56,8 +56,8 @@ public class EtlService {
         log.info(String.format("Old organisation schema summary %s", organisation.getSchemaMetadata().getCountsByType()));
         Organisation newOrganisation = schemaMigrationService.migrate(organisation);
         log.info(String.format("New organisation after migration, schema summary %s", newOrganisation.getSchemaMetadata().getCountsByType()));
-        reportingViewService.processMetabaseViews(newOrganisation);
         syncService.sync(newOrganisation);
+        reportingViewService.processViews(newOrganisation);
         postETLSyncService.executePostETLScripts(newOrganisation);
         log.info(String.format("Completed ETL for %s", organisationIdentity));
         OrgIdentityContextHolder.setContext(organisationIdentity, etlServiceConfig);

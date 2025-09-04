@@ -61,7 +61,7 @@ jobs:
     docker:
       - image: cimg/openjdk:17.0.5
 
-      - image: cimg/postgres:12.7
+      - image: cimg/postgres:16.8
         environment:
           - POSTGRES_USER: openchs
           - POSTGRES_DB: openchs_test

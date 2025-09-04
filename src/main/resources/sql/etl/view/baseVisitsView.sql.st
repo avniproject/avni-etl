@@ -4,20 +4,26 @@ CREATE OR REPLACE VIEW "<schema_name>"."<view_name>" AS
     WITH visits AS (
     <table_metadata:{table |
         SELECT
-        id,
-        uuid,
-        name,
-        individual_id,
+        t.id,
+        t.uuid,
+        t.name,
+        t.individual_id,
         '<table.encounterTypeUuid>' as encounter_type_uuid,
-        encounter_date_time,
-        cancel_date_time,
-        is_voided,
-        earliest_visit_date_time,
-        max_visit_date_time,
-        created_date_time,
-        last_modified_date_time,
-        address_id
-    from "<schema_name>"."<table.name>"
+        t.encounter_date_time,
+        t.cancel_date_time,
+        t.is_voided,
+        t.earliest_visit_date_time,
+        t.max_visit_date_time,
+        t.created_date_time,
+        t.last_modified_date_time,
+        t.address_id,
+        created_user.username as created_by_username,
+        modified_user.username as last_modified_by_username,
+        filled_user.username as filled_by_username
+    from "<schema_name>"."<table.name>" t
+    LEFT JOIN public.users created_user on t.created_by_id = created_user.id
+    LEFT JOIN public.users modified_user on t.last_modified_by_id = modified_user.id
+    LEFT JOIN public.users filled_user on t.filled_by_id = filled_user.id
     <where_clause>
     }; separator="UNION ALL \n">
     )
@@ -47,6 +53,9 @@ CREATE OR REPLACE VIEW "<schema_name>"."<view_name>" AS
         null as created_date_time,
         null as last_modified_date_time,
         null as address_id,
+        null as created_by_username,
+        null as last_modified_by_username,
+        null as filled_by_username,
         null as individual_uuid,
         null as first_name,
         null as last_name,

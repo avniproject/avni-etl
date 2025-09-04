@@ -4,20 +4,24 @@ CREATE OR REPLACE VIEW "<schema_name>".subject_view AS
     WITH all_subjects AS (
     <table_metadata:{table |
     SELECT
-        id as individual_id,
-        uuid as indvidual_uuid,
-        first_name,
-    <if(table.isPerson)> date_of_birth <else> null::date <endif> as date_of_birth,
-        last_name,
-    <if(table.isPerson)> gender <else> null <endif> as gender,
-        registration_date,
-        created_date_time,
-        last_modified_date_time,
-        is_voided,
+        t.id as individual_id,
+        t.uuid as indvidual_uuid,
+        t.first_name,
+    <if(table.isPerson)> t.date_of_birth <else> null::date <endif> as date_of_birth,
+        t.last_name,
+    <if(table.isPerson)> t.gender <else> null <endif> as gender,
+        t.registration_date,
+        t.created_date_time,
+        t.last_modified_date_time,
+        t.is_voided,
         '<table.subjectTypeUuid>' as subject_type_uuid,
-        address_id
-    from "<schema_name>"."<table.name>"
-    where is_voided is false
+        t.address_id,
+        created_user.username as created_by_username,
+        modified_user.username as last_modified_by_username
+    from "<schema_name>"."<table.name>" t
+    LEFT JOIN public.users created_user on t.created_by_id = created_user.id
+    LEFT JOIN public.users modified_user on t.last_modified_by_id = modified_user.id
+    where t.is_voided is false
     }; separator="UNION ALL \n">
     )
     SELECT all_subs.*,
@@ -40,6 +44,8 @@ CREATE OR REPLACE VIEW "<schema_name>".subject_view AS
         null as is_voided,
         null as subject_type_uuid,
         null as address_id,
+        null as created_by_username,
+        null as last_modified_by_username,
         null as subject_type,
         <address_columns:{col | null as "<col>"}; separator=", ">
     LIMIT 0;

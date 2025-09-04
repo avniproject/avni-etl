@@ -2,6 +2,7 @@ package org.avniproject.etl.repository;
 
 import jakarta.annotation.PostConstruct;
 import org.apache.log4j.Logger;
+import org.avniproject.etl.domain.OrgIdentityContextHolder;
 import org.avniproject.etl.domain.OrganisationIdentity;
 import org.avniproject.etl.domain.metadata.ReportingViewMetaData;
 import org.avniproject.etl.domain.metadata.TableMetadata;
@@ -10,13 +11,13 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.stringtemplate.v4.ST;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.avniproject.etl.repository.JdbcContextWrapper.runInOrgContext;
+import static org.avniproject.etl.repository.JdbcContextWrapper.runInSchemaUserContext;
 import static org.avniproject.etl.repository.sql.SqlFile.readFile;
 
 @Repository
@@ -50,13 +51,13 @@ public class ReportingViewRepository implements ReportingViewMetaData {
         viewConfigs.put(Type.ENROLMENT, new ViewConfig("enrolment_view",
                 "and p.organisation_id in (%s)", "", enrolmentViewFile));
         viewConfigs.put(Type.DUE_VISITS, new ViewConfig("due_visits_view",
-                "WHERE earliest_visit_date_time < CURRENT_DATE AND CURRENT_DATE < max_visit_date_time AND is_voided IS false",
+                "WHERE t.earliest_visit_date_time < CURRENT_DATE AND CURRENT_DATE < t.max_visit_date_time AND t.is_voided IS false",
                 "", baseVisitsViewFile));
         viewConfigs.put(Type.COMPLETED_VISITS, new ViewConfig("completed_visits_view",
-                "WHERE encounter_date_time IS NOT NULL AND cancel_date_time IS NULL AND is_voided IS false",
+                "WHERE t.encounter_date_time IS NOT NULL AND t.cancel_date_time IS NULL AND t.is_voided IS false",
                 "", baseVisitsViewFile));
         viewConfigs.put(Type.OVERDUE_VISITS, new ViewConfig("overdue_visits_view",
-                "WHERE CURRENT_DATE > max_visit_date_time AND is_voided IS false",
+                "WHERE CURRENT_DATE > t.max_visit_date_time AND t.encounter_date_time is NULL AND t.cancel_date_time is NULL AND t.is_voided IS false",
                 "", baseVisitsViewFile));
     }
 
@@ -77,6 +78,31 @@ public class ReportingViewRepository implements ReportingViewMetaData {
         st.add(DB_USER, organisationIdentity.getDbUser());
         String query = st.render();
         return jdbcTemplate.queryForList(query, String.class);
+    }
+
+    private boolean isOrganizationGroupSchema(OrganisationIdentity organisationIdentity) {
+        return !organisationIdentity.getSchemaName().equals(organisationIdentity.getDbUser());
+    }
+
+    private void executeQueryInContext(OrganisationIdentity organisationIdentity, String query, String operation, String viewName, String schemaName) {
+        try {
+            if (isOrganizationGroupSchema(organisationIdentity)) {
+                runInSchemaUserContext(() -> {
+                    jdbcTemplate.execute(query);
+                    return null;
+                }, jdbcTemplate);
+            } else {
+                runInOrgContext(() -> {
+                    jdbcTemplate.execute(query);
+                    return null;
+                }, jdbcTemplate);
+            }
+            log.info(String.format("%s view %s successfully", viewName, operation));
+        } catch (Exception e) {
+            log.error(String.format("Failed to %s view %s for schema %s. Error: %s",
+                    operation, viewName, schemaName, e.getMessage()), e);
+            throw e;
+        }
     }
 
     private void createViewAndGrantPermission(Type type, ViewConfig config, String schemaName, List<String> users, List<String> addressColumns, OrganisationIdentity organisationIdentity) {
@@ -102,24 +128,18 @@ public class ReportingViewRepository implements ReportingViewMetaData {
         st.add(WHERE_CLAUSE, String.format(whereClause, organisationIdsString));
 
         String query = st.render();
-        runInOrgContext(() -> {
-            jdbcTemplate.execute(query);
-            return null;
-        }, jdbcTemplate);
 
+        executeQueryInContext(organisationIdentity, query, "created", config.getViewName(), schemaName);
         log.info(String.format("%s view created", config.getViewName()));
         users.forEach(user -> grantPermissionToView(schemaName, config.getViewName(), user));
     }
 
-    private void grantPermissionToView(String schemaName, String viewName, String userName) {
+    public void grantPermissionToView(String schemaName, String viewName, String userName) {
         ST st = new ST(grantViewFile);
         st.add(SCHEMA_PARAM_NAME, schemaName);
         st.add(VIEW_PARAM_NAME, viewName);
         st.add(USER_PARAM_NAME, userName);
         String query = st.render();
-        runInOrgContext(() -> {
-            jdbcTemplate.execute(query);
-            return null;
-        }, jdbcTemplate);
+        executeQueryInContext(OrgIdentityContextHolder.getOrganisationIdentity(), query, "granted permission to", viewName, schemaName);
     }
 }

@@ -16,6 +16,7 @@ insert into ${schema_name}.${table_name} (
     "cancel_location",
     "created_by_id",
     "last_modified_by_id",
+    "filled_by_id",
     "created_date_time",
     "last_modified_date_time",
     "organisation_id"
@@ -38,6 +39,7 @@ insert into ${schema_name}.${table_name} (
         entity.cancel_location                                                       "cancel_location",
         entity.created_by_id                                                         "created_by_id",
         entity.last_modified_by_id                                                   "last_modified_by_id",
+        entity.filled_by_id                                                          "filled_by_id",
         entity.created_date_time                                                     "created_date_time",
         entity.last_modified_date_time                                               "last_modified_date_time",
         entity.organisation_id                                                       "organisation_id"
