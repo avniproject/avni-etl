@@ -14,9 +14,7 @@ insert into ${schema_name}.${table_name} (
     "created_date_time",
     "last_modified_date_time",
     "organisation_id",
-    "legacy_id",
-    "created_by_username",
-    "last_modified_by_username"
+    "legacy_id"
         ${observations_to_insert_list}
 )
 (${concept_maps}
@@ -34,17 +32,13 @@ SELECT entity.id                                                                
        entity.created_date_time                                                     "created_date_time",
        entity.last_modified_date_time                                               "last_modified_date_time",
        entity.organisation_id                                                       "organisation_id",
-       entity.legacy_id                                                             "legacy_id",
-       created_user.username                                                        "created_by_username",
-       modified_user.username                                                       "last_modified_by_username"
+       entity.legacy_id                                                             "legacy_id"
        ${selections}
 FROM public.program_enrolment entity
   ${cross_join_concept_maps}
          LEFT OUTER JOIN public.individual ind ON entity.individual_id = ind.id
     LEFT OUTER JOIN public.subject_type st on st.id = ind.subject_type_id
     LEFT OUTER JOIN public.program p on p.id = entity.program_id
-    LEFT OUTER JOIN public.users created_user on entity.created_by_id = created_user.id
-    LEFT OUTER JOIN public.users modified_user on entity.last_modified_by_id = modified_user.id
 WHERE p.uuid = '${program_uuid}'
   AND st.uuid = '${subject_type_uuid}'
     and entity.last_modified_date_time > '${start_time}'

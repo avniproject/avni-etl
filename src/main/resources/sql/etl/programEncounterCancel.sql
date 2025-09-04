@@ -19,10 +19,7 @@ insert into ${schema_name}.${table_name} (
     "filled_by_id",
     "created_date_time",
     "last_modified_date_time",
-    "organisation_id",
-    "created_by_username",
-    "last_modified_by_username",
-    "filled_by_username"
+    "organisation_id"
         ${observations_to_insert_list}
 )
     (${concept_maps}
@@ -45,10 +42,7 @@ insert into ${schema_name}.${table_name} (
         entity.filled_by_id                                                          "filled_by_id",
         entity.created_date_time                                                     "created_date_time",
         entity.last_modified_date_time                                               "last_modified_date_time",
-        entity.organisation_id                                                       "organisation_id",
-        created_user.username                                                        "created_by_username",
-        modified_user.username                                                       "last_modified_by_username",
-        filled_user.username                                                         "filled_by_username"
+        entity.organisation_id                                                       "organisation_id"
         ${cancel_obs_selections}
         FROM public.program_encounter entity
         ${cross_join_concept_maps}
@@ -58,9 +52,6 @@ insert into ${schema_name}.${table_name} (
         LEFT OUTER JOIN public.encounter_type et on entity.encounter_type_id = et.id
         LEFT OUTER JOIN public.subject_type st on st.id = ind.subject_type_id
         LEFT OUTER JOIN public.program p on p.id = programEnrolment.program_id
-        LEFT OUTER JOIN public.users created_user on entity.created_by_id = created_user.id
-        LEFT OUTER JOIN public.users modified_user on entity.last_modified_by_id = modified_user.id
-        LEFT OUTER JOIN public.users filled_user on entity.filled_by_id = filled_user.id
         WHERE p.uuid = '${program_uuid}'
         AND et.uuid = '${encounter_type_uuid}'
         AND st.uuid = '${subject_type_uuid}'
