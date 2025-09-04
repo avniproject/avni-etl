@@ -21,9 +21,7 @@ public class GroupToMemberTable extends Table {
                 .withColumns(Arrays.asList(
                         new Column("group_subject_id", Column.Type.integer, Column.ColumnType.index),
                         new Column("member_subject_id", Column.Type.integer, Column.ColumnType.index),
-                        new Column("role", Column.Type.text),
-                        new Column("created_by_username", Column.Type.text),
-                        new Column("last_modified_by_username", Column.Type.text)
+                        new Column("role", Column.Type.text)
                 ))
                 .build();
     }

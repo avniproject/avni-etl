@@ -27,9 +27,7 @@ public class ProgramEnrolmentTable extends Table {
                         new Column("enrolment_location", Column.Type.point),
                         new Column("exit_location", Column.Type.point),
                         new Column("legacy_id", Column.Type.text),
-                        new Column("latest_approval_status", Column.Type.text),
-                        new Column("created_by_username", Column.Type.text),
-                        new Column("last_modified_by_username", Column.Type.text)
+                        new Column("latest_approval_status", Column.Type.text)
                 ))
                 .build();
     }
