@@ -4,20 +4,22 @@ CREATE OR REPLACE VIEW "<schema_name>".enrolment_view AS
     WITH all_enrolments AS (
     <table_metadata:{table |
     SELECT
-        id AS enrolment_id,
-        uuid AS enrolment_uuid,
+        t.id AS enrolment_id,
+        t.uuid AS enrolment_uuid,
         '<table.programUuid>' AS program_uuid,
-        individual_id,
-        enrolment_date_time,
-        created_date_time,
-        last_modified_date_time,
-        is_voided,
-        program_exit_date_time,
-        address_id,
-        created_by_username,
-        last_modified_by_username
-    from "<schema_name>"."<table.name>"
-    where is_voided is false
+        t.individual_id,
+        t.enrolment_date_time,
+        t.created_date_time,
+        t.last_modified_date_time,
+        t.is_voided,
+        t.program_exit_date_time,
+        t.address_id,
+        created_user.username as created_by_username,
+        modified_user.username as last_modified_by_username
+    from "<schema_name>"."<table.name>" t
+    LEFT JOIN public.users created_user on t.created_by_id = created_user.id
+    LEFT JOIN public.users modified_user on t.last_modified_by_id = modified_user.id
+    where t.is_voided is false
     }; separator="UNION ALL \n">
     )
     SELECT all_enrolments.*,

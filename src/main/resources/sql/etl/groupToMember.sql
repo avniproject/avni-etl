@@ -13,7 +13,7 @@ insert into ${schema_name}.${table_name} ("id", "uuid", "is_voided", "created_by
             gs.organisation_id,
             grp.id                                             AS group_subject_id,
             member.id                                          AS member_subject_id,
-            rr.role                                            AS role,
+            rr.role                                            AS role
         FROM public.individual member
                  JOIN subject_type st ON member.subject_type_id = st.id AND st.type::text in ('Person'::text, 'Individual'::text)
                  JOIN group_subject gs ON gs.member_subject_id = member.id

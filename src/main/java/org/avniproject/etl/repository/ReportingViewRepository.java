@@ -51,13 +51,13 @@ public class ReportingViewRepository implements ReportingViewMetaData {
         viewConfigs.put(Type.ENROLMENT, new ViewConfig("enrolment_view",
                 "and p.organisation_id in (%s)", "", enrolmentViewFile));
         viewConfigs.put(Type.DUE_VISITS, new ViewConfig("due_visits_view",
-                "WHERE earliest_visit_date_time < CURRENT_DATE AND CURRENT_DATE < max_visit_date_time AND is_voided IS false",
+                "WHERE t.earliest_visit_date_time < CURRENT_DATE AND CURRENT_DATE < t.max_visit_date_time AND t.is_voided IS false",
                 "", baseVisitsViewFile));
         viewConfigs.put(Type.COMPLETED_VISITS, new ViewConfig("completed_visits_view",
-                "WHERE encounter_date_time IS NOT NULL AND cancel_date_time IS NULL AND is_voided IS false",
+                "WHERE t.encounter_date_time IS NOT NULL AND t.cancel_date_time IS NULL AND t.is_voided IS false",
                 "", baseVisitsViewFile));
         viewConfigs.put(Type.OVERDUE_VISITS, new ViewConfig("overdue_visits_view",
-                "WHERE CURRENT_DATE > max_visit_date_time AND is_voided IS false",
+                "WHERE CURRENT_DATE > t.max_visit_date_time AND t.is_voided IS false",
                 "", baseVisitsViewFile));
     }
 
