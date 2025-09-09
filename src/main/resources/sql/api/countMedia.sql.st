@@ -3,9 +3,9 @@ FROM "<schemaName>".media media
          <if(request.addresses)>JOIN "<schemaName>".address address ON address.id = media.address_id<endif>
          <if(joinTablesAndColumns)>
            <joinTablesAndColumns:{joinTableAndColumn |
-           RIGHT JOIN "<schemaName>".<joinTableAndColumn.tableName> <joinTableAndColumn.tableName> ON media.entity_id = <joinTableAndColumn.tableName>.id
+           RIGHT JOIN "<schemaName>".<joinTableAndColumn.tableName> <joinTableAndColumn.tableName>_<i0> ON media.entity_id = <joinTableAndColumn.tableName>_<i0>.id
            <if(joinTableAndColumn.exactSearch)>
-             AND <joinTableAndColumn.tableName>."<joinTableAndColumn.columnName>"
+             AND <joinTableAndColumn.tableName>_<i0>."<joinTableAndColumn.columnName>"
                <if(joinTableAndColumn.columnValues)>
                  IN ('<joinTableAndColumn.columnValues:{columnValue | <columnValue>}; separator="', '">')
                <else>
@@ -14,7 +14,7 @@ FROM "<schemaName>".media media
                  BETWEEN '<joinTableAndColumn.from>' AND '<joinTableAndColumn.to>'
                <endif>
            <else>
-             AND <joinTableAndColumn.columnValues:{columnValue | <joinTableAndColumn.tableName>."<joinTableAndColumn.columnName>" ILIKE '%<columnValue>%'}; separator=" \nAND ">
+             AND <joinTableAndColumn.columnValues:{columnValue | <joinTableAndColumn.tableName>_<i0>."<joinTableAndColumn.columnName>" ILIKE '%<columnValue>%'}; separator=" \nAND ">
            <endif>
           }; separator="\n">
          <endif>
