@@ -3,9 +3,9 @@ FROM "<schemaName>".media media
          <if(request.addresses)>JOIN "<schemaName>".address address ON address.id = media.address_id<endif>
          <if(joinTablesAndColumns)>
            <joinTablesAndColumns:{joinTableAndColumn |
-           RIGHT JOIN "<schemaName>".<joinTableAndColumn.tableName> <joinTableAndColumn.tableName>_<i0> ON media.entity_id = <joinTableAndColumn.tableName>_<i0>.id
+           RIGHT JOIN "<schemaName>".<joinTableAndColumn.tableName> <joinTableAndColumn.tableName>_<joinTableAndColumn.aliasIndex> ON media.entity_id = <joinTableAndColumn.tableName>_<joinTableAndColumn.aliasIndex>.id
            <if(joinTableAndColumn.exactSearch)>
-             AND <joinTableAndColumn.tableName>_<i0>."<joinTableAndColumn.columnName>"
+             AND <joinTableAndColumn.tableName>_<joinTableAndColumn.aliasIndex>."<joinTableAndColumn.columnName>"
                <if(joinTableAndColumn.columnValues)>
                  IN ('<joinTableAndColumn.columnValues:{columnValue | <columnValue>}; separator="', '">')
                <else>
@@ -14,8 +14,7 @@ FROM "<schemaName>".media media
                  BETWEEN '<joinTableAndColumn.from>' AND '<joinTableAndColumn.to>'
                <endif>
            <else>
-             <! TODO: StringTemplate v4 has a scoping issue where <i0> within nested loops doesn't maintain the correct outer loop index. This causes table alias mismatches in generated SQL. The current workaround maintains functionality but may generate incorrect aliases in complex scenarios with multiple non-exact search filters. !>
-             AND <joinTableAndColumn.columnValues:{columnValue | <joinTableAndColumn.tableName>_<i0>."<joinTableAndColumn.columnName>" ILIKE '%<columnValue>%'}; separator=" \nAND ">
+             <joinTableAndColumn.columnValues:{columnValue | AND <joinTableAndColumn.tableName>_<joinTableAndColumn.aliasIndex>."<joinTableAndColumn.columnName>" ILIKE '%<columnValue>%'}; separator=" \nAND ">
            <endif>
           }; separator="\n">
          <endif>

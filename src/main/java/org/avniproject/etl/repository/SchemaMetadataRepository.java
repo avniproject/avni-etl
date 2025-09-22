@@ -62,7 +62,7 @@ public class SchemaMetadataRepository {
                 "         join concept c on fe.concept_id = c.id\n" +
                 "where f.form_type = 'Location'\n" +
                 "  and f.is_voided = false";
-        List<Map<String, Object>> addressLevelTypes = runInOrgContext(() -> jdbcTemplate.queryForList("select name from address_level_type where not is_voided;"), jdbcTemplate);
+        List<Map<String, Object>> addressLevelTypes = runInOrgContext(() -> jdbcTemplate.queryForList("select name from address_level_type where not is_voided and organisation_id = (select id from organisation where db_user = current_user);"), jdbcTemplate);
         List<Map<String, Object>> locationProperties = runInOrgContext(() -> jdbcTemplate.queryForList(locationPropertiesSql), jdbcTemplate);
         AddressTable addressTable = new AddressTable(addressLevelTypes, locationProperties);
         TableMetadata tableMetadata = new TableMetadata();

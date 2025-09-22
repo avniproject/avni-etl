@@ -72,7 +72,7 @@ public class AvniMetadataRepository {
         if (uuid == null || uuid.isEmpty()) {
             return null;
         }
-        String sql = "select name from public." + tableName + " where uuid = :uuid limit 1";
+        String sql = "select name from " + tableName + " where uuid = :uuid limit 1";
         Map<String, Object> parameters = new HashMap<>(1);
         parameters.put("uuid", uuid);
 

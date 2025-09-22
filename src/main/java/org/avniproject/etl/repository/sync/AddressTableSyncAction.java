@@ -41,7 +41,7 @@ public class AddressTableSyncAction implements EntitySyncAction {
 
     private void insertLowestLevelAddresses(TableMetadata tableMetadata, Date lastSyncTime, Date dataSyncBoundaryTime) {
         String templatePath = "address.sql";
-        List<Map<String, Object>> lowestLevelsMap = runInOrgContext(() -> jdbcTemplate.queryForList("select name, id, parent_id from address_level_type where not is_voided;"), jdbcTemplate);
+        List<Map<String, Object>> lowestLevelsMap = runInOrgContext(() -> jdbcTemplate.queryForList("select name, id, parent_id from address_level_type where not is_voided and organisation_id = (select id from organisation where db_user = current_user);"), jdbcTemplate);
         lowestLevelsMap.forEach(lowestLevel -> {
             String levelName = (String) lowestLevel.get("name");
             String sql = new TransactionalSyncSqlGenerator().getSql(templatePath, tableMetadata, lastSyncTime, dataSyncBoundaryTime);
@@ -53,7 +53,7 @@ public class AddressTableSyncAction implements EntitySyncAction {
     }
 
     private void insertParents(Integer childLevelId, String childLevelName, Integer parentLevelId) {
-        List<Map<String, Object>> parentLevelsMap = runInOrgContext(() -> jdbcTemplate.queryForList(format("select name, id, parent_id from address_level_type where id = %d;", parentLevelId)), jdbcTemplate);
+        List<Map<String, Object>> parentLevelsMap = runInOrgContext(() -> jdbcTemplate.queryForList(format("select name, id, parent_id from address_level_type where id = %d and organisation_id = (select id from organisation where db_user = current_user);", parentLevelId)), jdbcTemplate);
         if (parentLevelId == null) return;
         parentLevelsMap.forEach(parentLevelMap -> {
             String parentLevelName = (String) parentLevelMap.get("name");

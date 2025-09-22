@@ -2,7 +2,6 @@ package org.avniproject.etl.repository;
 
 import org.avniproject.etl.domain.metadata.ColumnMetadata;
 import org.avniproject.etl.domain.metadata.SchemaMetadata;
-import org.avniproject.etl.domain.metadata.TableMetadata;
 import org.avniproject.etl.dto.*;
 import org.avniproject.etl.repository.service.MediaTableRepositoryService;
 import org.avniproject.etl.repository.sql.MediaSearchQueryBuilder;
@@ -18,6 +17,8 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigInteger;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.avniproject.etl.repository.JdbcContextWrapper.runInSchemaUserContext;
 
@@ -46,7 +47,7 @@ public class MediaTableRepository {
 
         SchemaMetadata schema = schemaMetadataRepository.getExistingSchemaMetadata();
 
-        List<ConceptFilterSearch> conceptFilterTablesAndColumns = conceptFilters.stream()
+        List<ConceptFilterSearch> allFilters = conceptFilters.stream()
                 .flatMap(conceptFilter -> schema.findTablesByForm(conceptFilter.getFormUuid())
                         .flatMap(table -> table.getAllColumnsByConceptUuid(conceptFilter.getConceptUuid())
                                 .map(column -> new ConceptFilterSearch(table.getName(),
@@ -60,8 +61,51 @@ public class MediaTableRepository {
                         )
                 ).toList();
 
-        logger.debug("Returning conceptFilterTablesAndColumns: " + conceptFilterTablesAndColumns);
-        return conceptFilterTablesAndColumns;
+        Map<String, List<ConceptFilterSearch>> filtersByTable = allFilters.stream()
+                .collect(Collectors.groupingBy(ConceptFilterSearch::getTableName));
+
+        List<ConceptFilterSearch> optimizedFilters = new ArrayList<>();
+        int aliasIndex = 0;
+        
+        for (Map.Entry<String, List<ConceptFilterSearch>> entry : filtersByTable.entrySet()) {
+            String tableName = entry.getKey();
+            List<ConceptFilterSearch> tableFilters = entry.getValue();
+            
+            Map<String, List<ConceptFilterSearch>> filtersByColumn = tableFilters.stream()
+                    .collect(Collectors.groupingBy(ConceptFilterSearch::getColumnName));
+            
+            for (Map.Entry<String, List<ConceptFilterSearch>> columnEntry : filtersByColumn.entrySet()) {
+                String columnName = columnEntry.getKey();
+                List<ConceptFilterSearch> columnFilters = columnEntry.getValue();
+                
+                if (columnFilters.size() == 1) {
+                    ConceptFilterSearch filter = columnFilters.get(0);
+                    filter.setAliasIndex(aliasIndex++);
+                    optimizedFilters.add(filter);
+                } else {
+                    ConceptFilterSearch firstFilter = columnFilters.get(0);
+                    List<String> combinedValues = columnFilters.stream()
+                            .flatMap(filter -> filter.getColumnValues() != null ? filter.getColumnValues().stream() : Stream.empty())
+                            .distinct()
+                            .collect(Collectors.toList());
+                    
+                    ConceptFilterSearch combinedFilter = new ConceptFilterSearch(
+                            tableName,
+                            columnName,
+                            combinedValues,
+                            firstFilter.getFrom(),
+                            firstFilter.getTo(),
+                            firstFilter.isNonStringValue(),
+                            firstFilter.isExactSearch()
+                    );
+                    combinedFilter.setAliasIndex(aliasIndex++);
+                    optimizedFilters.add(combinedFilter);
+                }
+            }
+        }
+
+        logger.debug("Returning optimized conceptFilterTablesAndColumns: " + optimizedFilters);
+        return optimizedFilters;
     }
 
     public List<MediaDTO> search(MediaSearchRequest mediaSearchRequest, Page page) {

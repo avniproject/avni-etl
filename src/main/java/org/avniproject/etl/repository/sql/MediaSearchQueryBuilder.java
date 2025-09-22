@@ -15,13 +15,13 @@ public class MediaSearchQueryBuilder {
     private final ST searchTemplate;
     private final ST countTemplate;
     private final Map<String, Object> parameters = new HashMap<>();
-    private final static String countSqlTemplate = readFile("/sql/api/searchMedia.sql.st");
-    private final static String searchSqlTemplate = readFile("/sql/api/countMedia.sql.st");
+    private final static String searchSqlTemplate = readFile("/sql/api/searchMedia.sql.st");
+    private final static String countSqlTemplate = readFile("/sql/api/countMedia.sql.st");
     private static final Logger logger = Logger.getLogger(MediaSearchQueryBuilder.class);
 
     public MediaSearchQueryBuilder() {
-        this.searchTemplate = new ST(countSqlTemplate);
-        this.countTemplate = new ST(searchSqlTemplate);
+        this.searchTemplate = new ST(searchSqlTemplate);
+        this.countTemplate = new ST(countSqlTemplate);
         addDefaultParameters();
     }
 
@@ -35,6 +35,12 @@ public class MediaSearchQueryBuilder {
     public MediaSearchQueryBuilder withSearchConceptFilters(List<ConceptFilterSearch> conceptFilters) {
         logger.debug("Building with searchConceptFilters:" + conceptFilters);
         if (conceptFilters != null && !conceptFilters.isEmpty()) {
+            for (int i = 0; i < conceptFilters.size(); i++) {
+                ConceptFilterSearch filter = conceptFilters.get(i);
+                if (filter.getAliasIndex() == 0 && i > 0) {
+                    filter.setAliasIndex(i);
+                }
+            }
             searchTemplate.add("joinTablesAndColumns", conceptFilters);
             countTemplate.add("joinTablesAndColumns", conceptFilters);
         }

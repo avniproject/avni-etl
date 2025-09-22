@@ -10,6 +10,7 @@ public class ConceptFilterSearch {
     private String to;
     private boolean nonStringValue;
     private boolean exactSearch;
+    private int aliasIndex;
 
     public ConceptFilterSearch(String tableName, String columnName, List<String> columnValues, String from, String to, boolean nonStringValue, boolean exactSearch) {
         this.tableName = tableName;
@@ -88,5 +89,13 @@ public class ConceptFilterSearch {
 
     public void setExactSearch(boolean exactSearch) {
         this.exactSearch = exactSearch;
+    }
+
+    public int getAliasIndex() {
+        return aliasIndex;
+    }
+
+    public void setAliasIndex(int aliasIndex) {
+        this.aliasIndex = aliasIndex;
     }
 }

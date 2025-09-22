@@ -86,10 +86,11 @@ public class TableMetadataRepository {
 
     public List<TableMetadataST> fetchByType(List<TableMetadata.Type> types) {
         List<String> list = types.stream().map(Enum::name).toList();
-        String sql = "SELECT * FROM table_metadata WHERE type IN (:types)";
+        String sql = "SELECT * FROM table_metadata WHERE type IN (:types) AND schema_name = :schema_name";
 
         HashMap<String, Object> params = new HashMap<>();
         params.put("types", list);
+        params.put("schema_name", OrgIdentityContextHolder.getDbSchema());
         return runInOrgContext(() -> new NamedParameterJdbcTemplate(jdbcTemplate)
                 .query(sql, params, (rs, rowNum) ->
                         new TableMetadataST(rs.getString("name"),

@@ -77,7 +77,12 @@ public class ReportingViewRepository implements ReportingViewMetaData {
         st.add(SCHEMA_PARAM_NAME, organisationIdentity.getSchemaName());
         st.add(DB_USER, organisationIdentity.getDbUser());
         String query = st.render();
-        return jdbcTemplate.queryForList(query, String.class);
+        
+        if (isOrganizationGroupSchema(organisationIdentity)) {
+            return runInSchemaUserContext(() -> jdbcTemplate.queryForList(query, String.class), jdbcTemplate);
+        } else {
+            return runInOrgContext(() -> jdbcTemplate.queryForList(query, String.class), jdbcTemplate);
+        }
     }
 
     private boolean isOrganizationGroupSchema(OrganisationIdentity organisationIdentity) {
