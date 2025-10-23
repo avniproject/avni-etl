@@ -145,6 +145,6 @@ public class ReportingViewRepository implements ReportingViewMetaData {
         st.add(VIEW_PARAM_NAME, viewName);
         st.add(USER_PARAM_NAME, userName);
         String query = st.render();
-        executeQueryInContext(OrgIdentityContextHolder.getOrganisationIdentity(), query, "granted permission to", viewName, schemaName);
+        jdbcTemplate.execute(query);
     }
 }
