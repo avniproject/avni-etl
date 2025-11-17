@@ -41,13 +41,6 @@ public class UserTypeSubjectTableSyncAction implements EntitySyncAction {
 
     @Override
     public void perform(TableMetadata tableMetadata, Date lastSyncTime, Date dataSyncBoundaryTime, SchemaMetadata currentSchemaMetadata) {
-        if (!tableMetadata.hasColumn("user_id") ||
-               tableMetadata.getFormUuid() != null ||
-               tableMetadata.getType() != TableMetadata.Type.User ||
-               tableMetadata.getSubjectTypeUuid() == null) {
-            return;
-        }
-
         logger.info("Syncing user-type placeholder table: " + tableMetadata.getName());
         syncUserSubjectData(tableMetadata.getName());
     }
