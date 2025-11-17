@@ -41,6 +41,10 @@ public class UserTypeSubjectTableSyncAction implements EntitySyncAction {
 
     @Override
     public void perform(TableMetadata tableMetadata, Date lastSyncTime, Date dataSyncBoundaryTime, SchemaMetadata currentSchemaMetadata) {
+        if (this.doesntSupport(tableMetadata)) {
+            return;
+        }
+        
         logger.info("Syncing user-type placeholder table: " + tableMetadata.getName());
         syncUserSubjectData(tableMetadata.getName());
     }
