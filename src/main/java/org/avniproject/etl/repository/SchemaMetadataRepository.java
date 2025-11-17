@@ -9,6 +9,7 @@ import org.avniproject.etl.domain.metadata.diff.Diff;
 import org.avniproject.etl.repository.rowMappers.*;
 import org.avniproject.etl.repository.rowMappers.tableMappers.AddressTable;
 import org.avniproject.etl.repository.rowMappers.tableMappers.ChecklistTable;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -26,6 +27,7 @@ import static org.avniproject.etl.repository.sql.SqlFile.readSqlFile;
 
 @Repository
 public class SchemaMetadataRepository {
+    private static final Logger logger = Logger.getLogger(SchemaMetadataRepository.class);
     private static final String PLACEHOLDER_CONCEPT_UUID = "b4e5a662-97bf-4846-b9b7-9baeab4d89c4";
     private final JdbcTemplate jdbcTemplate;
     private final TableMetadataRepository tableMetadataRepository;
@@ -124,9 +126,72 @@ public class SchemaMetadataRepository {
                 """, PLACEHOLDER_CONCEPT_UUID);
 
         List<TableMetadata> tables = getTableMetadataForForm(sql);
+        tables.addAll(getPlaceholderSubjectTables());
         tables.forEach(this::addDecisionConceptColumns);
         tables.stream().filter(t -> !t.isSubjectTable()).forEach(this::addSyncAttributeColumns);
         return tables;
+    }
+
+    /**
+     * Creates placeholder subject tables for User subject types that don't have IndividualProfile form mappings
+     * This ensures that User subject tables exist for linking even when no registration form is defined
+     */
+    private List<TableMetadata> getPlaceholderSubjectTables() {
+        // Find User subject types that don't have IndividualProfile form mappings
+        String findMissingUserSubjectTypesSql = """
+            select distinct ost.name as subject_type_name, st.uuid as subject_type_uuid, st.type as subject_type_type
+            from operational_subject_type ost
+            inner join subject_type st on ost.subject_type_id = st.id
+            where ost.is_voided = false
+            and st.type = 'User'
+            and st.id not in (
+                select distinct fm.subject_type_id
+                from form_mapping fm
+                inner join form f on fm.form_id = f.id
+                where fm.is_voided is false
+                and f.form_type = 'IndividualProfile'
+            )
+        """;
+
+        try {
+            List<Map<String, Object>> missingUserSubjectTypes = runInOrgContext(() -> jdbcTemplate.queryForList(findMissingUserSubjectTypesSql), jdbcTemplate);
+            
+            List<TableMetadata> tables = missingUserSubjectTypes.stream().map(subjectType -> {
+                TableMetadata tableMetadata = new TableMetadata();
+                String tableName = new TableNameGenerator().generateName(
+                    List.of((String) subjectType.get("subject_type_name")), 
+                    "IndividualProfile", 
+                    null
+                );
+                tableMetadata.setName(tableName);
+                tableMetadata.setType(TableMetadata.Type.valueOf((String) subjectType.get("subject_type_type")));
+                tableMetadata.setSubjectTypeUuid((String) subjectType.get("subject_type_uuid"));
+                
+                // Add standard subject table columns with user_id for linking
+                tableMetadata.addColumnMetadata(List.of(
+                    new ColumnMetadata(new Column("id", Column.Type.integer, Column.ColumnType.index), null, null, null, false),
+                    new ColumnMetadata(new Column("uuid", Column.Type.text, Column.ColumnType.index), null, null, null, false),
+                    new ColumnMetadata(new Column("user_id", Column.Type.integer, Column.ColumnType.index), null, null, null, false),
+                    new ColumnMetadata(new Column("first_name", Column.Type.text), null, null, null, false),
+                    new ColumnMetadata(new Column("last_name", Column.Type.text), null, null, null, false),
+                    new ColumnMetadata(new Column("address_id", Column.Type.integer, Column.ColumnType.index), null, null, null, false),
+                    new ColumnMetadata(new Column("created_by_id", Column.Type.integer), null, null, null, false),
+                    new ColumnMetadata(new Column("last_modified_by_id", Column.Type.integer), null, null, null, false),
+                    new ColumnMetadata(new Column("created_date_time", Column.Type.timestamp), null, null, null, false),
+                    new ColumnMetadata(new Column("last_modified_date_time", Column.Type.timestamp), null, null, null, false),
+                    new ColumnMetadata(new Column("organisation_id", Column.Type.integer), null, null, null, false),
+                    new ColumnMetadata(new Column("is_voided", Column.Type.bool), null, null, null, false)
+                ));
+                
+                return tableMetadata;
+            }).collect(Collectors.toList());
+            
+            return tables;
+            
+        } catch (Exception e) {
+            logger.error("Failed to get placeholder subject tables: " + e.getMessage(), e);
+            return List.of();
+        }
     }
 
     private List<TableMetadata> getChecklistTables() {

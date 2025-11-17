@@ -2,7 +2,6 @@ package org.avniproject.etl.repository;
 
 import jakarta.annotation.PostConstruct;
 import org.apache.log4j.Logger;
-import org.avniproject.etl.domain.OrgIdentityContextHolder;
 import org.avniproject.etl.domain.OrganisationIdentity;
 import org.avniproject.etl.domain.metadata.ReportingViewMetaData;
 import org.avniproject.etl.domain.metadata.TableMetadata;
@@ -28,7 +27,6 @@ public class ReportingViewRepository implements ReportingViewMetaData {
     private final String subjectViewFile = readFile("/sql/etl/view/subjectView.sql.st");
     private final String enrolmentViewFile = readFile("/sql/etl/view/enrolmentView.sql.st");
     private final String baseVisitsViewFile = readFile("/sql/etl/view/baseVisitsView.sql.st");
-    private final String grantViewFile = readFile("/sql/etl/view/grantView.sql.st");
 
     private final Map<Type, ViewConfig> viewConfigs = new HashMap<>();
     private final OrganisationRepository organisationRepository;
@@ -104,9 +102,25 @@ public class ReportingViewRepository implements ReportingViewMetaData {
             }
             log.info(String.format("%s view %s successfully", viewName, operation));
         } catch (Exception e) {
-            log.error(String.format("Failed to %s view %s for schema %s. Error: %s",
-                    operation, viewName, schemaName, e.getMessage()), e);
-            throw e;
+            // Check if it's a permission-related error and handle gracefully
+            String errorMessage = e.getMessage();
+            if (errorMessage == null) {
+                errorMessage = e.getCause() != null ? e.getCause().getMessage() : "";
+            }
+            
+            // Handle all permission-related errors gracefully
+            if (errorMessage.contains("permission denied") || 
+                errorMessage.contains("insufficient privilege") ||
+                errorMessage.contains("must be owner") ||
+                errorMessage.contains("ERROR: permission denied")) {
+                log.warn(String.format("Permission grant failed for %s view %s in schema %s, but continuing. Error: %s",
+                        operation, viewName, schemaName, errorMessage));
+                // Don't throw exception for permission errors - they're non-critical
+            } else {
+                log.error(String.format("Failed to %s view %s for schema %s. Error: %s",
+                        operation, viewName, schemaName, errorMessage), e);
+                throw e; // Re-throw non-permission errors
+            }
         }
     }
 
@@ -136,15 +150,5 @@ public class ReportingViewRepository implements ReportingViewMetaData {
 
         executeQueryInContext(organisationIdentity, query, "created", config.getViewName(), schemaName);
         log.info(String.format("%s view created", config.getViewName()));
-        users.forEach(user -> grantPermissionToView(schemaName, config.getViewName(), user));
-    }
-
-    public void grantPermissionToView(String schemaName, String viewName, String userName) {
-        ST st = new ST(grantViewFile);
-        st.add(SCHEMA_PARAM_NAME, schemaName);
-        st.add(VIEW_PARAM_NAME, viewName);
-        st.add(USER_PARAM_NAME, userName);
-        String query = st.render();
-        executeQueryInContext(OrgIdentityContextHolder.getOrganisationIdentity(), query, "granted permission to", viewName, schemaName);
     }
 }

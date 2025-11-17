@@ -4,31 +4,29 @@ import org.avniproject.etl.domain.OrganisationIdentity;
 import org.avniproject.etl.domain.metadata.SchemaMetadata;
 import org.avniproject.etl.domain.metadata.TableMetadata;
 import org.avniproject.etl.domain.metadata.ColumnMetadata;
-import org.avniproject.etl.repository.ReportingViewRepository;
-import org.avniproject.etl.repository.sql.SqlFile;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.stringtemplate.v4.ST;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
+
+import static org.avniproject.etl.repository.sql.SqlFile.readFile;
 
 @Component
 public class MultiSelectViewSyncAction {
     private static final Logger logger = LoggerFactory.getLogger(MultiSelectViewSyncAction.class);
     private final JdbcTemplate jdbcTemplate;
-    private final ReportingViewRepository reportingViewRepository;
     private static final String MULTISELECT_VIEW_SQL = "/sql/etl/view/multiselect_view.sql.st";
     private static final int POSTGRES_MAX_NAME_LENGTH = 63;
     private static final String VIEW_SUFFIX = "_coded";
     private static final int MAX_MULTISELECT_VIEW_NAME_LENGTH = POSTGRES_MAX_NAME_LENGTH - VIEW_SUFFIX.length();
 
     @Autowired
-    public MultiSelectViewSyncAction(JdbcTemplate jdbcTemplate, ReportingViewRepository reportingViewRepository) {
+    public MultiSelectViewSyncAction(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
-        this.reportingViewRepository = reportingViewRepository;
         logger.info("Initialized MultiSelectViewSyncAction");
     }
 
@@ -66,7 +64,7 @@ public class MultiSelectViewSyncAction {
                 table.getName(), multiselectColumns.size()));
 
         try {
-            String sql = SqlFile.readFile(MULTISELECT_VIEW_SQL);
+            String sql = readFile(MULTISELECT_VIEW_SQL);
             ST template = new ST(sql);
 
             // Set schema and table names, ensuring view name stays within PostgreSQL limit
@@ -85,8 +83,6 @@ public class MultiSelectViewSyncAction {
 
             jdbcTemplate.execute(generatedSql);
             logger.info("Successfully created multiselect view for table: " + table.getName());
-
-            users.forEach(user -> reportingViewRepository.grantPermissionToView(schemaName, viewName, user));
 
         } catch (Exception e) {
             logger.error("Error creating multiselect view for table: " + table.getName(), e);

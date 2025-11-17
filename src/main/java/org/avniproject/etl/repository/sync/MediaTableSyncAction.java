@@ -1,5 +1,6 @@
 package org.avniproject.etl.repository.sync;
 
+import org.apache.log4j.Logger;
 import org.avniproject.etl.domain.OrgIdentityContextHolder;
 import org.avniproject.etl.domain.NullObject;
 import org.avniproject.etl.domain.metadata.ColumnMetadata;
@@ -18,7 +19,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.logging.Logger;
 
 import static org.avniproject.etl.domain.metadata.ColumnMetadata.MEDIA_COLUMN_CONCEPT_TYPES;
 import static org.avniproject.etl.repository.JdbcContextWrapper.runInOrgContext;
@@ -154,8 +154,7 @@ public class MediaTableSyncAction implements EntitySyncAction {
             sql = template.render();
             logger.info("Successfully rendered SQL template");
         } catch (Exception e) {
-            logger.severe("Error rendering SQL template " + templateName + ": " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Error rendering SQL template " + templateName + ": " + e.getMessage(), e);
             throw e;
         }
 
@@ -181,7 +180,8 @@ public class MediaTableSyncAction implements EntitySyncAction {
 
 
     private String subjectTypeTableName(String subjectTypeName) {
-        return new TableNameGenerator().generateName(List.of(subjectTypeName), "IndividualProfile", null);
+        String tableName = new TableNameGenerator().generateName(List.of(subjectTypeName), "IndividualProfile", null);
+        return tableName;
     }
     
     /**

@@ -34,6 +34,9 @@ public class TransactionalSyncSqlGenerator {
     }
 
     public boolean supports(TableMetadata tableMetadata) {
+        if(tableMetadata.getType() == TableMetadata.Type.Individual){
+            return false;
+        }
         return typeMap.containsKey(tableMetadata.getType());
     }
 
