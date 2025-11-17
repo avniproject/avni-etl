@@ -46,19 +46,6 @@ public class SchemaMigrationService {
         return organisation;
     }
     
-    // Utility method for debugging - extracts table name from CREATE TABLE SQL
-    // Currently unused but kept for future debugging needs
-    private String extractTableNameFromSQL(String sql) {
-        // Extract table name from CREATE TABLE "schema"."tablename"
-        String pattern = "CREATE TABLE.*?\\.\"([^\"]+)\"";
-        java.util.regex.Pattern p = java.util.regex.Pattern.compile(pattern);
-        java.util.regex.Matcher m = p.matcher(sql);
-        if (m.find()) {
-            return m.group(1);
-        }
-        return "";
-    }
-
     private void ensureSchemaExists(OrganisationIdentity organisationIdentity) {
         organisationRepository.createDBUser(organisationIdentity.getDbUser(), "password");
         List<String> dbUsers = organisationIdentity.getUsersWithSchemaAccess();
