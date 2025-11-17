@@ -47,13 +47,11 @@ public class ReportingViewService {
                 // Reset role to ensure we have proper permissions to grant
                 jdbcTemplate.execute("RESET ROLE");
                 
-                // Grant permissions on all tables in the schema
-                String grantTablesSql = String.format("GRANT ALL ON ALL TABLES IN SCHEMA \"%s\" TO \"%s\"", schemaName, dbUser);
-                jdbcTemplate.execute(grantTablesSql);
+                // Grant permissions on all tables in the schema using parameterized queries
+                jdbcTemplate.update("GRANT ALL ON ALL TABLES IN SCHEMA ? TO ?", schemaName, dbUser);
                 
                 // Grant permissions on all sequences in the schema
-                String grantSequencesSql = String.format("GRANT ALL ON ALL SEQUENCES IN SCHEMA \"%s\" TO \"%s\"", schemaName, dbUser);
-                jdbcTemplate.execute(grantSequencesSql);
+                jdbcTemplate.update("GRANT ALL ON ALL SEQUENCES IN SCHEMA ? TO ?", schemaName, dbUser);
                 
                 log.info(String.format("Granted permissions on all objects in schema %s to user %s", schemaName, dbUser));
                 return null;
