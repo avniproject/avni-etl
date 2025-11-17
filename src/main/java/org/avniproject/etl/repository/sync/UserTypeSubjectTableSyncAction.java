@@ -14,7 +14,7 @@ import static org.avniproject.etl.repository.JdbcContextWrapper.runInOrgContext;
 
 /**
  * Sync action for User subject type placeholder tables.
- * This handles syncing data from the users table to User subject type tables
+ * This handles syncing data from the individual joined with users table to User subject type tables
  * that don't have IndividualProfile form mappings.
  */
 @Repository
@@ -71,20 +71,7 @@ public class UserTypeSubjectTableSyncAction implements EntitySyncAction {
 
         try {
             runInOrgContext(() -> {
-                // Check if table exists first
-                Boolean tableExists = jdbcTemplate.queryForObject(
-                    "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = ?)", 
-                    Boolean.class, tableName);
-                
-                if (tableExists) {
-                    logger.info("Syncing " + jdbcTemplate.queryForObject("SELECT COUNT(*) FROM " + tableName, Long.class) + " existing records in " + tableName);
-                    
-                    jdbcTemplate.execute(sql);
-                    
-                    Long newCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM " + tableName, Long.class);
-                    logger.info("Completed sync for " + tableName + ": " + newCount + " total records");
-                }
-                
+                jdbcTemplate.execute(sql);
                 return NullObject.instance();
             }, jdbcTemplate);
         } catch (Exception e) {
