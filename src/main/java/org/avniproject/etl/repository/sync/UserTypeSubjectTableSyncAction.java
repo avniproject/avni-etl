@@ -55,21 +55,22 @@ public class UserTypeSubjectTableSyncAction implements EntitySyncAction {
                 created_by_id, last_modified_by_id, created_date_time, last_modified_date_time, 
                 organisation_id, is_voided)
             SELECT 
-                u.id,
-                u.uuid,
-                u.id as user_id,
-                u.name as first_name,
-                null as last_name,
-                null as address_id,
-                u.created_by_id,
-                u.last_modified_by_id,
-                u.created_date_time,
-                u.last_modified_date_time,
-                u.organisation_id,
-                u.is_voided
-            FROM public.users u
+                i.id,
+                i.uuid,
+                us.user_id,
+                i.first_name,
+                i.last_name,
+                i.address_id,
+                i.created_by_id,
+                i.last_modified_by_id,
+                i.created_date_time,
+                i.last_modified_date_time,
+                i.organisation_id,
+                i.is_voided
+            FROM public.individual i
+            JOIN public.user_subject us ON i.id = us.subject_id
             WHERE NOT EXISTS (
-                SELECT 1 FROM %s ps WHERE ps.user_id = u.id
+                SELECT 1 FROM %s ps WHERE ps.user_id = us.user_id AND ps.id = us.subject_id
             );
             """, tableName, tableName);
 
