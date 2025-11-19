@@ -9,8 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
-import static org.avniproject.etl.repository.JdbcContextWrapper.runInOrgContext;
-
 @Service
 public class ReportingViewService {
     private final ReportingViewRepository reportingViewRepository;
@@ -43,22 +41,15 @@ public class ReportingViewService {
         String dbUser = organisationIdentity.getDbUser();
         
         try {
-            runInOrgContext(() -> {
-                // Reset role to ensure we have proper permissions to grant
-                jdbcTemplate.execute("RESET ROLE");
-                
-                // Grant permissions on all tables in the schema using parameterized queries
-                jdbcTemplate.update("GRANT ALL ON ALL TABLES IN SCHEMA ? TO ?", schemaName, dbUser);
-                
-                // Grant permissions on all sequences in the schema
-                jdbcTemplate.update("GRANT ALL ON ALL SEQUENCES IN SCHEMA ? TO ?", schemaName, dbUser);
-                
-                log.info(String.format("Granted permissions on all objects in schema %s to user %s", schemaName, dbUser));
-                return null;
-            }, jdbcTemplate);
+            jdbcTemplate.execute("RESET ROLE");
+            
+            jdbcTemplate.execute(String.format("GRANT ALL ON ALL TABLES IN SCHEMA \"%s\" TO \"%s\"", schemaName, dbUser));
+            
+            jdbcTemplate.execute(String.format("GRANT ALL ON ALL SEQUENCES IN SCHEMA \"%s\" TO \"%s\"", schemaName, dbUser));
+            
+            log.info(String.format("Granted permissions on all objects in schema %s to user %s", schemaName, dbUser));
         } catch (Exception e) {
             log.warn("Failed to grant schema permissions for " + organisationIdentity + ": " + e.getMessage());
-            // Don't fail the ETL if permission grants fail
         }
     }
 }
