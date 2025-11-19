@@ -142,8 +142,7 @@ public class SchemaMetadataRepository {
             select distinct ost.name as subject_type_name, st.uuid as subject_type_uuid, st.type as subject_type_type
             from operational_subject_type ost
             inner join subject_type st on ost.subject_type_id = st.id
-            where ost.is_voided = false
-            and st.type = 'User'
+            where st.type = 'User'
             and st.id not in (
                 select distinct fm.subject_type_id
                 from form_mapping fm
