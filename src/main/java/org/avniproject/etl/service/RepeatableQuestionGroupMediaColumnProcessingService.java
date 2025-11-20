@@ -3,6 +3,7 @@ package org.avniproject.etl.service;
 import org.apache.log4j.Logger;
 import org.avniproject.etl.domain.OrgIdentityContextHolder;
 import org.avniproject.etl.domain.metadata.*;
+import org.avniproject.etl.domain.metadata.TableMetadata.TableType;
 import org.avniproject.etl.repository.rowMappers.tableMappers.EncounterTable;
 import org.avniproject.etl.repository.rowMappers.tableMappers.ProgramEncounterTable;
 import org.avniproject.etl.repository.rowMappers.tableMappers.ProgramEnrolmentTable;
@@ -12,6 +13,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.stringtemplate.v4.ST;
+
+import com.amazonaws.util.StringUtils;
 
 import static org.avniproject.etl.repository.sql.SqlFile.readSqlFile;
 
@@ -106,7 +109,7 @@ public class RepeatableQuestionGroupMediaColumnProcessingService {
 
             // Pass column name directly, no quoting needed
             template.add("individualId", "individual_id");
-            template.add("subjectTableName", "individual");  // Always individual for subject
+            template.add("subjectTableName", determineSubjectTableName(subjectTypeName));
             template.add("subjectTypeName", "'" + subjectTypeName + "'");
             template.add("encounterTypeName", encounterTypeName != null ? "'" + encounterTypeName + "'" : "null");
             template.add("programName", programName != null ? "'" + programName + "'" : "null");
@@ -159,6 +162,24 @@ public class RepeatableQuestionGroupMediaColumnProcessingService {
         } catch (Exception e) {
             logger.error("ERROR executing SQL for table: " + tableMetadata.getName() + ", column: " + mediaConceptName, e);
         }
+    }
+
+    /**
+     * Determines the appropriate subject table name for a repeatable question group table based on metadata.
+     *
+     * @param subjectTypeName The name of the subject type
+     * @return The name of the subject table
+     * @throws IllegalArgumentException if subject type name is null or empty
+     */
+    private String determineSubjectTableName(String subjectTypeName) {
+        if (StringUtils.isNullOrEmpty(subjectTypeName)) {
+            throw new IllegalArgumentException("Subject type name cannot be null or empty");
+        }
+        // Create a map with all the details needed to generate the parent table name
+        Map<String, Object> tableDetails = new HashMap<>();
+        tableDetails.put("subject_type_name", subjectTypeName);
+
+        return new SubjectTable().name(tableDetails);
     }
 
     /**
