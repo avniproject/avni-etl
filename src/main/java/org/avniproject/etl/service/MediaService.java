@@ -10,6 +10,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
+import org.avniproject.etl.domain.metadata.TableMetadata;
 
 import java.util.List;
 
@@ -53,5 +54,27 @@ public class MediaService {
             return;
         }
         throw new IllegalArgumentException("Address level type names are incorrect");
+    }
+
+    /**
+     * Determines the appropriate subject ID column to use for joining with the subject table.
+     * Handles special cases like when the entity table is the subject table itself.
+     *
+     * @param tableMetadata The metadata for the table we're working with
+     * @return The name of the column to use for the subject ID join
+     */
+    public String determineSubjectIdColumn(TableMetadata tableMetadata) {
+        // If this is the individual/subject table itself, use 'id' for self-join
+        if (tableMetadata.isSubjectTable() || "individual".equals(tableMetadata.getName())) {
+            return "id";
+        }
+        
+        // Check if table has subject_id column
+        if (tableMetadata.hasColumn("subject_id")) {
+            return "subject_id";
+        }
+        
+        // Default to individual_id for backward compatibility
+        return "individual_id";
     }
 }

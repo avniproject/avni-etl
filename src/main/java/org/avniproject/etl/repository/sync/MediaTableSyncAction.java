@@ -9,6 +9,7 @@ import org.avniproject.etl.domain.metadata.TableMetadata;
 import org.avniproject.etl.domain.result.SyncRegistrationConcept;
 import org.avniproject.etl.repository.AvniMetadataRepository;
 import org.avniproject.etl.repository.rowMappers.TableNameGenerator;
+import org.avniproject.etl.service.MediaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -33,10 +34,13 @@ public class MediaTableSyncAction implements EntitySyncAction {
     private static final String mediaV3Sql = readSqlFile("mediaV3.sql.st");
     private static final String deleteDuplicateMediaSql = readSqlFile("deleteDuplicateMedia.sql.st");
 
+    private final MediaService mediaService;
+
     @Autowired
-    public MediaTableSyncAction(JdbcTemplate jdbcTemplate, AvniMetadataRepository metadataRepository) {
+    public MediaTableSyncAction(JdbcTemplate jdbcTemplate, AvniMetadataRepository metadataRepository, MediaService mediaService) {
         this.jdbcTemplate = jdbcTemplate;
         this.avniMetadataRepository = metadataRepository;
+        this.mediaService = mediaService;
     }
 
     @Override
@@ -129,7 +133,7 @@ public class MediaTableSyncAction implements EntitySyncAction {
                 .add("endTime", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").format(dataSyncBoundaryTime))
                 .add("subjectTableName", subjectTypeTableName(subjectTypeName))
                 .add("individualId", tableMetadata.isSubjectTable() ? "id" : "individual_id") // Don't wrap in quotes - template already handles them
-                .add("subjectIdColumnName", determineSubjectIdColumn(tableMetadata)); // Don't wrap in quotes - template already handles them
+                .add("subjectIdColumnName", mediaService.determineSubjectIdColumn(tableMetadata)); // Don't wrap in quotes - template already handles them
         if (syncRegistrationConcepts[0].getUuid() != null) {
             template = template
                     .add("syncRegistrationConcept1Name", wrapStringValue(syncRegistrationConcepts[0].getName()))
@@ -184,27 +188,6 @@ public class MediaTableSyncAction implements EntitySyncAction {
         return tableName;
     }
     
-    /**
-     * Determines the appropriate subject ID column to use for joining with the subject table.
-     * Handles special cases like when the entity table is the subject table itself.
-     * 
-     * @param tableMetadata The metadata for the table we're working with
-     * @return The name of the column to use for the subject ID join
-     */
-    private String determineSubjectIdColumn(TableMetadata tableMetadata) {
-        // If this is the individual/subject table itself, use 'id' for self-join
-        if (tableMetadata.isSubjectTable() || "individual".equals(tableMetadata.getName())) {
-            return "id";
-        }
-        
-        // Check if table has subject_id column
-        if (tableMetadata.hasColumn("subject_id")) {
-            return "subject_id";
-        }
-        
-        // Default to individual_id for backward compatibility
-        return "individual_id";
-    }
 
     /**
      * Properly wraps a value in double quotes if needed

@@ -25,10 +25,12 @@ public class RepeatableQuestionGroupMediaColumnProcessingService {
     private static final Logger logger = Logger.getLogger(RepeatableQuestionGroupMediaColumnProcessingService.class);
     private static final String MEDIA_REPEATABLE_GROUP_SQL_TEMPLATE = "mediaRepeatableGroup.sql.st";
     private final JdbcTemplate jdbcTemplate;
+    private final MediaService mediaService;
 
     @Autowired
-    public RepeatableQuestionGroupMediaColumnProcessingService(JdbcTemplate jdbcTemplate) {
+    public RepeatableQuestionGroupMediaColumnProcessingService(JdbcTemplate jdbcTemplate, MediaService mediaService) {
         this.jdbcTemplate = jdbcTemplate;
+        this.mediaService = mediaService;
     }
 
     /**
@@ -41,10 +43,10 @@ public class RepeatableQuestionGroupMediaColumnProcessingService {
         String dbSchema = OrgIdentityContextHolder.getDbSchema();
         try {
             jdbcTemplate.execute("SET search_path TO " + dbSchema);
-            
+
             // Process the media column
             syncMediaFromRepeatableQuestionGroup(mediaTableMetadata, tableData, mediaColumn, lastSyncTime, dataSyncBoundaryTime);
-            
+
             logger.info("Transaction completed successfully for media column: " + mediaColumn.getName());
         } catch (Exception e) {
             logger.error("Error in transaction for media column: " + mediaColumn.getName() + ", error: " + e.getMessage(), e);
@@ -59,7 +61,7 @@ public class RepeatableQuestionGroupMediaColumnProcessingService {
             }
         }
     }
-    
+
     private void syncMediaFromRepeatableQuestionGroup(TableMetadata mediaTableMetadata, TableMetadata tableMetadata,
                                                       ColumnMetadata mediaColumn, Date lastSyncTime, Date dataSyncBoundaryTime) {
         // Get the required parameters for the SQL template
@@ -94,7 +96,7 @@ public class RepeatableQuestionGroupMediaColumnProcessingService {
             String encounterTypeName = (String) parentTableDetails.get("encounter_type_name");
             String programName = (String) parentTableDetails.get("program_name");
             String parentIdColumn = determineParentIdColumn(tableMetadata);
-            String subjectIdColumn = determineSubjectIdColumn(tableMetadata);
+            String subjectIdColumn = mediaService.determineSubjectIdColumn(tableMetadata);
 
             template.add("parentTableName", parentTable);
             // Don't wrap in quotes - template already handles quoting
@@ -304,45 +306,18 @@ public class RepeatableQuestionGroupMediaColumnProcessingService {
     private String determineParentIdColumn(TableMetadata tableMetadata) {
 
         // Standard ID columns
-        if(tableMetadata.getParentTableType() == TableMetadata.TableType.Encounter){
+        if (tableMetadata.getParentTableType() == TableMetadata.TableType.Encounter) {
             return "encounter_id";
         }
-        if(tableMetadata.getParentTableType() == TableMetadata.TableType.ProgramEncounter){
+        if (tableMetadata.getParentTableType() == TableMetadata.TableType.ProgramEncounter) {
             return "program_encounter_id";
         }
-        if(tableMetadata.getParentTableType() == TableMetadata.TableType.ProgramEnrolment){
+        if (tableMetadata.getParentTableType() == TableMetadata.TableType.ProgramEnrolment) {
             return "program_enrolment_id";
         }
-        if(tableMetadata.getParentTableType() == TableMetadata.TableType.IndividualProfile){
-            return "subject_id";
+        if (tableMetadata.getParentTableType() == TableMetadata.TableType.IndividualProfile) {
+            return mediaService.determineSubjectIdColumn(tableMetadata);
         }
         throw new IllegalArgumentException("Unknown parent id column: " + tableMetadata.getParentTableType());
-    }
-
-    /**
-     * Determines the subject ID column name in the repeatable question group table
-     * that links to the subject table.
-     *
-     * @param tableMetadata The metadata for the repeatable question group table
-     * @return The name of the subject ID column
-     */
-    // Method removed: wrapColumnNameIfNeeded - Template already handles quoting of column names
-
-    private String determineSubjectIdColumn(TableMetadata tableMetadata) {
-        // First look for standard subject ID columns
-        if (tableMetadata.hasColumn("subject_id")) {
-            return "subject_id";
-        } else if (tableMetadata.hasColumn("individual_id")) {
-            return "individual_id";
-        }
-
-        // If the table might itself be a subject table, use the 'id' column
-        if (tableMetadata.isSubjectTable()) {
-            return "id";
-        }
-
-        // Default fallback
-        logger.warn("Warning: Could not determine subject ID column for " + tableMetadata.getName() + ". Using 'individual_id' as default.");
-        throw new IllegalArgumentException("Unknown subject id column: " + tableMetadata.getSubjectTypeUuid());
     }
 }
