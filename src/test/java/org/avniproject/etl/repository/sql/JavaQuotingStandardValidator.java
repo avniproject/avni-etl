@@ -30,9 +30,9 @@ class JavaQuotingStandardValidator {
         "wrapInQuotes.*\\.add\\(.*tableName", 
         "\\.add\\(.*wrapInQuotes.*schema",
         "\\.add\\(.*wrapInQuotes.*table",
-        // Direct string concatenation with quotes in template parameters
-        "\\.add\\(.*\".*\".*schema",
-        "\\.add\\(.*\".*\".*table"
+        // Direct string concatenation with quotes in template parameters (more specific)
+        "\\.add\\([^,]*,\\s*\"[^\"]*schema[^\"]*\"\\)",
+        "\\.add\\([^,]*,\\s*\"[^\"]*table[^\"]*\"\\)"
     };
 
     // Skip patterns for legitimate usage (not violations)

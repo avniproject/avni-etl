@@ -50,8 +50,8 @@ public class UserTableSyncAction implements EntitySyncAction{
     private void syncNewerRows(TableMetadata userTableMetadata, Date lastSyncTime, Date dataSyncBoundaryTime) {
 
         ST template = new ST(userSql)
-                .add("schemaName", wrapInQuotes(OrgIdentityContextHolder.getDbSchema()))
-                .add("tableName", wrapInQuotes(userTableMetadata.getName()))
+                .add("schemaName", OrgIdentityContextHolder.getDbSchema())
+                .add("tableName", userTableMetadata.getName())
                 .add("startTime", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").format(lastSyncTime))
                 .add("endTime", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").format(dataSyncBoundaryTime));
 

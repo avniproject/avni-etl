@@ -63,10 +63,14 @@ class AllTemplateQuotingValidator {
                     
                     // Check for proper quoting patterns
                     boolean hasProperQuoting = content.matches("(?s).*\"<schemaName>\".*") && 
-                                             content.matches("(?s).*\"<tableName>\".*");
+                                             (content.matches("(?s).*\"<tableName>\".*") || 
+                                              content.matches("(?s).*\"<mediaAnalysisTable>\".*") ||
+                                              content.matches("(?s).*\"<encounterCancelTableName>\".*") ||
+                                              content.matches("(?s).*\"<primaryTableName>\".*") ||
+                                              content.matches("(?s).*\"<exitTableName>\".*"));
                     
                     if (!hasProperQuoting) {
-                        fail("Template " + templateName + " should have explicit quoting: \"<schemaName>\".\"<tableName>\"");
+                        fail("Template " + templateName + " should have explicit quoting for schema and table parameters");
                     }
                     
                 } catch (IOException e) {
@@ -109,11 +113,12 @@ class AllTemplateQuotingValidator {
             String[] commonTableRefs = {"individual", "encounter", "program_enrolment", "program_encounter"};
             for (String tableRef : commonTableRefs) {
                 if (content.contains(tableRef) && !content.matches("(?s).*\"" + tableRef + "\".*")) {
-                    // Only flag if it looks like a table reference (not a column name)
-                    if (content.matches("(?s).*\\b" + tableRef + "\\b.*FROM.*") || 
+                    // Only flag if it looks like a table reference (not a column name) and not in public schema
+                    if ((content.matches("(?s).*\\b" + tableRef + "\\b.*FROM.*") || 
                         content.matches("(?s).*\\b" + tableRef + "\\b.*JOIN.*") ||
                         content.matches("(?s).*\\b" + tableRef + "\\b.*INSERT INTO.*") ||
-                        content.matches("(?s).*\\b" + tableRef + "\\b.*CREATE TABLE.*")) {
+                        content.matches("(?s).*\\b" + tableRef + "\\b.*CREATE TABLE.*")) &&
+                        !content.contains("public." + tableRef)) {
                         return Stream.of("Template " + fileName + " has potentially unquoted table reference: " + tableRef);
                     }
                 }

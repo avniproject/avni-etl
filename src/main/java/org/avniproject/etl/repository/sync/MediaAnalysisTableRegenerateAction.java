@@ -86,8 +86,8 @@ public class MediaAnalysisTableRegenerateAction {
         String schema = OrgIdentityContextHolder.getDbSchema();
         String mediaAnalysisTable = tableMetadata.getName();
         String sql = new ST(TRUNCATE_MEDIA_ANALYSIS_TABLE_SQL)
-                .add(SCHEMA_NAME, wrapInQuotes(schema))
-                .add(MEDIA_ANALYSIS_TABLE, wrapInQuotes(mediaAnalysisTable))
+                .add(SCHEMA_NAME, schema)
+                .add(MEDIA_ANALYSIS_TABLE, mediaAnalysisTable)
                 .render();
         runInOrgContext(() -> {
             jdbcTemplate.execute(sql);

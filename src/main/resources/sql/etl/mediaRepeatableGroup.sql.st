@@ -1,4 +1,4 @@
-insert into <schemaName>.<tableName> (
+insert into "<schemaName>"."<tableName>" (
     -- Entity identifiers
     entity_id, uuid, is_voided, created_by_id, last_modified_by_id, 
     created_date_time, last_modified_date_time, organisation_id, address_id, 

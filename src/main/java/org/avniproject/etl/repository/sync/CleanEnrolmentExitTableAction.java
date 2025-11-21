@@ -37,9 +37,9 @@ public class CleanEnrolmentExitTableAction implements EntitySyncAction {
         String exitTableName = tableMetadata.getName();
         String primaryTableName = getPrimaryTableName(tableMetadata, currentSchemaMetadata);
         String sql = new ST(deleteInvalidExitsSqlTemplate)
-                .add("schemaName", wrapInQuotes(schema))
-                .add("exitTableName", wrapInQuotes(exitTableName))
-                .add("primaryTableName", wrapInQuotes(primaryTableName))
+                .add("schemaName", schema)
+                .add("exitTableName", exitTableName)
+                .add("primaryTableName", primaryTableName)
                 .render();
         runInOrgContext(() -> {
             jdbcTemplate.execute(sql);

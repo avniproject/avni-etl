@@ -48,8 +48,8 @@ public class SyncTelemetryTableSyncAction implements EntitySyncAction {
     private void syncNewerRows(TableMetadata syncTelemetryTableMetadata, Date lastSyncTime, Date dataSyncBoundaryTime) {
 
         ST template = new ST(syncTelemetrySql)
-                .add("schemaName", wrapInQuotes(OrgIdentityContextHolder.getDbSchema()))
-                .add("tableName", wrapInQuotes(syncTelemetryTableMetadata.getName()))
+                .add("schemaName", OrgIdentityContextHolder.getDbSchema())
+                .add("tableName", syncTelemetryTableMetadata.getName())
                 .add("startTime", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").format(lastSyncTime))
                 .add("endTime", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").format(dataSyncBoundaryTime));
 

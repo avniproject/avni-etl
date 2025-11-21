@@ -39,9 +39,9 @@ public class CleanEncounterCancelTableAction implements EntitySyncAction {
         String encounterCancelTableName = tableMetadata.getName();
         String primaryTableName = getPrimaryTableName(tableMetadata, currentSchemaMetadata);
         String sql = new ST(deleteUncancelledEncountersSqlTemplate)
-                .add("schemaName", wrapInQuotes(schema))
-                .add("encounterCancelTableName", wrapInQuotes(encounterCancelTableName))
-                .add("primaryTableName", wrapInQuotes(primaryTableName))
+                .add("schemaName", schema)
+                .add("encounterCancelTableName", encounterCancelTableName)
+                .add("primaryTableName", primaryTableName)
                 .render();
         runInOrgContext(() -> {
             jdbcTemplate.execute(sql);

@@ -120,15 +120,15 @@ public class MediaTableSyncAction implements EntitySyncAction {
         logger.info("Template content:\n" + sqlTemplate);
 
         ST template = new ST(sqlTemplate)
-                .add("schemaName", wrapInQuotes(OrgIdentityContextHolder.getDbSchema()))
-                .add("tableName", wrapInQuotes(mediaTableMetadata.getName()))
+                .add("schemaName", OrgIdentityContextHolder.getDbSchema())
+                .add("tableName", mediaTableMetadata.getName())
                 .add("conceptColumnName", conceptColumnName)
                 .add("questionGroupConceptName", questionGroupConceptName)
                 .add("subjectTypeName", wrapStringValue(subjectTypeName))
                 .add("encounterTypeName", wrapStringValue(encounterTypeName))
                 .add("programName", wrapStringValue(programName))
                 .add("conceptName", wrapStringValue(conceptName))
-                .add("fromTableName", wrapInQuotes(fromTableName))
+                .add("fromTableName", fromTableName)
                 .add("startTime", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").format(lastSyncTime))
                 .add("endTime", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").format(dataSyncBoundaryTime))
                 .add("subjectTableName", subjectTypeTableName(subjectTypeName))
