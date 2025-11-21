@@ -2,12 +2,10 @@ package org.avniproject.etl.repository.sql;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -23,14 +21,21 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class JavaQuotingStandardValidator {
 
-    // Patterns that indicate violations of the quoting standard
+    // Patterns that indicate violations of the quoting standard (focus on actual risks)
     private static final String[] VIOLATION_PATTERNS = {
-        // wrapInQuotes calls when adding parameters to ST templates
+        // wrapInQuotes calls when adding parameters to ST templates (HIGH RISK)
         "wrapInQuotes.*\\.add\\(.*schemaName",
         "wrapInQuotes.*\\.add\\(.*tableName", 
         "\\.add\\(.*wrapInQuotes.*schema",
         "\\.add\\(.*wrapInQuotes.*table",
-        // Direct string concatenation with quotes in template parameters (more specific)
+        
+        // String replacement with wrapInQuotes (HIGH RISK - causes double-quoting)
+        "\\.replace.*wrapInQuotes.*schema",
+        "\\.replace.*wrapInQuotes.*table",
+        "wrapInQuotes.*\\.replace.*schema",
+        "wrapInQuotes.*\\.replace.*table",
+        
+        // Direct string concatenation with quotes in ST template parameters (MEDIUM RISK)
         "\\.add\\([^,]*,\\s*\"[^\"]*schema[^\"]*\"\\)",
         "\\.add\\([^,]*,\\s*\"[^\"]*table[^\"]*\"\\)"
     };
@@ -40,7 +45,12 @@ class JavaQuotingStandardValidator {
         "SET search_path TO",  // Direct SQL execution
         "jdbcTemplate.execute", // Direct SQL execution
         "jdbcTemplate.update",  // Direct SQL execution
-        "TransactionDataSyncHelper\\.java" // Skip the helper class itself
+        "TransactionDataSyncHelper\\.java", // Skip the helper class itself
+        "\\.replace\\(\\\"\\$\\{schema_name\\}\\\"", // Legitimate string replacement (template has quotes)
+        "\\.replace\\(\\\"\\$\\{table_name\\}\\\"",   // Legitimate string replacement (template has quotes)
+        "\\.replace\\(\\\"\\$schemaName\\\"",        // Legitimate string replacement 
+        "\\.replace\\(\\\"\\$tableName\\\"",         // Legitimate string replacement
+        "ReportRepository\\.java" // Skip report repository (legitimate dynamic queries)
     };
 
     @Test
@@ -55,7 +65,7 @@ class JavaQuotingStandardValidator {
         
         if (violationArray.length > 0) {
             String errorMessage = String.format(
-                "Found %d quoting standard violations:%n%s", 
+                "Found %d Java quoting standard violations:%n%s", 
                 violationArray.length,
                 String.join("%n", violationArray)
             );
@@ -100,32 +110,35 @@ class JavaQuotingStandardValidator {
         try {
             String content = Files.readString(javaFile);
             String fileName = javaFile.getFileName().toString();
+            String filePath = javaFile.toString();
             
-            // Skip test files and the validator itself
-            if (fileName.contains("Test") || fileName.equals("JavaQuotingStandardValidator.java")) {
-                return Stream.empty();
-            }
-            
-            // Skip TransactionDataSyncHelper itself (internal usage is legitimate)
-            if (fileName.equals("TransactionDataSyncHelper.java")) {
-                return Stream.empty();
-            }
-
-            // Skip files with legitimate SQL usage patterns
-            for (String legitimatePattern : LEGITIMATE_USAGE_PATTERNS) {
-                if (content.matches("(?s).*" + legitimatePattern + ".*")) {
+            // Skip legitimate usage files
+            for (String skipPattern : LEGITIMATE_USAGE_PATTERNS) {
+                if (filePath.matches(".*" + skipPattern + ".*")) {
                     return Stream.empty();
                 }
             }
-
-            // Check for violation patterns
-            return Arrays.stream(VIOLATION_PATTERNS)
-                .filter(pattern -> content.matches("(?s).*" + pattern + ".*"))
-                .map(pattern -> String.format("File: %s - Found pattern: %s", 
-                    javaFile.toString(), pattern));
-                    
+            
+            Stream<String> violations = Stream.empty();
+            String[] lines = content.split("\n");
+            
+            for (int i = 0; i < lines.length; i++) {
+                String line = lines[i];
+                int lineNumber = i + 1;
+                
+                for (String violationPattern : VIOLATION_PATTERNS) {
+                    if (line.matches(".*" + violationPattern + ".*")) {
+                        violations = Stream.concat(violations, Stream.of(
+                            String.format("File %s:%d - %s: %s", fileName, lineNumber, violationPattern, line.trim())
+                        ));
+                    }
+                }
+            }
+            
+            return violations;
+            
         } catch (IOException e) {
-            return Stream.of("Error reading file: " + javaFile.toString() + " - " + e.getMessage());
+            return Stream.of("Error reading Java file: " + javaFile.toString() + " - " + e.getMessage());
         }
     }
 }

@@ -1,4 +1,4 @@
-insert into ${schema_name}.${table_name} ("id", "uuid", "is_voided", "created_by_id", "last_modified_by_id",
+insert into "${schema_name}"."${table_name}" ("id", "uuid", "is_voided", "created_by_id", "last_modified_by_id",
                                           "created_date_time", "last_modified_date_time", "organisation_id",
                                           "group_subject_id", "member_subject_id", "role", "Head of household ID")
     (

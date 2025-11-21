@@ -1,5 +1,5 @@
 --[SQL template for auto generated view]
-insert into ${schema_name}.${table_name} (
+insert into "${schema_name}"."${table_name}" (
     "individual_id", "id", "earliest_visit_date_time", "encounter_date_time", "uuid", "name", "address_id", "max_visit_date_time", "is_voided",
     "encounter_location", "cancel_date_time", "cancel_location", "created_by_id", "last_modified_by_id", "filled_by_id",
     "created_date_time", "last_modified_date_time", "organisation_id", "legacy_id"

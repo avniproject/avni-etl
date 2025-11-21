@@ -27,7 +27,7 @@ class AllTemplateQuotingValidator {
     void validateAllSqlTemplatesHaveExplicitQuoting() {
         Path sqlTemplateDir = Paths.get("src/main/resources/sql/etl");
         
-        Stream<String> violations = findSqlTemplateFiles(sqlTemplateDir)
+        Stream<String> violations = findAllSqlTemplateFiles(sqlTemplateDir)
             .flatMap(this::checkTemplateForQuotingViolations);
         
         String[] violationArray = violations.toArray(String[]::new);
@@ -39,6 +39,19 @@ class AllTemplateQuotingValidator {
                 String.join("%n", violationArray)
             );
             fail(errorMessage);
+        }
+    }
+
+    private Stream<Path> findAllSqlTemplateFiles(Path directory) {
+        try {
+            return Files.walk(directory)
+                .filter(path -> {
+                    String fileName = path.toString();
+                    return (fileName.endsWith(".sql.st") || fileName.endsWith(".sql")) 
+                        && Files.isRegularFile(path);
+                });
+        } catch (IOException e) {
+            return Stream.empty();
         }
     }
 
@@ -80,16 +93,7 @@ class AllTemplateQuotingValidator {
         }
     }
 
-    private Stream<Path> findSqlTemplateFiles(Path directory) {
-        try {
-            return Files.walk(directory)
-                .filter(path -> path.toString().endsWith(".sql.st"))
-                .filter(Files::isRegularFile);
-        } catch (IOException e) {
-            return Stream.empty();
-        }
-    }
-
+    
     private Stream<String> checkTemplateForQuotingViolations(Path templateFile) {
         try {
             String content = Files.readString(templateFile);
@@ -100,31 +104,52 @@ class AllTemplateQuotingValidator {
                 return Stream.empty();
             }
             
-            // Check for unquoted schema/table references
-            if (content.contains("<schemaName>") && !content.matches("(?s).*\"<schemaName>\".*")) {
-                return Stream.of("Template " + fileName + " has unquoted schemaName reference");
-            }
+            Stream<String> violations = Stream.empty();
+            String[] lines = content.split("\n");
             
-            if (content.contains("<tableName>") && !content.matches("(?s).*\"<tableName>\".*")) {
-                return Stream.of("Template " + fileName + " has unquoted tableName reference");
-            }
-            
-            // Check for other common table references that might need quoting
-            String[] commonTableRefs = {"individual", "encounter", "program_enrolment", "program_encounter"};
-            for (String tableRef : commonTableRefs) {
-                if (content.contains(tableRef) && !content.matches("(?s).*\"" + tableRef + "\".*")) {
-                    // Only flag if it looks like a table reference (not a column name) and not in public schema
-                    if ((content.matches("(?s).*\\b" + tableRef + "\\b.*FROM.*") || 
-                        content.matches("(?s).*\\b" + tableRef + "\\b.*JOIN.*") ||
-                        content.matches("(?s).*\\b" + tableRef + "\\b.*INSERT INTO.*") ||
-                        content.matches("(?s).*\\b" + tableRef + "\\b.*CREATE TABLE.*")) &&
-                        !content.contains("public." + tableRef)) {
-                        return Stream.of("Template " + fileName + " has potentially unquoted table reference: " + tableRef);
+            for (int i = 0; i < lines.length; i++) {
+                String line = lines[i];
+                int lineNumber = i + 1;
+                
+                // Check for unquoted schemaName references
+                if (line.contains("<schemaName>") && !line.matches(".*\"<schemaName>\".*")) {
+                    violations = Stream.concat(violations, Stream.of(
+                        String.format("Template %s:%d has unquoted schemaName reference: %s", fileName, lineNumber, line.trim())
+                    ));
+                }
+                
+                // Check for unquoted tableName references
+                if (line.contains("<tableName>") && !line.matches(".*\"<tableName>\".*")) {
+                    violations = Stream.concat(violations, Stream.of(
+                        String.format("Template %s:%d has unquoted tableName reference: %s", fileName, lineNumber, line.trim())
+                    ));
+                }
+                
+                // Check for unquoted table parameter references (comprehensive)
+                String[] tableParams = {"<fromTableName>", "<subjectTableName>", "<parentTableName>", "<mediaAnalysisTable>", "<encounterCancelTableName>", "<primaryTableName>", "<exitTableName>"};
+                for (String param : tableParams) {
+                    if (line.contains(param) && !line.matches(".*\"" + param.replace("<", "\\<").replace(">", "\\>") + "\".*")) {
+                        violations = Stream.concat(violations, Stream.of(
+                            String.format("Template %s:%d has unquoted %s reference: %s", fileName, lineNumber, param, line.trim())
+                        ));
                     }
+                }
+                
+                // Check for unquoted string replacement patterns
+                if (line.contains("${schema_name}") && !line.contains("\"${schema_name}\"")) {
+                    violations = Stream.concat(violations, Stream.of(
+                        String.format("Template %s:%d has unquoted ${schema_name} reference: %s", fileName, lineNumber, line.trim())
+                    ));
+                }
+                
+                if (line.contains("${table_name}") && !line.contains("\"${table_name}\"")) {
+                    violations = Stream.concat(violations, Stream.of(
+                        String.format("Template %s:%d has unquoted ${table_name} reference: %s", fileName, lineNumber, line.trim())
+                    ));
                 }
             }
             
-            return Stream.empty();
+            return violations;
             
         } catch (IOException e) {
             return Stream.of("Error reading template: " + templateFile.toString() + " - " + e.getMessage());

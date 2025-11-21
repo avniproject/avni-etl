@@ -47,8 +47,8 @@ public class TransactionalSyncSqlGenerator {
     public String getSql(String fileName, TableMetadata tableMetadata, Date startTime, Date endTime) {
         String template = readSqlFile(fileName);
         String obsColumnName = tableMetadata.getType().equals(TableMetadata.Type.Address) ? "location_properties" : "observations";
-        String text = template.replace("${schema_name}", TransactionDataSyncHelper.wrapInQuotes(OrgIdentityContextHolder.getDbSchema()))
-                .replace("${table_name}", TransactionDataSyncHelper.wrapInQuotes(tableMetadata.getName()))
+        String text = template.replace("${schema_name}", OrgIdentityContextHolder.getDbSchema())
+                .replace("${table_name}", tableMetadata.getName())
                 .replace("${observations_to_insert_list}", TransactionDataSyncHelper.getListOfObservations(tableMetadata))
                 .replace("${concept_maps}", TransactionDataSyncHelper.getConceptMaps(tableMetadata))
                 .replace("${cross_join_concept_maps}", "cross join " + TransactionDataSyncHelper.getConceptMapName(tableMetadata))
