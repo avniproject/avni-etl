@@ -1,5 +1,6 @@
 package org.avniproject.etl.service;
 
+import java.util.List;
 import org.apache.log4j.Logger;
 import org.avniproject.etl.domain.OrgIdentityContextHolder;
 import org.avniproject.etl.domain.Organisation;
@@ -39,9 +40,18 @@ public class SyncService {
     public void sync(Organisation organisation) {
         SchemaMetadata currentSchemaMetadata = organisation.getSchemaMetadata();
 
-        currentSchemaMetadata.getOrderedTableMetadata().stream()
+        List<TableMetadata> orderedTables = currentSchemaMetadata.getOrderedTableMetadata();
+        List<TableMetadata> regularSyncTables = orderedTables.stream()
                 .filter(TableMetadata::isPartOfRegularSync)
-                .forEach(tableMetadata -> migrateTable(tableMetadata, organisation.getSyncStatus(), currentSchemaMetadata));
+                .toList();
+        
+        log.info("Syncing " + regularSyncTables.size() + " tables for organisation: " + organisation.getOrganisationIdentity());
+        
+        regularSyncTables.forEach(tableMetadata -> {
+            log.info("Processing table: " + tableMetadata.getName() + " (Type: " + tableMetadata.getType() + 
+                    ", SubjectTypeUUID: " + tableMetadata.getSubjectTypeUuid() + ")");
+            migrateTable(tableMetadata, organisation.getSyncStatus(), currentSchemaMetadata);
+        });
     }
 
     @Transactional

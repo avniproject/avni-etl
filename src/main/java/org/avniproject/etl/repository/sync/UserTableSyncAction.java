@@ -17,6 +17,7 @@ import static org.avniproject.etl.repository.sql.SqlFile.readSqlFile;
 
 @Repository
 public class UserTableSyncAction implements EntitySyncAction{
+    
     private final JdbcTemplate jdbcTemplate;
     private static final String userSql = readSqlFile("user.sql.st");
 
@@ -27,7 +28,10 @@ public class UserTableSyncAction implements EntitySyncAction{
 
     @Override
     public boolean doesntSupport(TableMetadata tableMetadata) {
-        return !tableMetadata.getType().equals(TableMetadata.Type.User);
+        // Only handle the main users table (subject_type_uuid is null), not placeholder User subject tables
+        return !tableMetadata.getType().equals(TableMetadata.Type.User) || 
+               !"users".equals(tableMetadata.getName()) ||
+               tableMetadata.getSubjectTypeUuid() != null; // placeholder tables have subject_type_uuid
     }
 
     @Override

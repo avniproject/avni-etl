@@ -24,6 +24,7 @@ public class EntityRepository {
                             MediaForRepeatableGroupsSyncAction mediaForRepeatableGroupsSyncAction,
                             SyncTelemetryTableSyncAction syncTelemetryTableSyncAction,
                             UserTableSyncAction userTableSyncAction,
+                            UserTypeSubjectTableSyncAction userTypeSubjectTableSyncAction,
                             CleanEnrolmentExitTableAction cleanEnrolmentExitTableAction,
                             CleanEncounterCancelTableAction cleanEncounterCancelTableAction,
                             RepeatableQGTransactionTablesSyncAction repeatableQGTransactionTablesSyncAction) {
@@ -36,6 +37,7 @@ public class EntityRepository {
         entitySyncRepositories.add(mediaForRepeatableGroupsSyncAction);
         entitySyncRepositories.add(syncTelemetryTableSyncAction);
         entitySyncRepositories.add(userTableSyncAction);
+        entitySyncRepositories.add(userTypeSubjectTableSyncAction);
         entitySyncRepositories.add(duplicateRowDeleteAction);
         entitySyncRepositories.add(cleanEncounterCancelTableAction);
         entitySyncRepositories.add(cleanEnrolmentExitTableAction);

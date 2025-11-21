@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -32,10 +31,12 @@ public class SchemaMigrationService {
         OrganisationIdentity organisationIdentity = organisation.getOrganisationIdentity();
         ensureSchemaExists(organisationIdentity);
 
-        log.debug(String.format("Migrating schema for organisation: %s", organisationIdentity));
+        log.info(String.format("Migrating schema for organisation: %s", organisationIdentity));
         SchemaMetadata newSchemaMetadata = schemaMetadataRepository.getNewSchemaMetadata();
+        SchemaMetadata oldSchemaMetadata = organisation.getSchemaMetadata();
 
-        List<Diff> changes = newSchemaMetadata.findChanges(organisation.getSchemaMetadata());
+        List<Diff> changes = newSchemaMetadata.findChanges(oldSchemaMetadata);
+        
         schemaMetadataRepository.applyChanges(changes);
 
         organisation.applyNewSchema(newSchemaMetadata);
@@ -44,9 +45,8 @@ public class SchemaMigrationService {
 
         return organisation;
     }
-
+    
     private void ensureSchemaExists(OrganisationIdentity organisationIdentity) {
-        log.debug("Adding schema if not exists");
         organisationRepository.createDBUser(organisationIdentity.getDbUser(), "password");
         List<String> dbUsers = organisationIdentity.getUsersWithSchemaAccess();
         dbUsers.forEach(user -> organisationRepository.createImplementationSchema(organisationIdentity.getSchemaName(), user));
