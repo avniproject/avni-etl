@@ -37,7 +37,7 @@ select entity.id,
        <else>
             null
        <endif>
-from <schemaName>.<fromTableName> entity
-     inner join <schemaName>.<subjectTableName> subject on entity."<individualId>" = subject.id
+from "<schemaName>"."<fromTableName>" entity
+     inner join "<schemaName>"."<subjectTableName>" subject on entity."<individualId>" = subject.id
 where entity."last_modified_date_time" > '<startTime>'
   and entity."last_modified_date_time" \<= '<endTime>';

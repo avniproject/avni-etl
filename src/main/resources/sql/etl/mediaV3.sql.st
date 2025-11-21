@@ -32,9 +32,9 @@ select
     COALESCE('<questionGroupConceptName>', '<conceptColumnName>') as question_group_concept_name,
     <if(isRepeatable)>entity.repeatable_question_group_index<else>-1<endif> as repeatable_question_group_index
 from 
-    <schemaName>.<fromTableName> entity
+    "<schemaName>"."<fromTableName>" entity
     -- Join with the subject table to get missing columns
-    inner join <schemaName>.<subjectTableName> subject 
+    inner join "<schemaName>"."<subjectTableName>" subject 
         on entity."<subjectIdColumnName>" = subject.id,
     -- Handle various data formats
     json_array_elements_text(

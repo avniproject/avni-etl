@@ -38,7 +38,7 @@ select entity.id,
             null
        <endif>,
        json_array_elements_text(entity."<conceptColumnName>"::json)::jsonb
-from <schemaName>.<fromTableName> entity
-    inner join <schemaName>.<subjectTableName> subject on entity."<individualId>" = subject.id
+from "<schemaName>"."<fromTableName>" entity
+    inner join "<schemaName>"."<subjectTableName>" subject on entity."<individualId>" = subject.id
 where entity."last_modified_date_time" > '<startTime>'
   and entity."last_modified_date_time" \<= '<endTime>';
