@@ -63,7 +63,4 @@ public class UserTableSyncAction implements EntitySyncAction{
         }, jdbcTemplate);
     }
 
-    private String wrapInQuotes(String parameter) {
-        return parameter == null ? "null" : "\"" + parameter + "\"";
-    }
 }

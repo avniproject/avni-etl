@@ -61,10 +61,6 @@ public class CleanEncounterCancelTableAction implements EntitySyncAction {
         throw new RuntimeException(String.format("Corresponding Primary table not found for cancel table: %s", tableMetadata.getName()));
     }
 
-    private String wrapInQuotes(String parameter) {
-        return parameter == null ? "null" : "\"" + parameter + "\"";
-    }
-
     private boolean supports(TableMetadata tableMetadata) {
         return Arrays.asList(TableMetadata.Type.IndividualEncounterCancellation, TableMetadata.Type.ProgramEncounterCancellation).contains(tableMetadata.getType());
     }
