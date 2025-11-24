@@ -39,9 +39,9 @@ public class CleanEncounterCancelTableAction implements EntitySyncAction {
         String encounterCancelTableName = tableMetadata.getName();
         String primaryTableName = getPrimaryTableName(tableMetadata, currentSchemaMetadata);
         String sql = new ST(deleteUncancelledEncountersSqlTemplate)
-                .add("schemaName", wrapInQuotes(schema))
-                .add("encounterCancelTableName", wrapInQuotes(encounterCancelTableName))
-                .add("primaryTableName", wrapInQuotes(primaryTableName))
+                .add("schemaName", schema)
+                .add("encounterCancelTableName", encounterCancelTableName)
+                .add("primaryTableName", primaryTableName)
                 .render();
         runInOrgContext(() -> {
             jdbcTemplate.execute(sql);
@@ -59,10 +59,6 @@ public class CleanEncounterCancelTableAction implements EntitySyncAction {
             return primaryTableMetadata.get().getName();
         }
         throw new RuntimeException(String.format("Corresponding Primary table not found for cancel table: %s", tableMetadata.getName()));
-    }
-
-    private String wrapInQuotes(String parameter) {
-        return parameter == null ? "null" : "\"" + parameter + "\"";
     }
 
     private boolean supports(TableMetadata tableMetadata) {

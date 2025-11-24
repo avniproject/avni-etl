@@ -1,5 +1,5 @@
 --[Data Extract Report] Registration
-insert into ${schema_name}.${table_name} (
+insert into "${schema_name}"."${table_name}" (
     "id", "address_id", "uuid", "first_name", "last_name", "registration_date", "registration_location",
     "is_voided", "created_by_id", "last_modified_by_id", "created_date_time",
     "last_modified_date_time", "organisation_id", "legacy_id"

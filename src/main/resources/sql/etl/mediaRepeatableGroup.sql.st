@@ -1,4 +1,4 @@
-insert into <schemaName>.<tableName> (
+insert into "<schemaName>"."<tableName>" (
     -- Entity identifiers
     entity_id, uuid, is_voided, created_by_id, last_modified_by_id, 
     created_date_time, last_modified_date_time, organisation_id, address_id, 
@@ -39,11 +39,11 @@ select
     '<questionGroupConceptName>' as question_group_concept_name,
     entity.repeatable_question_group_index as repeatable_question_group_index
 from 
-    <schemaName>.<fromTableName> entity
-    inner join <schemaName>.<subjectTableName> subject 
+    "<schemaName>"."<fromTableName>" entity
+    inner join "<schemaName>"."<subjectTableName>" subject 
         on entity."<subjectIdColumnName>" = subject.id
     -- Join with parent entity to get missing columns
-    inner join <schemaName>.<parentTableName> parent
+    inner join "<schemaName>"."<parentTableName>" parent
         on entity."<parentIdColumnName>" = parent.id,
     -- Lateral join to handle both JSON arrays and direct URLs
     LATERAL (
