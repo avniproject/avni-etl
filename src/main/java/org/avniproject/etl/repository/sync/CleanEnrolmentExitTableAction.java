@@ -37,9 +37,9 @@ public class CleanEnrolmentExitTableAction implements EntitySyncAction {
         String exitTableName = tableMetadata.getName();
         String primaryTableName = getPrimaryTableName(tableMetadata, currentSchemaMetadata);
         String sql = new ST(deleteInvalidExitsSqlTemplate)
-                .add("schemaName", wrapInQuotes(schema))
-                .add("exitTableName", wrapInQuotes(exitTableName))
-                .add("primaryTableName", wrapInQuotes(primaryTableName))
+                .add("schemaName", schema)
+                .add("exitTableName", exitTableName)
+                .add("primaryTableName", primaryTableName)
                 .render();
         runInOrgContext(() -> {
             jdbcTemplate.execute(sql);
@@ -57,10 +57,6 @@ public class CleanEnrolmentExitTableAction implements EntitySyncAction {
             return primaryTableMetadata.get().getName();
         }
         throw new RuntimeException(String.format("Corresponding Primary table not found for cancel table: %s", tableMetadata.getName()));
-    }
-
-    private String wrapInQuotes(String parameter) {
-        return parameter == null ? "null" : "\"" + parameter + "\"";
     }
 
     private boolean supports(TableMetadata tableMetadata) {

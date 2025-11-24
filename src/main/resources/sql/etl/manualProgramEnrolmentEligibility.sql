@@ -1,5 +1,5 @@
 --[SQL template for auto generated view]
-insert into ${schema_name}.${table_name} (
+insert into "${schema_name}"."${table_name}" (
     "subject_id", "id", "program_id", "is_eligible", "uuid", "check_date", "is_voided",
     "created_by_id", "last_modified_by_id", "created_date_time", "last_modified_date_time", "organisation_id"
     ${observations_to_insert_list}

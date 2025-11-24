@@ -1,4 +1,4 @@
-insert into ${schema_name}.address ("${titleColumnName}", "${idColumnName}", id, "uuid", "is_voided", "created_by_id", "last_modified_by_id",
+insert into "${schema_name}".address ("${titleColumnName}", "${idColumnName}", id, "uuid", "is_voided", "created_by_id", "last_modified_by_id",
                                     "created_date_time", "last_modified_date_time", "organisation_id", "gps_coordinates"
                                         ${observations_to_insert_list})
 (${concept_maps}

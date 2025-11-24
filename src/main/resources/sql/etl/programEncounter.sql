@@ -1,5 +1,5 @@
 --[SQL template for auto generated view]
-insert into ${schema_name}.${table_name} (
+insert into "${schema_name}"."${table_name}" (
     "program_enrolment_id",
     "id",
     "individual_id",

@@ -1,4 +1,4 @@
-insert into <schemaName>.<tableName> (
+insert into "<schemaName>"."<tableName>" (
     entity_id, uuid, is_voided, created_by_id, last_modified_by_id, 
     created_date_time, last_modified_date_time, organisation_id, address_id, 
     image_url, sync_parameter_key1, sync_parameter_value1, sync_parameter_key2, sync_parameter_value2, 
@@ -32,9 +32,9 @@ select
     COALESCE('<questionGroupConceptName>', '<conceptColumnName>') as question_group_concept_name,
     <if(isRepeatable)>entity.repeatable_question_group_index<else>-1<endif> as repeatable_question_group_index
 from 
-    <schemaName>.<fromTableName> entity
+    "<schemaName>"."<fromTableName>" entity
     -- Join with the subject table to get missing columns
-    inner join <schemaName>.<subjectTableName> subject 
+    inner join "<schemaName>"."<subjectTableName>" subject 
         on entity."<subjectIdColumnName>" = subject.id,
     -- Handle various data formats
     json_array_elements_text(
