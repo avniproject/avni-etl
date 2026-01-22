@@ -103,7 +103,7 @@ class ColumnTruncationRegressionTest {
 
     @Test
     void ensureTableMetadataUsesCorrectMethodForVoidedColumns() {
-        // This test specifically checks that TableMetadata uses the correct method
+        // This test specifically checks that TableMetadata.findChanges() uses the correct method
         // and not the buggy getVoidedName() directly
         
         // Set up context
@@ -111,17 +111,21 @@ class ColumnTruncationRegressionTest {
             OrganisationIdentity.createForOrganisation("test_user", "test_schema", "test")
         );
 
-        // Create a scenario where getVoidedName() would produce 68 chars
-        // but getNewVoidedColumnMetaData() produces 62 chars
+        // Create the scenario where findChanges() would be called
         TableMetadata existingTable = new TableMetadata();
         existingTable.setName("test_table");
         
+        // Use a name that when voided would exceed 63 chars without proper truncation
         String problematicName = "Please provide name of child and information about suffering from disease";
         Column column = new Column(problematicName, Column.Type.text);
         ColumnMetadata columnMetadata = new ColumnMetadata(
             column, 1, ColumnMetadata.ConceptType.Text, "concept-uuid", false
         );
         existingTable.addColumnMetadata(List.of(columnMetadata));
+
+        // New table without the column (simulating form element removal)
+        TableMetadata newTable = new TableMetadata();
+        newTable.setName("test_table");
 
         // What the buggy method would produce
         String buggyResult = columnMetadata.getVoidedName();
@@ -132,13 +136,37 @@ class ColumnTruncationRegressionTest {
         System.out.println("Buggy method result: " + buggyResult + " (length: " + buggyResult.length() + ")");
         System.out.println("Correct method result: " + correctResult + " (length: " + correctResult.length() + ")");
 
-        // If the buggy method exceeds the limit, the fix must be in place
+        // Call the actual findChanges() method
+        List<org.avniproject.etl.domain.metadata.diff.Diff> changes = newTable.findChanges(existingTable);
+        
+        // Extract the voided name from the actual implementation
+        String actualResult = null;
+        for (org.avniproject.etl.domain.metadata.diff.Diff diff : changes) {
+            if (diff instanceof org.avniproject.etl.domain.metadata.diff.RenameColumn) {
+                org.avniproject.etl.domain.metadata.diff.RenameColumn rc = 
+                    (org.avniproject.etl.domain.metadata.diff.RenameColumn) diff;
+                String sql = rc.getSql();
+                if (sql.contains("voided_")) {
+                    int toIndex = sql.indexOf(" to \"");
+                    int endIndex = sql.lastIndexOf("\"");
+                    actualResult = sql.substring(toIndex + 5, endIndex);
+                    break;
+                }
+            }
+        }
+        
+        assertNotNull(actualResult, "Should have a rename change with voided column");
+        System.out.println("Actual implementation result: " + actualResult + " (length: " + actualResult.length() + ")");
+
+        // If the buggy method exceeds the limit, the actual implementation must use the correct method
         if (buggyResult.length() > 63) {
-            // The actual implementation must use the correct method
-            assertNotEquals(buggyResult, correctResult, 
+            // The actual implementation must not use the buggy method
+            assertNotEquals(buggyResult, actualResult, 
                 "Implementation must not use the buggy getVoidedName() method directly");
-            assertTrue(correctResult.length() <= 63, 
-                "Correct implementation must produce name within limit");
+            assertEquals(correctResult, actualResult,
+                "Implementation must use the correct getNewVoidedColumnMetaData() method");
+            assertTrue(actualResult.length() <= 63, 
+                "Actual implementation must produce name within limit");
         }
     }
 }
