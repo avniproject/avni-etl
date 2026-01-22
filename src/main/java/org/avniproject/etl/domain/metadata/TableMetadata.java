@@ -82,7 +82,7 @@ public class TableMetadata extends Model {
             if (matchingColumn.isEmpty() && !existingColumn.isConceptVoided()) {
                 OrganisationIdentity organisationIdentity = OrgIdentityContextHolder.getOrganisationIdentity();
                 if (!organisationIdentity.isPartOfGroup())
-                    diffs.add(new RenameColumn(getName(), existingColumn.getName(), existingColumn.getVoidedName()));
+                    diffs.add(new RenameColumn(getName(), existingColumn.getName(), existingColumn.getNewVoidedColumnMetaData().getName()));
             }
         });
         return diffs;
