@@ -21,7 +21,7 @@ public class ReportingViewService {
 
     public void processViews(Organisation organisation) {
         OrganisationIdentity organisationIdentity = organisation.getOrganisationIdentity();
-        reportingViewRepository.createOrReplaceView(organisationIdentity);
+        reportingViewRepository.createOrReplaceView(organisationIdentity, organisation.getSchemaMetadata());
         log.info(String.format("Created reporting views for %s", organisationIdentity));
         multiSelectViewSyncAction.createMultiselectViews(organisationIdentity, organisation.getSchemaMetadata());
         log.info(String.format("Created multiselect views for %s", organisationIdentity));

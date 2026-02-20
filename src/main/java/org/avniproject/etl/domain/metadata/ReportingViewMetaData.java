@@ -13,7 +13,7 @@ public interface ReportingViewMetaData {
     String DB_USER = "db_user";
 
 
-    void createOrReplaceView(OrganisationIdentity organisationIdentity);
+    void createOrReplaceView(OrganisationIdentity organisationIdentity, SchemaMetadata schemaMetadata);
 
     class ViewConfig {
         private final String viewName;

@@ -2,9 +2,9 @@ package org.avniproject.etl.repository;
 
 import jakarta.annotation.PostConstruct;
 import org.apache.log4j.Logger;
-import org.avniproject.etl.domain.OrgIdentityContextHolder;
 import org.avniproject.etl.domain.OrganisationIdentity;
 import org.avniproject.etl.domain.metadata.ReportingViewMetaData;
+import org.avniproject.etl.domain.metadata.SchemaMetadata;
 import org.avniproject.etl.domain.metadata.TableMetadata;
 import org.avniproject.etl.dto.TableMetadataST;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -32,16 +32,14 @@ public class ReportingViewRepository implements ReportingViewMetaData {
 
     private final Map<Type, ViewConfig> viewConfigs = new HashMap<>();
     private final OrganisationRepository organisationRepository;
-    private final TableMetadataRepository tableMetadataRepository;
 
     public enum Type {
         SUBJECT, ENROLMENT, DUE_VISITS, COMPLETED_VISITS, OVERDUE_VISITS
     }
 
-    public ReportingViewRepository(JdbcTemplate jdbcTemplate, OrganisationRepository organisationRepository, TableMetadataRepository tableMetadataRepository) {
+    public ReportingViewRepository(JdbcTemplate jdbcTemplate, OrganisationRepository organisationRepository) {
         this.jdbcTemplate = jdbcTemplate;
         this.organisationRepository = organisationRepository;
-        this.tableMetadataRepository = tableMetadataRepository;
     }
 
     @PostConstruct
@@ -62,13 +60,13 @@ public class ReportingViewRepository implements ReportingViewMetaData {
     }
 
     @Override
-    public void createOrReplaceView(OrganisationIdentity organisationIdentity) {
+    public void createOrReplaceView(OrganisationIdentity organisationIdentity, SchemaMetadata schemaMetadata) {
         String schemaName = organisationIdentity.getSchemaName();
         List<String> addressColumns = getAddressColumnNames(organisationIdentity);
         List<String> usersWithSchemaAccess = organisationIdentity.getUsersWithSchemaAccess();
         for (Type type : Type.values()) {
             ViewConfig config = viewConfigs.get(type);
-            createViewAndGrantPermission(type, config, schemaName, usersWithSchemaAccess, addressColumns, organisationIdentity);
+            createViewAndGrantPermission(type, config, schemaName, usersWithSchemaAccess, addressColumns, organisationIdentity, schemaMetadata);
         }
     }
 
@@ -110,13 +108,26 @@ public class ReportingViewRepository implements ReportingViewMetaData {
         }
     }
 
-    private void createViewAndGrantPermission(Type type, ViewConfig config, String schemaName, List<String> users, List<String> addressColumns, OrganisationIdentity organisationIdentity) {
+    private List<TableMetadataST> filterTableMetadata(SchemaMetadata schemaMetadata, List<TableMetadata.Type> types) {
+        return schemaMetadata.getTableMetadata().stream()
+                .filter(t -> types.contains(t.getType()))
+                .map(t -> new TableMetadataST(
+                        t.getName(),
+                        t.getType().name(),
+                        t.getSubjectTypeUuid(),
+                        t.getProgramUuid(),
+                        t.getEncounterTypeUuid(),
+                        t.getType() == TableMetadata.Type.Person))
+                .collect(Collectors.toList());
+    }
+
+    private void createViewAndGrantPermission(Type type, ViewConfig config, String schemaName, List<String> users, List<String> addressColumns, OrganisationIdentity organisationIdentity, SchemaMetadata schemaMetadata) {
         List<TableMetadataST> tableMetadata = switch (type) {
             case SUBJECT ->
-                    tableMetadataRepository.fetchByType(List.of(TableMetadata.Type.Individual, TableMetadata.Type.Person, TableMetadata.Type.Household, TableMetadata.Type.Group));
-            case ENROLMENT -> tableMetadataRepository.fetchByType(List.of(TableMetadata.Type.ProgramEnrolment));
+                    filterTableMetadata(schemaMetadata, List.of(TableMetadata.Type.Individual, TableMetadata.Type.Person, TableMetadata.Type.Household, TableMetadata.Type.Group));
+            case ENROLMENT -> filterTableMetadata(schemaMetadata, List.of(TableMetadata.Type.ProgramEnrolment));
             case DUE_VISITS, COMPLETED_VISITS, OVERDUE_VISITS ->
-                    tableMetadataRepository.fetchByType(List.of(TableMetadata.Type.Encounter, TableMetadata.Type.IndividualEncounterCancellation, TableMetadata.Type.ProgramEncounter, TableMetadata.Type.ProgramEncounterCancellation));
+                    filterTableMetadata(schemaMetadata, List.of(TableMetadata.Type.Encounter, TableMetadata.Type.IndividualEncounterCancellation, TableMetadata.Type.ProgramEncounter, TableMetadata.Type.ProgramEncounterCancellation));
         };
         ST st = new ST(config.getSqlTemplateFile());
         st.add(SCHEMA_PARAM_NAME, schemaName);
