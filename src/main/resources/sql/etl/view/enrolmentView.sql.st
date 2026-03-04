@@ -26,8 +26,8 @@ CREATE OR REPLACE VIEW "<schema_name>".enrolment_view AS
         p.name AS program_name,
         ind.uuid AS individual_uuid,
         ind.first_name,
-        ind.last_name,
-         <address_columns:{col | a."<col>"}; separator=", ">
+        ind.last_name<if(address_columns)>,
+         <address_columns:{col | a."<col>"}; separator=", "><endif>
     FROM all_enrolments
     JOIN public.program p ON all_enrolments.program_uuid = p.uuid <where_clause>
     JOIN "<schema_name>".address a ON all_enrolments.address_id = a.id
@@ -49,7 +49,7 @@ CREATE OR REPLACE VIEW "<schema_name>".enrolment_view AS
         null as program_name,
         null as individual_uuid,
         null as first_name,
-        null as last_name,
-        <address_columns:{col | null as "<col>"}; separator=", ">
+        null as last_name<if(address_columns)>,
+        <address_columns:{col | null as "<col>"}; separator=", "><endif>
     LIMIT 0;
 <endif>
