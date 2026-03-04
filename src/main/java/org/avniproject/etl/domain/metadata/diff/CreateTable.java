@@ -20,7 +20,12 @@ public class CreateTable implements Diff {
 
     @Override
     public String getSql() {
-        StringBuffer sql = new StringBuffer("create table ")
+        StringBuffer sql = new StringBuffer("drop table if exists ")
+                .append(this.getTableName())
+                .append(" cascade")
+                .append(END_STATEMENT)
+                .append(NEWLINE)
+                .append("create table ")
                 .append(this.getTableName())
                 .append(OPEN_BRACKETS)
                 .append(addColumnsToSql(columns))
