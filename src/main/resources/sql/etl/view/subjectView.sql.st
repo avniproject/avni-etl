@@ -25,8 +25,7 @@ CREATE OR REPLACE VIEW "<schema_name>".subject_view AS
     }; separator="UNION ALL \n">
     )
     SELECT all_subs.*,
-     st.name as subject_type<if(address_columns)>,
-     <address_columns:{col | a."<col>"}; separator=", "><endif>
+     st.name as subject_type<if(address_columns)>, <address_columns:{col | a."<col>"}; separator=", "><endif>
      FROM all_subjects all_subs
       JOIN public.subject_type st on st.uuid = all_subs.subject_type_uuid <where_clause>
       JOIN "<schema_name>".address a ON all_subs.address_id = a.id;
@@ -46,7 +45,6 @@ CREATE OR REPLACE VIEW "<schema_name>".subject_view AS
         null as address_id,
         null as created_by_username,
         null as last_modified_by_username,
-        null as subject_type<if(address_columns)>,
-        <address_columns:{col | null as "<col>"}; separator=", "><endif>
+        null as subject_type<if(address_columns)>, <address_columns:{col | null as "<col>"}; separator=", "><endif>
     LIMIT 0;
 <endif>
