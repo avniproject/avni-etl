@@ -32,7 +32,8 @@ CREATE OR REPLACE VIEW "<schema_name>"."<view_name>" AS
         ind.uuid AS individual_uuid,
         ind.first_name,
         ind.last_name,
-        et.name as encounter_type_name<if(address_columns)>, <address_columns:{col | a."<col>"}; separator=", "><endif>
+        et.name as encounter_type_name,
+        <address_columns:{col | a."<col>"}; separator=", ">
     FROM visits
     JOIN public.individual ind ON visits.individual_id = ind.id
     JOIN public.encounter_type et ON visits.encounter_type_uuid = et.uuid
@@ -58,6 +59,7 @@ CREATE OR REPLACE VIEW "<schema_name>"."<view_name>" AS
         null as individual_uuid,
         null as first_name,
         null as last_name,
-        null as encounter_type_name<if(address_columns)>, <address_columns:{col | null as "<col>"}; separator=", "><endif>
+        null as encounter_type_name,
+        <address_columns:{col | null as "<col>"}; separator=", ">
     LIMIT 0;
 <endif>
