@@ -16,7 +16,7 @@ select
     COALESCE(entity.organisation_id, subject.organisation_id) as organisation_id, -- Get from entity or parent
     COALESCE(entity.address_id, subject.address_id) as address_id, -- Get from entity or parent
     -- Extract URI from JSON element
-    media_json::json->>'uri' as image_url,
+    COALESCE(media_json->>'uri', media_json#>>'{}') as image_url,
     -- Sync parameters
     <if(syncRegistrationConcept1ColumnName)><syncRegistrationConcept1Name>, entity."<syncRegistrationConcept1ColumnName>",<else>null, null,<endif>
     <if(syncRegistrationConcept2ColumnName)><syncRegistrationConcept2Name>, entity."<syncRegistrationConcept2ColumnName>",<else>null, null,<endif>
@@ -37,17 +37,14 @@ from
     inner join "<schemaName>"."<subjectTableName>" subject 
         on entity."<subjectIdColumnName>" = subject.id,
     -- Handle various data formats
-    json_array_elements_text(
-        CASE 
-            -- When content starts with http/https, treat as a direct URL and wrap in JSON array
-            WHEN entity."<conceptColumnName>"::text LIKE 'http%' 
-            THEN CONCAT('[{"uri": "', REPLACE(entity."<conceptColumnName>"::text, '"', '\"'), '"}]')
-            -- When content starts with [ and ends with ], assume it's already a valid JSON array
-            WHEN entity."<conceptColumnName>"::text ~ '^\\[.*\\]$' 
-            THEN entity."<conceptColumnName>"::text
-            -- For other values (UUIDs, plain text, etc), wrap as a simple JSON object
-            ELSE CONCAT('[{"uri": "', REPLACE(COALESCE(entity."<conceptColumnName>"::text, ''), '"', '\"'), '"}]')
-        END::json
+    json_array_elements(
+        CASE
+            -- When content starts with [, assume it's already a valid JSON array
+            WHEN entity."<conceptColumnName>"::text ~ '^\\['
+            THEN entity."<conceptColumnName>"::json
+            -- For other values (URLs, UUIDs, plain text, etc), wrap as a JSON array with uri object
+            ELSE json_build_array(json_build_object('uri', COALESCE(entity."<conceptColumnName>"::text, '')))
+        END
     ) as media_json
 where 
     entity."last_modified_date_time" > '<startTime>'
