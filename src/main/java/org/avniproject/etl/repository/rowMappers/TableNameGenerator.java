@@ -13,7 +13,7 @@ public class TableNameGenerator {
     public static final String ProgramEncounterRepeatableQuestionGroup = "ProgramEncounterRepeatableQuestionGroup";
 
     private static final Map<String, List<Integer>> trims = new HashMap<>() {{
-        put("Registration", List.of(6));
+        put("Registration", List.of(6, 6));
         put(RegistrationRepeatableQuestionGroup, List.of(6, 20));
         put("Encounter", List.of(6, 20));
         put(EncounterRepeatableQuestionGroup, List.of(6, 20, 20));
