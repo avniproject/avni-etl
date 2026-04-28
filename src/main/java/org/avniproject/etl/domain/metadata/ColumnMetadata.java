@@ -83,11 +83,11 @@ public class ColumnMetadata extends Model {
         this.parentConceptName = parentConceptName;
         this.conceptVoided = conceptVoided;
     }
-    
+
     public boolean isConceptVoided() {
         return conceptVoided;
     }
-    
+
     public ColumnMetadata(Integer id, String name, Integer conceptId, ConceptType conceptType, String conceptUuid, String parentConceptUuid, String parentConceptName, Column.ColumnType columnType, boolean conceptVoided) {
         this(id, conceptType == null ? new Column(name, null, columnType) : new Column(name, conceptType.getColumnDatatype(), columnType), conceptId, conceptType, conceptUuid, parentConceptUuid, parentConceptName, conceptVoided);
     }
@@ -123,7 +123,7 @@ public class ColumnMetadata extends Model {
     public String getParentConceptUuid() {
         return parentConceptUuid;
     }
-    
+
     public String getParentConceptName() {
         return parentConceptName;
     }
@@ -144,13 +144,13 @@ public class ColumnMetadata extends Model {
         if (!getName().equals(oldColumnMetadata.getName())) {
             return List.of(new RenameColumn(newTable.getName(), oldColumnMetadata.getName(), getName()));
         }
-        if (!getType().equals(oldColumnMetadata.getType())) {
-            if (conceptUuid == null) {
-                return List.of(new AlterColumnType(newTable.getName(), getName(), getType()));
-            }
-            throw new RuntimeException(String.format("Change in datatype detected. Table: %s, Column: %s, Old Type: %s, New Type: %s", newTable.getName(), getName(), getType(), oldColumnMetadata.getType()));
+        if (getType().equals(oldColumnMetadata.getType())) {
+            return Collections.emptyList();
         }
-        return Collections.emptyList();
+        if (conceptUuid == null) {
+            return List.of(new AlterColumnType(newTable.getName(), getName(), getType()));
+        }
+        throw new RuntimeException(String.format("Change in datatype detected. Table: %s, Column: %s, Old Type: %s, New Type: %s", newTable.getName(), getName(), getType(), oldColumnMetadata.getType()));
     }
 
     public void mergeWith(ColumnMetadata oldColumnMetadata) {

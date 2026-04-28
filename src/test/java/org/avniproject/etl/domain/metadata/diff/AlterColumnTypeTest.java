@@ -13,7 +13,6 @@ public class AlterColumnTypeTest {
     public void shouldGenerateAlterColumnTypeSql() {
         OrgIdentityContextHolder.setContext(OrganisationIdentity.createForOrganisation("dbUser", "schema", "mediaDirectory"));
         AlterColumnType alterColumnType = new AlterColumnType("media", "address_id", Column.Type.integer);
-        assertThat(alterColumnType.getSql(), is("""
-alter table "schema".media alter column "address_id" type integer using "address_id"::integer;"""));
+        assertThat(alterColumnType.getSql(), is("alter table \"schema\".media alter column \"address_id\" type integer using \"address_id\"::integer;"));
     }
 }
