@@ -17,7 +17,7 @@ public class MediaTable extends Table {
         return new Columns()
                 .withSerialIdColumn()
                 .withCommonColumns()
-                .withColumn(new Column("address_id", Column.Type.numeric, Column.ColumnType.index))
+                .withColumn(new Column("address_id", Column.Type.integer, Column.ColumnType.index))
                 .withColumn(new Column("image_url", Column.Type.text))
                 .withColumn(new Column("sync_parameter_key1", Column.Type.text))
                 .withColumn(new Column("sync_parameter_value1", Column.Type.text))
