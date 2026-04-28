@@ -1,7 +1,6 @@
 package org.avniproject.etl.repository.service;
 
 import org.avniproject.etl.config.AmazonClientService;
-import org.avniproject.etl.config.S3FileDoesNotExist;
 import org.avniproject.etl.dto.ImageData;
 import org.avniproject.etl.dto.MediaCompactDTO;
 import org.avniproject.etl.dto.MediaDTO;
@@ -48,13 +47,13 @@ public class MediaTableRepositoryService {
 
             try {
                 signedImageUrl = amazonClientService.generateMediaDownloadUrl(imageUrl);
-                try {
-                    signedThumbnailUrl = amazonClientService.generateMediaDownloadUrl(thumbnailUrl);
-                } catch (IllegalArgumentException | S3FileDoesNotExist exception) {
-                    //Ignore and move on. Thumbnail will be broken
-                }
-            } catch (IllegalArgumentException | S3FileDoesNotExist exception) {
+            } catch (IllegalArgumentException exception) {
                 //Ignore and move on. Image will be null
+            }
+            try {
+                signedThumbnailUrl = amazonClientService.generateMediaDownloadUrl(thumbnailUrl);
+            } catch (IllegalArgumentException exception) {
+                //Ignore and move on. Thumbnail will be broken
             }
 
             String uuid = rs.getString("uuid");
