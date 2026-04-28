@@ -63,6 +63,7 @@ public class TableMetadata extends Model {
             }
         });
         diffs.addAll(columnDiffs.stream().filter(diff -> diff instanceof RenameColumn).toList());
+        diffs.addAll(columnDiffs.stream().filter(diff -> diff instanceof AlterColumnType).toList());
         diffs.addAll(columnDiffs.stream().filter(diff -> diff instanceof AddColumn).toList());
 
         getIndexMetadataList().forEach(indexMetadata -> {
