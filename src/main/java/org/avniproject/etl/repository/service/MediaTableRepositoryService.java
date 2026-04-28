@@ -47,13 +47,13 @@ public class MediaTableRepositoryService {
 
             try {
                 signedImageUrl = amazonClientService.generateMediaDownloadUrl(imageUrl);
+                try {
+                    signedThumbnailUrl = amazonClientService.generateMediaDownloadUrl(thumbnailUrl);
+                } catch (IllegalArgumentException exception) {
+                    //Ignore and move on. Thumbnail will be broken
+                }
             } catch (IllegalArgumentException exception) {
                 //Ignore and move on. Image will be null
-            }
-            try {
-                signedThumbnailUrl = amazonClientService.generateMediaDownloadUrl(thumbnailUrl);
-            } catch (IllegalArgumentException exception) {
-                //Ignore and move on. Thumbnail will be broken
             }
 
             String uuid = rs.getString("uuid");
