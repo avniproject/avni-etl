@@ -36,8 +36,8 @@ class ColumnMetadataTest {
     public void shouldEmitAlterColumnTypeWhenTypeChanges() {
         OrgIdentityContextHolder.setContext(OrganisationIdentity.createForOrganisation("dbUser", "schema", "mediaDirectory"));
         String uuid = UUID.randomUUID().toString();
-        ColumnMetadata oldColumnMetadata = new ColumnMetadata(new Column("address_id", Column.Type.numeric), null, null, uuid, false);
-        ColumnMetadata newColumnMetadata = new ColumnMetadata(new Column("address_id", Column.Type.integer), null, null, uuid, false);
+        ColumnMetadata oldColumnMetadata = new ColumnMetadata(new Column("address_id", Column.Type.numeric), null, null, null, false);
+        ColumnMetadata newColumnMetadata = new ColumnMetadata(new Column("address_id", Column.Type.integer), null, null, null, false);
 
         TableMetadata newTable = new TableMetadata();
         newTable.setName("media");
