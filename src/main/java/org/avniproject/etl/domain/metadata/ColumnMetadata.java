@@ -145,7 +145,10 @@ public class ColumnMetadata extends Model {
             return List.of(new RenameColumn(newTable.getName(), oldColumnMetadata.getName(), getName()));
         }
         if (!getType().equals(oldColumnMetadata.getType())) {
-            return List.of(new AlterColumnType(newTable.getName(), getName(), getType()));
+            if (conceptUuid == null) {
+                return List.of(new AlterColumnType(newTable.getName(), getName(), getType()));
+            }
+            throw new RuntimeException(String.format("Change in datatype detected. Table: %s, Column: %s, Old Type: %s, New Type: %s", newTable.getName(), getName(), getType(), oldColumnMetadata.getType()));
         }
         return Collections.emptyList();
     }
