@@ -43,6 +43,7 @@ class SqlGeneratorTest {
         String output = "--[Data Extract Report] Registration\n" +
                 "insert into \"schema\".\"Individual\" (\n" +
                 "    \"id\", \"address_id\", \"uuid\", \"first_name\", \"last_name\", \"registration_date\", \"registration_location\",\n" +
+                "    \"subject_location_accuracy\", \"subject_location_x\", \"subject_location_y\",\n" +
                 "    \"is_voided\", \"created_by_id\", \"last_modified_by_id\", \"created_date_time\",\n" +
                 "    \"last_modified_date_time\", \"organisation_id\", \"legacy_id\"\n" +
                 "        , \"numeric field\", \"text field\", \"single select\", \"multi select\", \"date\"\n" +
@@ -59,6 +60,9 @@ class SqlGeneratorTest {
                 "        entity.last_name                                                                as \"last_name\",\n" +
                 "        entity.registration_date                                                        as \"registration_date\",\n" +
                 "        entity.registration_location                                                    as \"registration_location\",\n" +
+                "        (entity.subject_location ->> 'accuracy')::numeric                               as \"subject_location_accuracy\",\n" +
+                "        (entity.subject_location -> 'coordinates' ->> 'x')::numeric                     as \"subject_location_x\",\n" +
+                "        (entity.subject_location -> 'coordinates' ->> 'y')::numeric                     as \"subject_location_y\",\n" +
                 "        entity.is_voided                                                                as \"is_voided\",\n" +
                 "        entity.created_by_id                                                            as \"created_by_id\",\n" +
                 "        entity.last_modified_by_id                                                      as \"last_modified_by_id\",\n" +
