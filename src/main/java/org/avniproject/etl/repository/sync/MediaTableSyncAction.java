@@ -131,7 +131,7 @@ public class MediaTableSyncAction implements EntitySyncAction {
                 .add("fromTableName", fromTableName)
                 .add("startTime", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").format(lastSyncTime))
                 .add("endTime", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").format(dataSyncBoundaryTime))
-                .add("subjectTableName", subjectTypeTableName(subjectTypeName))
+                .add("subjectTableName", subjectTypeTableName(subjectTypeName, tableMetadata.getSubjectTypeUuid()))
                 .add("individualId", tableMetadata.isSubjectTable() ? "id" : "individual_id") // Don't wrap in quotes - template already handles them
                 .add("subjectIdColumnName", mediaService.determineSubjectIdColumn(tableMetadata)); // Don't wrap in quotes - template already handles them
         if (syncRegistrationConcepts[0].getUuid() != null) {
@@ -183,9 +183,8 @@ public class MediaTableSyncAction implements EntitySyncAction {
     }
 
 
-    private String subjectTypeTableName(String subjectTypeName) {
-        String tableName = new TableNameGenerator().generateName(List.of(subjectTypeName), "IndividualProfile", null);
-        return tableName;
+    private String subjectTypeTableName(String subjectTypeName, String subjectTypeUuid) {
+        return new TableNameGenerator().generateName(List.of(subjectTypeName), "IndividualProfile", null, subjectTypeUuid);
     }
     
 
