@@ -158,10 +158,9 @@ public class SchemaMetadataRepository {
             List<TableMetadata> tables = missingUserSubjectTypes.stream().map(subjectType -> {
                 TableMetadata tableMetadata = new TableMetadata();
                 String tableName = new TableNameGenerator().generateName(
-                    List.of((String) subjectType.get("subject_type_name")),
-                    "IndividualProfile",
-                    null,
-                    (String) subjectType.get("subject_type_uuid")
+                    List.of((String) subjectType.get("subject_type_name")), 
+                    "IndividualProfile", 
+                    null
                 );
                 tableMetadata.setName(tableName);
                 tableMetadata.setType(TableMetadata.Type.valueOf((String) subjectType.get("subject_type_type")));
