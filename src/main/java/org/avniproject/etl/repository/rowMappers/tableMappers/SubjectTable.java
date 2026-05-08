@@ -23,6 +23,9 @@ public class SubjectTable extends Table {
                         new Column("first_name", Column.Type.text),
                         new Column("last_name", Column.Type.text),
                         new Column("registration_location", Column.Type.point),
+                        new Column("subject_location_accuracy", Column.Type.numeric),
+                        new Column("subject_location_x", Column.Type.numeric),
+                        new Column("subject_location_y", Column.Type.numeric),
                         new Column("legacy_id", Column.Type.text),
                         new Column("latest_approval_status", Column.Type.text)
                 ))

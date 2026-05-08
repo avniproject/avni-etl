@@ -2,6 +2,7 @@
 insert into "${schema_name}"."${table_name}" (
     "id", "address_id", "uuid", "first_name", "last_name", "gender", "date_of_birth",
     "date_of_birth_verified", "registration_date", "registration_location",
+    "subject_location_accuracy", "subject_location_x", "subject_location_y",
     "is_voided", "created_by_id", "last_modified_by_id", "created_date_time",
     "last_modified_date_time", "organisation_id", "legacy_id"
     ${middle_name}
@@ -18,6 +19,9 @@ SELECT entity.id                                                                
        entity.date_of_birth_verified                                                   as "date_of_birth_verified",
        entity.registration_date                                                        as "registration_date",
        entity.registration_location                                                    as "registration_location",
+       (entity.subject_location ->> 'accuracy')::numeric                               as "subject_location_accuracy",
+       (entity.subject_location -> 'coordinates' ->> 'x')::numeric                     as "subject_location_x",
+       (entity.subject_location -> 'coordinates' ->> 'y')::numeric                     as "subject_location_y",
        entity.is_voided                                                                as "is_voided",
        entity.created_by_id                                                            as "created_by_id",
        entity.last_modified_by_id                                                      as "last_modified_by_id",
