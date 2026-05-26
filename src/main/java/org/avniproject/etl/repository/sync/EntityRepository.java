@@ -27,7 +27,12 @@ public class EntityRepository {
                             UserTypeSubjectTableSyncAction userTypeSubjectTableSyncAction,
                             CleanEnrolmentExitTableAction cleanEnrolmentExitTableAction,
                             CleanEncounterCancelTableAction cleanEncounterCancelTableAction,
-                            RepeatableQGTransactionTablesSyncAction repeatableQGTransactionTablesSyncAction) {
+                            RepeatableQGTransactionTablesSyncAction repeatableQGTransactionTablesSyncAction,
+                            CalendarTableSyncAction calendarTableSyncAction,
+                            CalendarDateMarkerTableSyncAction calendarDateMarkerTableSyncAction,
+                            AttendanceTypeTableSyncAction attendanceTypeTableSyncAction,
+                            SessionTableSyncAction sessionTableSyncAction,
+                            AttendanceRecordTableSyncAction attendanceRecordTableSyncAction) {
         entitySyncRepositories.add(transactionalTablesSyncAction);
         entitySyncRepositories.add(addressTableSyncAction);
         entitySyncRepositories.add(repeatableQGTransactionTablesSyncAction);
@@ -38,6 +43,11 @@ public class EntityRepository {
         entitySyncRepositories.add(syncTelemetryTableSyncAction);
         entitySyncRepositories.add(userTableSyncAction);
         entitySyncRepositories.add(userTypeSubjectTableSyncAction);
+        entitySyncRepositories.add(calendarTableSyncAction);
+        entitySyncRepositories.add(calendarDateMarkerTableSyncAction);
+        entitySyncRepositories.add(attendanceTypeTableSyncAction);
+        entitySyncRepositories.add(sessionTableSyncAction);
+        entitySyncRepositories.add(attendanceRecordTableSyncAction);
         entitySyncRepositories.add(duplicateRowDeleteAction);
         entitySyncRepositories.add(cleanEncounterCancelTableAction);
         entitySyncRepositories.add(cleanEnrolmentExitTableAction);

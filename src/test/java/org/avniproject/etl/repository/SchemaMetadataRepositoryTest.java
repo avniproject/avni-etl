@@ -33,7 +33,9 @@ public class SchemaMetadataRepositoryTest extends BaseIntegrationTest {
     @Sql(scripts = {"/test-data-teardown.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void shouldGetAllTablesForAnOrganisation() {
         SchemaMetadata schemaMetadata = schemaMetadataRepository.getNewSchemaMetadata();
-        assertThat(schemaMetadata.getTableMetadata().size(), is(16));
+        // 16 base tables + 5 attendance/calendar passthrough tables (calendar, calendar_date_marker,
+        // attendance_type, session, attendance_record)
+        assertThat(schemaMetadata.getTableMetadata().size(), is(21));
     }
 
     @Test

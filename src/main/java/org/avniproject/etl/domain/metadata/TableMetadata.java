@@ -309,7 +309,12 @@ public class TableMetadata extends Model {
         SyncTelemetry,
         User,
         Media,
-        MediaAnalysis
+        MediaAnalysis,
+        Calendar,
+        CalendarDateMarker,
+        AttendanceType,
+        Session,
+        AttendanceRecord
     }
 
 

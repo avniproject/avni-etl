@@ -81,6 +81,16 @@ public class DuplicateRowDeleteAction implements EntitySyncAction {
         return new TransactionalSyncSqlGenerator().supports(tableMetadata) ||
                 new RepeatableQuestionGroupSyncSqlGenerator().supports(tableMetadata) ||
                 tableMetadata.getType().equals(TableMetadata.Type.User) ||
-                tableMetadata.getType().equals(TableMetadata.Type.Address);
+                tableMetadata.getType().equals(TableMetadata.Type.Address) ||
+                isAttendancePassthroughTable(tableMetadata);
+    }
+
+    private boolean isAttendancePassthroughTable(TableMetadata tableMetadata) {
+        TableMetadata.Type type = tableMetadata.getType();
+        return type.equals(TableMetadata.Type.Calendar) ||
+                type.equals(TableMetadata.Type.CalendarDateMarker) ||
+                type.equals(TableMetadata.Type.AttendanceType) ||
+                type.equals(TableMetadata.Type.Session) ||
+                type.equals(TableMetadata.Type.AttendanceRecord);
     }
 }

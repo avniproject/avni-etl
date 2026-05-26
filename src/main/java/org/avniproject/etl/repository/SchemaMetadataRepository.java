@@ -46,6 +46,11 @@ public class SchemaMetadataRepository {
         tables.add(MediaAnalysisTableMetadataBuilder.build());
         tables.add(SyncTelemetryTableMetadataBuilder.build());
         tables.add(UserTableMetadataBuilder.build());
+        tables.add(CalendarTableMetadataBuilder.build());
+        tables.add(CalendarDateMarkerTableMetadataBuilder.build());
+        tables.add(AttendanceTypeTableMetadataBuilder.build());
+        tables.add(SessionTableMetadataBuilder.build());
+        tables.add(AttendanceRecordTableMetadataBuilder.build());
         tables.addAll(getGroupSubjectTables());
 
         tables.addAll(getRepeatableQuestionGroupTables());
