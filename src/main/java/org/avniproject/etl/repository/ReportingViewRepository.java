@@ -2,6 +2,7 @@ package org.avniproject.etl.repository;
 
 import jakarta.annotation.PostConstruct;
 import org.apache.log4j.Logger;
+import org.avniproject.etl.config.EtlServiceConfig;
 import org.avniproject.etl.domain.OrganisationIdentity;
 import org.avniproject.etl.domain.metadata.ReportingViewMetaData;
 import org.avniproject.etl.domain.metadata.SchemaMetadata;
@@ -29,45 +30,94 @@ public class ReportingViewRepository implements ReportingViewMetaData {
     private final String enrolmentViewFile = readFile("/sql/etl/view/enrolmentView.sql.st");
     private final String baseVisitsViewFile = readFile("/sql/etl/view/baseVisitsView.sql.st");
     private final String grantViewFile = readFile("/sql/etl/view/grantView.sql.st");
+    private final String workingDayCalendarFile = readFile("/sql/etl/view/workingDayCalendar.sql.st");
+    private final String subjectResolvedCalendarFile = readFile("/sql/etl/view/subjectResolvedCalendar.sql.st");
+    private final String expectedSessionsFile = readFile("/sql/etl/view/expectedSessions.sql.st");
+    private final String perStudentAttendanceFile = readFile("/sql/etl/view/perStudentAttendance.sql.st");
 
     private final Map<Type, ViewConfig> viewConfigs = new HashMap<>();
     private final OrganisationRepository organisationRepository;
+    private final EtlServiceConfig etlServiceConfig;
 
+    // Declaration order also drives creation order via Type.values(): the materialized views
+    // must be built after their dependencies (working_day_calendar + subject_resolved_calendar
+    // before expected_sessions before per_student_attendance).
     public enum Type {
-        SUBJECT, ENROLMENT, DUE_VISITS, COMPLETED_VISITS, OVERDUE_VISITS
+        SUBJECT, ENROLMENT, DUE_VISITS, COMPLETED_VISITS, OVERDUE_VISITS,
+        WORKING_DAY_CALENDAR, SUBJECT_RESOLVED_CALENDAR, EXPECTED_SESSIONS, PER_STUDENT_ATTENDANCE
     }
 
-    public ReportingViewRepository(JdbcTemplate jdbcTemplate, OrganisationRepository organisationRepository) {
+    public ReportingViewRepository(JdbcTemplate jdbcTemplate, OrganisationRepository organisationRepository,
+                                   EtlServiceConfig etlServiceConfig) {
         this.jdbcTemplate = jdbcTemplate;
         this.organisationRepository = organisationRepository;
+        this.etlServiceConfig = etlServiceConfig;
     }
 
     @PostConstruct
     public void init() {
         viewConfigs.put(Type.SUBJECT, new ViewConfig("subject_view",
-                "and st.organisation_id in (%s)", "", subjectViewFile));
+                "and st.organisation_id in (%s)", "", subjectViewFile,
+                List.of(TableMetadata.Type.Individual, TableMetadata.Type.Person, TableMetadata.Type.Household, TableMetadata.Type.Group)));
         viewConfigs.put(Type.ENROLMENT, new ViewConfig("enrolment_view",
-                "and p.organisation_id in (%s)", "", enrolmentViewFile));
+                "and p.organisation_id in (%s)", "", enrolmentViewFile,
+                List.of(TableMetadata.Type.ProgramEnrolment)));
         viewConfigs.put(Type.DUE_VISITS, new ViewConfig("due_visits_view",
                 "WHERE t.earliest_visit_date_time < CURRENT_DATE AND CURRENT_DATE < t.max_visit_date_time AND t.is_voided IS false",
-                "", baseVisitsViewFile));
+                "", baseVisitsViewFile, VISIT_METADATA_TYPES));
         viewConfigs.put(Type.COMPLETED_VISITS, new ViewConfig("completed_visits_view",
                 "WHERE t.encounter_date_time IS NOT NULL AND t.cancel_date_time IS NULL AND t.is_voided IS false",
-                "", baseVisitsViewFile));
+                "", baseVisitsViewFile, VISIT_METADATA_TYPES));
         viewConfigs.put(Type.OVERDUE_VISITS, new ViewConfig("overdue_visits_view",
                 "WHERE CURRENT_DATE > t.max_visit_date_time AND t.encounter_date_time is NULL AND t.cancel_date_time is NULL AND t.is_voided IS false",
-                "", baseVisitsViewFile));
+                "", baseVisitsViewFile, VISIT_METADATA_TYPES));
+
+        // Materialized views (attendance/calendar) — gated to schemas that have at least one
+        // non-voided calendar. No org filter needed: they run under the org/schema role, so RLS
+        // scopes reads of public tables (same as the passthrough sync templates).
+        viewConfigs.put(Type.WORKING_DAY_CALENDAR, new ViewConfig("working_day_calendar",
+                "", "", workingDayCalendarFile, List.of(), true, true));
+        viewConfigs.put(Type.SUBJECT_RESOLVED_CALENDAR, new ViewConfig("subject_resolved_calendar",
+                "", "", subjectResolvedCalendarFile, List.of(), true, true));
+        viewConfigs.put(Type.EXPECTED_SESSIONS, new ViewConfig("expected_sessions",
+                "", "", expectedSessionsFile,
+                List.of(TableMetadata.Type.Group, TableMetadata.Type.Household), true, true));
+        viewConfigs.put(Type.PER_STUDENT_ATTENDANCE, new ViewConfig("per_student_attendance",
+                "", "", perStudentAttendanceFile, List.of(), true, true));
     }
+
+    private static final List<TableMetadata.Type> VISIT_METADATA_TYPES = List.of(
+            TableMetadata.Type.Encounter, TableMetadata.Type.IndividualEncounterCancellation,
+            TableMetadata.Type.ProgramEncounter, TableMetadata.Type.ProgramEncounterCancellation);
 
     @Override
     public void createOrReplaceView(OrganisationIdentity organisationIdentity, SchemaMetadata schemaMetadata) {
         String schemaName = organisationIdentity.getSchemaName();
         List<String> addressColumns = getAddressColumnNames(organisationIdentity);
         List<String> usersWithSchemaAccess = organisationIdentity.getUsersWithSchemaAccess();
+        boolean hasCalendar = hasNonVoidedCalendar(organisationIdentity, schemaName);
         for (Type type : Type.values()) {
             ViewConfig config = viewConfigs.get(type);
-            createViewAndGrantPermission(type, config, schemaName, usersWithSchemaAccess, addressColumns, organisationIdentity, schemaMetadata);
+            if (config.isGated() && !hasCalendar) {
+                // Attendance not in use for this org: drop any stale materialized view and skip.
+                dropMaterializedViewIfExists(organisationIdentity, schemaName, config.getViewName());
+                continue;
+            }
+            createViewAndGrantPermission(config, schemaName, usersWithSchemaAccess, addressColumns, organisationIdentity, schemaMetadata);
         }
+    }
+
+    private boolean hasNonVoidedCalendar(OrganisationIdentity organisationIdentity, String schemaName) {
+        String query = String.format("select exists(select 1 from \"%s\".calendar where is_voided = false)", schemaName);
+        if (isOrganizationGroupSchema(organisationIdentity)) {
+            return Boolean.TRUE.equals(runInSchemaUserContext(() -> jdbcTemplate.queryForObject(query, Boolean.class), jdbcTemplate));
+        }
+        return Boolean.TRUE.equals(runInOrgContext(() -> jdbcTemplate.queryForObject(query, Boolean.class), jdbcTemplate));
+    }
+
+    private void dropMaterializedViewIfExists(OrganisationIdentity organisationIdentity, String schemaName, String viewName) {
+        String query = String.format("DROP MATERIALIZED VIEW IF EXISTS \"%s\".\"%s\" CASCADE", schemaName, viewName);
+        executeQueryInContext(organisationIdentity, query, "dropped", viewName, schemaName);
     }
 
     private List<String> getAddressColumnNames(OrganisationIdentity organisationIdentity) {
@@ -121,14 +171,8 @@ public class ReportingViewRepository implements ReportingViewMetaData {
                 .collect(Collectors.toList());
     }
 
-    private void createViewAndGrantPermission(Type type, ViewConfig config, String schemaName, List<String> users, List<String> addressColumns, OrganisationIdentity organisationIdentity, SchemaMetadata schemaMetadata) {
-        List<TableMetadataST> tableMetadata = switch (type) {
-            case SUBJECT ->
-                    filterTableMetadata(schemaMetadata, List.of(TableMetadata.Type.Individual, TableMetadata.Type.Person, TableMetadata.Type.Household, TableMetadata.Type.Group));
-            case ENROLMENT -> filterTableMetadata(schemaMetadata, List.of(TableMetadata.Type.ProgramEnrolment));
-            case DUE_VISITS, COMPLETED_VISITS, OVERDUE_VISITS ->
-                    filterTableMetadata(schemaMetadata, List.of(TableMetadata.Type.Encounter, TableMetadata.Type.IndividualEncounterCancellation, TableMetadata.Type.ProgramEncounter, TableMetadata.Type.ProgramEncounterCancellation));
-        };
+    private void createViewAndGrantPermission(ViewConfig config, String schemaName, List<String> users, List<String> addressColumns, OrganisationIdentity organisationIdentity, SchemaMetadata schemaMetadata) {
+        List<TableMetadataST> tableMetadata = filterTableMetadata(schemaMetadata, config.getMetadataTypes());
         ST st = new ST(config.getSqlTemplateFile());
         st.add(SCHEMA_PARAM_NAME, schemaName);
         st.add(VIEW_PARAM_NAME, config.getViewName());
@@ -136,12 +180,12 @@ public class ReportingViewRepository implements ReportingViewMetaData {
         st.add(EXTRA_COLUMNS, config.getExtraColumns());
         st.add(TABLE_METADATA, tableMetadata);
 
-        String whereClause = config.getWhereClause();
         List<Long> organisationIds = organisationRepository.getOrganisationIds(organisationIdentity);
         String organisationIdsString = organisationIds.stream()
                 .map(String::valueOf)
                 .collect(Collectors.joining(","));
-        st.add(WHERE_CLAUSE, String.format(whereClause, organisationIdsString));
+        st.add(WHERE_CLAUSE, String.format(config.getWhereClause(), organisationIdsString));
+        st.add(STUDENT_WINDOW_MONTHS, etlServiceConfig.getPerStudentAttendanceWindowInMonths());
 
         String query = st.render();
 

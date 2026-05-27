@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Working agreements
+
+- **Do not commit unless explicitly asked.** Make and stage changes, run the build/tests, and leave the work uncommitted for review. Only run `git commit`/`git push` when the user requests it, and use the branch they specify.
+
 ## Commands
 
 ```bash
