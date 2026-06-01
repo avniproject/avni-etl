@@ -22,7 +22,8 @@ public class AttendanceRecordTable extends Table {
                         new Column("session_uuid", Column.Type.text, Column.ColumnType.index),
                         new Column("subject_uuid", Column.Type.text, Column.ColumnType.index),
                         new Column("status", Column.Type.text),
-                        new Column("reason_concept_uuid", Column.Type.text),
+                        new Column("reason_concept_uuids", Column.Type.jsonb),
+                        new Column("needs_follow_up", Column.Type.bool),
                         new Column("follow_up_encounter_uuid", Column.Type.text)
                 ))
                 .build();

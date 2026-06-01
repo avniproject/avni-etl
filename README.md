@@ -25,8 +25,10 @@ recreated), only for schemas that have at least one non-voided `calendar`:
   — one row per (group, date, attendance_type) on working days, plus "mark-anyway" sessions on
   off days flagged `calendar_day_type = 'mark_anyway'`.
 - `per_student_attendance(organisation_id, student_subject_uuid, group_subject_uuid, scheduled_date,
-  attendance_type_uuid, status, reason_concept_uuid, follow_up_encounter_uuid)` — rolling window of
-  the last `AVNI_ATTENDANCE_PER_STUDENT_WINDOW_IN_MONTHS` months (default 12).
+  attendance_type_uuid, calendar_day_type, status, reason_concept_uuids, needs_follow_up,
+  follow_up_encounter_uuid)` — rolling window of the last
+  `AVNI_ATTENDANCE_PER_STUDENT_WINDOW_IN_MONTHS` months (default 12). `calendar_day_type` carries
+  through from `expected_sessions` so consumers can exclude `mark_anyway` rows.
 
 **`day_type` terminology:** `weekly_off` = the calendar's `working_pattern` says non-working;
 `public_holiday` = a marker says non-working; `working_override` = a marker says working despite the
@@ -39,6 +41,7 @@ pattern. `marker_name` is populated only for `public_holiday` and `working_overr
 SELECT group_subject_uuid,
        round(100.0 * count(*) FILTER (WHERE status = 'Present') / nullif(count(*), 0), 1) AS attendance_pct
 FROM per_student_attendance
+WHERE calendar_day_type <> 'mark_anyway'
 GROUP BY group_subject_uuid;
 
 -- Holiday impact: working days lost to public holidays per calendar

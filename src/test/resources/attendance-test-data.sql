@@ -69,7 +69,7 @@ INSERT INTO session (id, uuid, group_subject_id, scheduled_date, attendance_type
  (95010, 'session-0000-0000-0000-00000000000010', 574190, '2024-03-04', 92010, 'Held', null, null, 3453, '2024-03-04 12:00:00+00', 12, false, 1, 1, '2024-03-04 10:00:00+00', '2024-03-04 10:00:00+00', 0);
 
 -- Attendance records for the 2024-03-04 session: present + absent, plus a voided record.
-INSERT INTO attendance_record (id, uuid, session_id, subject_id, status, reason_concept_id, follow_up_encounter_uuid, organisation_id, is_voided, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time, version) VALUES
- (96001, 'attrec-0000-0000-0000-0000000000001', 95001, 574170, 'Present', null, null, 12, false, 1, 1, '2024-03-04 12:30:00+00', '2024-03-04 12:30:00+00', 0),
- (96002, 'attrec-0000-0000-0000-0000000000002', 95001, 574173, 'Absent', null, null, 12, false, 1, 1, '2024-03-04 12:30:00+00', '2024-03-04 12:30:00+00', 0),
- (96003, 'attrec-0000-0000-0000-0000000000003', 95001, 574174, 'Present', null, null, 12, true, 1, 1, '2024-03-04 12:30:00+00', '2024-03-04 12:30:00+00', 0);
+INSERT INTO attendance_record (id, uuid, session_id, subject_id, status, follow_up_encounter_uuid, organisation_id, is_voided, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time, version) VALUES
+ (96001, 'attrec-0000-0000-0000-0000000000001', 95001, 574170, 'Present', null, 12, false, 1, 1, '2024-03-04 12:30:00+00', '2024-03-04 12:30:00+00', 0),
+ (96002, 'attrec-0000-0000-0000-0000000000002', 95001, 574173, 'Absent', null, 12, false, 1, 1, '2024-03-04 12:30:00+00', '2024-03-04 12:30:00+00', 0),
+ (96003, 'attrec-0000-0000-0000-0000000000003', 95001, 574174, 'Present', null, 12, true, 1, 1, '2024-03-04 12:30:00+00', '2024-03-04 12:30:00+00', 0);
