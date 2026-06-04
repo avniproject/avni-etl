@@ -495,10 +495,22 @@ public class DataSyncIntegrationTest extends BaseIntegrationTest {
     @Test
     @Sql({"/test-data-teardown.sql", "/test-data.sql"})
     @Sql(scripts = "/test-data-teardown.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
-    public void _userTableShouldUpdateWithIsVoided() {
+    public void userTableShouldUpdateWithIsVoided() {
         runDataSync();
-        String updateIsVoided = "update public.users set last_modified_date_time = now(),is_voided = true where id = 3453;";
-        jdbcTemplate.execute(updateIsVoided);
+
+        // The next sync's lower bound is the last_sync_time recorded by run 1. Setting
+        // last_modified_date_time to that + 1 ms makes the row deterministically fall inside the
+        // (lastSyncTime, dataSyncBoundaryTime] window regardless of wall-clock resolution between
+        // Java and Postgres. The previous now()-based UPDATE could race with the boundary at
+        // millisecond precision on fast hardware, intermittently dropping the row from the window.
+        java.sql.Timestamp lastSyncTime = jdbcTemplate.queryForObject(
+                "select ash.last_sync_time from entity_sync_status ash " +
+                        "join table_metadata tm on tm.id = ash.table_metadata_id " +
+                        "where tm.name = 'users' and ash.schema_name = 'orgc'",
+                java.sql.Timestamp.class);
+        jdbcTemplate.execute(format(
+                "update public.users set last_modified_date_time = '%s'::timestamptz + interval '1 millisecond', is_voided = true where id = 3453",
+                lastSyncTime.toInstant().toString()));
 
         runDataSync();
         List<Map<String, Object>> list = jdbcTemplate.queryForList("select * from orgc.users where is_voided = true and id = 3453 ; ");
