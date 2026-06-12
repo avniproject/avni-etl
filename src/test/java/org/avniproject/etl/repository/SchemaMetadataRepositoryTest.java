@@ -41,6 +41,26 @@ public class SchemaMetadataRepositoryTest extends BaseIntegrationTest {
     @Test
     @Sql({"/test-data-teardown.sql", "/test-data.sql"})
     @Sql(scripts = {"/test-data-teardown.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    public void shouldNotProduceDuplicateColumnsForQuestionGroupWithMultipleKeyValues() {
+        // The "Question group" form element (40110) carries a multi-entry key_values array. Previously the
+        // metadata query cross-joined every key_values entry, emitting each question-group child column once
+        // per entry, which produced "column specified more than once" on CREATE TABLE.
+        SchemaMetadata schemaMetadata = schemaMetadataRepository.getNewSchemaMetadata();
+        schemaMetadata.getTableMetadata().forEach(table -> {
+            List<String> columnNames = table.getColumns().stream().map(Column::getName).collect(Collectors.toList());
+            assertThat("Duplicate columns in table " + table.getName() + ": " + columnNames,
+                    columnNames.size(), is((int) columnNames.stream().distinct().count()));
+        });
+
+        TableMetadata personTable = schemaMetadata.getTableMetadata().stream()
+                .filter(t -> t.getName().equals("person")).findFirst().get();
+        assertThat(personTable.getColumns().stream().filter(c -> c.getName().equals("Question group Child 1")).count(), is(1L));
+        assertThat(personTable.getColumns().stream().filter(c -> c.getName().equals("Question group Child 2")).count(), is(1L));
+    }
+
+    @Test
+    @Sql({"/test-data-teardown.sql", "/test-data.sql"})
+    @Sql(scripts = {"/test-data-teardown.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void shouldGetDecisionConcepts() {
         SchemaMetadata schemaMetadata = schemaMetadataRepository.getNewSchemaMetadata();
         TableMetadata growthMonitoringEncounterTable = schemaMetadata.getTableMetadata().stream().filter(tableMetadata1 -> tableMetadata1.getName().equals("person_nutrition_growth_monitoring")).findFirst().get();
