@@ -61,6 +61,38 @@ public class SchemaMetadataRepositoryTest extends BaseIntegrationTest {
     @Test
     @Sql({"/test-data-teardown.sql", "/test-data.sql"})
     @Sql(scripts = {"/test-data-teardown.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    public void shouldExcludeRepeatableQuestionGroupChildrenWhenGroupElementHasMultipleKeyValues() {
+        // The "Asset Info" repeatable question group (group form element 40114) carries multiple key_values
+        // (repeatable=true plus cosmetic keys), mirroring the tanuh prod form. Before dcd9430 the metadata
+        // query cross-joined every key_values entry and only dropped the repeatable=true one, so each child
+        // column was both left in the parent encounter table and emitted once per remaining entry, failing
+        // CREATE TABLE with "column specified more than once". Children of a repeatable QG must live ONLY in
+        // their own RepeatableQuestionGroup table, never flattened into the parent.
+        SchemaMetadata schemaMetadata = schemaMetadataRepository.getNewSchemaMetadata();
+
+        schemaMetadata.getTableMetadata().forEach(table -> {
+            List<String> columnNames = table.getColumns().stream().map(Column::getName).collect(Collectors.toList());
+            assertThat("Duplicate columns in table " + table.getName() + ": " + columnNames,
+                    columnNames.size(), is((int) columnNames.stream().distinct().count()));
+        });
+
+        TableMetadata rqgTable = schemaMetadata.getTableMetadata().stream()
+                .filter(t -> t.getName().equals("person_general_encounter_asset_info")).findFirst().get();
+        assertThat(rqgTable.getColumns().stream().filter(c -> c.getName().equals("Bitcoin")).count(), is(1L));
+        assertThat(rqgTable.getColumns().stream().filter(c -> c.getName().equals("Exchange")).count(), is(1L));
+
+        // Repeatable-QG children must not leak into any parent table as "<QG> <child>" columns.
+        schemaMetadata.getTableMetadata().forEach(table -> {
+            List<String> columnNames = table.getColumns().stream().map(Column::getName).collect(Collectors.toList());
+            assertThat("Repeatable QG child leaked into table " + table.getName() + ": " + columnNames,
+                    columnNames.stream().anyMatch(name -> name.equals("Asset Info Bitcoin") || name.equals("Asset Info Exchange")),
+                    is(false));
+        });
+    }
+
+    @Test
+    @Sql({"/test-data-teardown.sql", "/test-data.sql"})
+    @Sql(scripts = {"/test-data-teardown.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void shouldGetDecisionConcepts() {
         SchemaMetadata schemaMetadata = schemaMetadataRepository.getNewSchemaMetadata();
         TableMetadata growthMonitoringEncounterTable = schemaMetadata.getTableMetadata().stream().filter(tableMetadata1 -> tableMetadata1.getName().equals("person_nutrition_growth_monitoring")).findFirst().get();
