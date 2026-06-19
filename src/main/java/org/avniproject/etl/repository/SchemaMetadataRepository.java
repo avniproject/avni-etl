@@ -147,6 +147,7 @@ public class SchemaMetadataRepository {
             from operational_subject_type ost
             inner join subject_type st on ost.subject_type_id = st.id
             where st.type = 'User'
+            and st.is_voided is false
             and st.id not in (
                 select distinct fm.subject_type_id
                 from form_mapping fm
@@ -158,18 +159,18 @@ public class SchemaMetadataRepository {
 
         try {
             List<Map<String, Object>> missingUserSubjectTypes = runInOrgContext(() -> jdbcTemplate.queryForList(findMissingUserSubjectTypesSql), jdbcTemplate);
-            
+
             List<TableMetadata> tables = missingUserSubjectTypes.stream().map(subjectType -> {
                 TableMetadata tableMetadata = new TableMetadata();
                 String tableName = new TableNameGenerator().generateName(
-                    List.of((String) subjectType.get("subject_type_name")), 
-                    "IndividualProfile", 
+                    List.of((String) subjectType.get("subject_type_name")),
+                    "IndividualProfile",
                     null
                 );
                 tableMetadata.setName(tableName);
                 tableMetadata.setType(TableMetadata.Type.valueOf((String) subjectType.get("subject_type_type")));
                 tableMetadata.setSubjectTypeUuid((String) subjectType.get("subject_type_uuid"));
-                
+
                 // Add standard subject table columns with user_id for linking
                 tableMetadata.addColumnMetadata(List.of(
                     new ColumnMetadata(new Column("id", Column.Type.integer, Column.ColumnType.index), null, null, null, false),
@@ -185,12 +186,12 @@ public class SchemaMetadataRepository {
                     new ColumnMetadata(new Column("organisation_id", Column.Type.integer), null, null, null, false),
                     new ColumnMetadata(new Column("is_voided", Column.Type.bool), null, null, null, false)
                 ));
-                
+
                 return tableMetadata;
             }).collect(Collectors.toList());
-            
+
             return tables;
-            
+
         } catch (Exception e) {
             logger.error("Failed to get placeholder subject tables: " + e.getMessage(), e);
             return List.of();
