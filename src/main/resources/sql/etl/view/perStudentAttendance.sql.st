@@ -29,7 +29,7 @@ sess AS (
 ),
 recs AS (
     SELECT ar.subject_uuid, ar.session_uuid, ar.status, ar.reason_concept_uuids,
-           ar.needs_follow_up, ar.follow_up_encounter_uuid
+           ar.other_reason_text, ar.needs_follow_up, ar.follow_up_encounter_uuid
     FROM "<schema_name>".attendance_record ar
     WHERE ar.is_voided = false
 )
@@ -41,7 +41,7 @@ SELECT se.organisation_id, se.student_subject_uuid, se.group_subject_uuid,
            WHEN r.subject_uuid IS NULL AND se.session_status = 'Held' THEN 'Absent_implied'
            ELSE r.status
        END AS status,
-       r.reason_concept_uuids, r.needs_follow_up, r.follow_up_encounter_uuid
+       r.reason_concept_uuids, r.other_reason_text, r.needs_follow_up, r.follow_up_encounter_uuid
 FROM student_expected se
 JOIN sess s ON s.group_subject_uuid = se.group_subject_uuid
            AND s.scheduled_date = se.scheduled_date
