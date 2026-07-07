@@ -83,13 +83,23 @@ jobs:
 
       - run: wget -qO- https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/8.5.9/flyway-commandline-8.5.9-linux-x64.tar.gz | tar xvz && sudo ln -s `pwd`/flyway-8.5.9/flyway /usr/local/bin
 
-      - run: curl -L https://github.com/avniproject/avni-server/archive/master.zip >> ~/server.zip
-
+      # Build the source schema from avni-server's migrations. Pull the SAME branch as this
+      # ETL pipeline (fall back to master) so release-branch server migrations that aren't on
+      # master yet are present — otherwise ETL tests fail on schema drift when a server column
+      # and the ETL code that reads it ship together on a branch.
       - run: |
           cd ~/
-          unzip server.zip
-          mv avni-server-master avni-server
-          rm -rf server.zip
+          BRANCH="${CIRCLE_BRANCH:-master}"
+          if curl -sfL "https://github.com/avniproject/avni-server/archive/refs/heads/${BRANCH}.zip" -o server.zip; then
+            echo "Using avni-server@${BRANCH} for the test schema"
+          else
+            echo "avni-server@${BRANCH} not found; falling back to master"
+            curl -fL "https://github.com/avniproject/avni-server/archive/refs/heads/master.zip" -o server.zip
+          fi
+          unzip -q server.zip
+          rm -rf avni-server
+          mv avni-server-* avni-server
+          rm -f server.zip
       - run: |
           pwd
           cd ~/avni-server
