@@ -41,6 +41,7 @@ public class AttendanceSyncIntegrationTest extends BaseIntegrationTest {
     private static final String EVENING_TYPE_VOIDED = "attype-evening-0000-0000-000000000002";
     private static final String CLASS_GROUP_574190 = "class-group-0000-0000-0000-00000000190";
     private static final String CLASS_TYPE = "attype-class-0000-0000-0000-000000092010";
+    private static final String WHITE_CONCEPT = "c6012f8d-d705-4d72-a0ba-45d8d37c730b";
     private static final String PERSON_574170 = "751bb8c8-ef18-4250-a73d-73106e7a5b56";
     private static final String PERSON_574173 = "335fec0f-958c-4cc0-b477-c6a5a9ba986b";
     private static final String PERSON_574174 = "b1a62475-61ae-42a2-923f-43df4c747b0d";
@@ -157,6 +158,15 @@ public class AttendanceSyncIntegrationTest extends BaseIntegrationTest {
         assertThat(markAnyway.get("calendar_day_type"), is("mark_anyway"));
         assertThat(markAnyway.get("status"), is("Held"));
 
+        // avniproject/avni-server#1035: the server no longer rejects a Held session on a calendar-off
+        // day that carries no reason, so reports identify them here instead — mark_anyway + Held +
+        // null reason is exactly the shape that used to deadlock a device's sync queue (FD-8271).
+        assertThat(markAnyway.get("reason_concept_uuid"), is(nullValue()));
+
+        // A session that does carry a reason projects the concept uuid, proving the column is a real
+        // passthrough rather than always null.
+        assertThat(expectedSession("2024-03-16").get("reason_concept_uuid"), is(WHITE_CONCEPT));
+
         // mark_anyway must not leak sessions of an unresolved-calendar group (group is excluded entirely).
         assertThat(jdbcTemplate.queryForList(format("select 1 from orgc.expected_sessions where group_subject_uuid = '%s'", GROUP_574180_UNRESOLVED)).size(), is(0));
 
@@ -207,7 +217,7 @@ public class AttendanceSyncIntegrationTest extends BaseIntegrationTest {
 
     private Map<String, Object> expectedSession(String date) {
         return jdbcTemplate.queryForMap(format(
-                "select calendar_day_type, status from orgc.expected_sessions where group_subject_uuid='%s' and attendance_type_uuid='%s' and scheduled_date='%s'",
+                "select calendar_day_type, status, reason_concept_uuid from orgc.expected_sessions where group_subject_uuid='%s' and attendance_type_uuid='%s' and scheduled_date='%s'",
                 GROUP_574171, MORNING_TYPE, date));
     }
 

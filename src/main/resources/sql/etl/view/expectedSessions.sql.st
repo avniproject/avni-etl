@@ -35,7 +35,7 @@ calendar_days AS (
          ON wdc.calendar_uuid = r.calendar_uuid AND wdc.day_type IN ('working_day', 'working_override')
 ),
 sess AS (
-    SELECT s.group_subject_uuid, s.attendance_type_uuid, s.scheduled_date, s.status
+    SELECT s.group_subject_uuid, s.attendance_type_uuid, s.scheduled_date, s.status, s.reason_concept_uuid
     FROM "<schema_name>".session s
     WHERE s.is_voided = false
 ),
@@ -46,7 +46,8 @@ expected AS (
                WHEN 1 THEN 'mon' WHEN 2 THEN 'tue' WHEN 3 THEN 'wed' WHEN 4 THEN 'thu'
                WHEN 5 THEN 'fri' WHEN 6 THEN 'sat' ELSE 'sun' END AS day_of_week,
            cd.calendar_day_type,
-           COALESCE(se.status, 'Unmarked') AS status
+           COALESCE(se.status, 'Unmarked') AS status,
+           se.reason_concept_uuid
     FROM calendar_days cd
     LEFT JOIN sess se ON se.group_subject_uuid = cd.group_subject_uuid
                       AND se.attendance_type_uuid = cd.attendance_type_uuid
@@ -64,7 +65,8 @@ mark_anyway AS (
                WHEN 1 THEN 'mon' WHEN 2 THEN 'tue' WHEN 3 THEN 'wed' WHEN 4 THEN 'thu'
                WHEN 5 THEN 'fri' WHEN 6 THEN 'sat' ELSE 'sun' END AS day_of_week,
            'mark_anyway' AS calendar_day_type,
-           COALESCE(se.status, 'Unmarked') AS status
+           COALESCE(se.status, 'Unmarked') AS status,
+           se.reason_concept_uuid
     FROM sess se
     JOIN resolved r ON r.group_subject_uuid = se.group_subject_uuid
                    AND r.attendance_type_uuid = se.attendance_type_uuid
@@ -79,7 +81,8 @@ SELECT * FROM mark_anyway
 -- Org has no group/household subject tables: empty view with the right shape.
 SELECT null::integer AS organisation_id, null::text AS group_subject_uuid, null::text AS group_subject_type_uuid,
        null::text AS attendance_type_uuid, null::text AS attendance_type_name, null::date AS scheduled_date,
-       null::text AS day_of_week, null::text AS calendar_day_type, null::text AS status
+       null::text AS day_of_week, null::text AS calendar_day_type, null::text AS status,
+       null::text AS reason_concept_uuid
 LIMIT 0
 <endif>;
 CREATE INDEX IF NOT EXISTS <view_name>_grp_date_at_idx ON "<schema_name>"."<view_name>" (organisation_id, group_subject_uuid, scheduled_date, attendance_type_uuid);

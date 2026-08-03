@@ -58,7 +58,9 @@ INSERT INTO group_subject (id, uuid, group_subject_id, member_subject_id, group_
 -- Sessions for the group on the Morning attendance type.
 INSERT INTO session (id, uuid, group_subject_id, scheduled_date, attendance_type_id, status, reason_concept_id, notes, marked_by_user_id, marked_at, organisation_id, is_voided, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time, version) VALUES
  (95001, 'session-0000-0000-0000-00000000000001', 574171, '2024-03-04', 92001, 'Held', null, null, 3453, '2024-03-04 12:00:00+00', 12, false, 1, 1, '2024-03-04 10:00:00+00', '2024-03-04 10:00:00+00', 0),
- (95002, 'session-0000-0000-0000-00000000000002', 574171, '2024-03-16', 92001, 'Held', null, null, 3453, '2024-03-16 12:00:00+00', 12, false, 1, 1, '2024-03-16 10:00:00+00', '2024-03-16 10:00:00+00', 0),
+ -- Carries a session reason (concept 107577 'White') so expected_sessions.reason_concept_uuid is
+ -- exercised with a non-null value, not just the nulls every other session here has.
+ (95002, 'session-0000-0000-0000-00000000000002', 574171, '2024-03-16', 92001, 'Held', 107577, null, 3453, '2024-03-16 12:00:00+00', 12, false, 1, 1, '2024-03-16 10:00:00+00', '2024-03-16 10:00:00+00', 0),
  (95003, 'session-0000-0000-0000-00000000000003', 574171, '2024-03-09', 92001, 'Held', null, null, 3453, '2024-03-09 12:00:00+00', 12, false, 1, 1, '2024-03-09 10:00:00+00', '2024-03-09 10:00:00+00', 0),
  (95004, 'session-0000-0000-0000-00000000000004', 574171, '2024-03-20', 92001, 'Held', null, null, 3453, '2024-03-20 12:00:00+00', 12, true, 1, 1, '2024-03-20 10:00:00+00', '2024-03-20 10:00:00+00', 0),
  -- Off-day session for the unresolved group (574180): must NOT appear in expected_sessions (incl. mark_anyway).
