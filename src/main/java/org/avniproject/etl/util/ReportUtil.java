@@ -24,7 +24,7 @@ public class ReportUtil {
 
     public String getDynamicUserWhere(List<Long> userIds, String columnName) {
         if (!userIds.isEmpty()) {
-            return format("and %s in (%s)", columnName, StrUtil.joinLongToList(userIds));
+            return format("and %s in (%s)", columnName, StringUtil.joinLongToList(userIds));
         }
         return "";
     }
