@@ -27,10 +27,41 @@ public class TransactionalSyncSqlGenerator {
         typeMap.put(TableMetadata.Type.ManualProgramEnrolmentEligibility, "manualProgramEnrolmentEligibility.sql");
         typeMap.put(TableMetadata.Type.GroupToMember, "groupToMember.sql");
         typeMap.put(TableMetadata.Type.HouseholdToMember, "householdToMember.sql");
+        typeMap.put(TableMetadata.Type.Approval, "approval.sql");
+        typeMap.put(TableMetadata.Type.Rejection, "rejection.sql");
     }
 
     private static String toString(String uuid) {
         return uuid == null ? "" : uuid;
+    }
+
+    /**
+     * An approval or rejection form attaches to any of four mapping shapes, and the decision it produces
+     * carries a different entity_type for each (#174). typeMap holds one template per type, so the shape
+     * cannot be written into the SQL - it is resolved here and passed in.
+     *
+     * The mapping mirrors avni-server's EntityApprovalStatusService.getEntityTypeUUID, which is what
+     * writes these two columns in the first place.
+     */
+    private static String approvalEntityType(TableMetadata tableMetadata) {
+        boolean hasProgram = tableMetadata.getProgramUuid() != null;
+        boolean hasEncounterType = tableMetadata.getEncounterTypeUuid() != null;
+        if (hasProgram && hasEncounterType) return "ProgramEncounter";
+        if (hasEncounterType) return "Encounter";
+        if (hasProgram) return "ProgramEnrolment";
+        return "Subject";
+    }
+
+    /**
+     * entity_type_uuid holds whichever type the decision is against: the encounter type for either
+     * encounter shape, the programme for an enrolment, the subject type for a bare subject.
+     */
+    private static String approvalEntityTypeUuid(TableMetadata tableMetadata) {
+        boolean hasProgram = tableMetadata.getProgramUuid() != null;
+        boolean hasEncounterType = tableMetadata.getEncounterTypeUuid() != null;
+        if (hasEncounterType) return toString(tableMetadata.getEncounterTypeUuid());
+        if (hasProgram) return toString(tableMetadata.getProgramUuid());
+        return toString(tableMetadata.getSubjectTypeUuid());
     }
 
     public boolean supports(TableMetadata tableMetadata) {
@@ -60,6 +91,8 @@ public class TransactionalSyncSqlGenerator {
                 .replace("${group_subject_type_uuid}", toString(tableMetadata.getGroupSubjectTypeUuid()))
                 .replace("${member_subject_type_uuid}", toString(tableMetadata.getMemberSubjectTypeUuid()))
                 .replace("${program_uuid}", toString(tableMetadata.getProgramUuid()))
+                .replace("${approval_entity_type}", approvalEntityType(tableMetadata))
+                .replace("${approval_entity_type_uuid}", approvalEntityTypeUuid(tableMetadata))
                 .replace("${start_time}", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").format(startTime))
                 .replace("${end_time}", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").format(endTime));
         if (tableMetadata.getType().equals(TableMetadata.Type.Person) && tableMetadata.hasColumn("middle_name")) {

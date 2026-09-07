@@ -7,11 +7,16 @@ import org.avniproject.etl.domain.metadata.TableMetadata;
 import org.avniproject.etl.repository.rowMappers.tableMappers.*;
 import org.avniproject.etl.repository.rowMappers.tableMappers.repeatableQuestionGroup.RepeatableQuestionGroupTableFactory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 public class TableMetadataMapper {
+    private static final Logger logger = LoggerFactory.getLogger(TableMetadataMapper.class);
+
     private ColumnMetadata createColumnMetaData(Map<String, Object> map) {
         return new ColumnMetadata(
                 (Integer) map.get("column_id"),
@@ -49,11 +54,17 @@ public class TableMetadataMapper {
         return tableMetadata;
     }
 
+    /**
+     * Null when this build cannot map the row - an unrecognised form type, or a repeatable question group
+     * hanging off one. Callers filter nulls out; see AC11 on #174.
+     */
     public TableMetadata create(List<Map<String, Object>> columns) {
         TableMetadata tableMetadata = new TableMetadata();
         Map<String, Object> tableDetails = columns.get(0);
         populateCommonColumns(tableMetadata, tableDetails);
+        if (tableMetadata.getType() == null) return null;
         Table table = getTableStructure(tableMetadata.getType(), tableDetails);
+        if (table == null) return null;
         tableMetadata.setName(table.name(tableDetails));
 
         tableMetadata.addColumnMetadata(table.columns().stream().map(column -> new ColumnMetadata(column, null, null, null, false)).collect(Collectors.toList()));
@@ -83,14 +94,25 @@ public class TableMetadataMapper {
         }
     }
 
+    /**
+     * Null rather than an exception for a form type this build does not know (#174, AC11). getFormTables()
+     * has no form-type filter, so a form type from a newer avni-server reaches here - and Type.valueOf
+     * would take the whole organisation's ETL run down rather than one table.
+     */
     private TableMetadata.Type getTableType(Map<String, Object> tableDetails) {
         String tableType = (String) tableDetails.get("table_type");
-        return tableType.equals(TableMetadata.TableType.IndividualProfile.name()) ?
-                TableMetadata.Type.valueOf((String) tableDetails.get("subject_type_type")) :
-                TableMetadata.Type.valueOf(tableType);
+        String typeName = tableType.equals(TableMetadata.TableType.IndividualProfile.name()) ?
+                (String) tableDetails.get("subject_type_type") : tableType;
+        try {
+            return TableMetadata.Type.valueOf(typeName);
+        } catch (IllegalArgumentException e) {
+            logger.warn("Skipping table for unrecognised form type '{}'. This build does not know it; reporting for the rest of the organisation is unaffected.", typeName);
+            return null;
+        }
     }
 
     public Table getTableStructure(TableMetadata.Type type, Map<String, Object> tableDetails) {
+        if (type == null) return null;
         switch (type) {
             case Group:
             case Household:
@@ -115,10 +137,16 @@ public class TableMetadataMapper {
                 return new EncounterCancellationTable();
             case ManualProgramEnrolmentEligibility:
                 return new SubjectProgramEligibilityTable();
+            case Approval:
+                return new ApprovalTable();
+            case Rejection:
+                return new RejectionTable();
             case RepeatableQuestionGroup:
                 return RepeatableQuestionGroupTableFactory.create(tableDetails);
             default:
-                throw new RuntimeException("Cannot create table structure for table details: " + tableDetails);
+                // Skipped, not fatal - see getTableType.
+                logger.warn("Skipping table: no table structure for type {}", type);
+                return null;
         }
     }
 }

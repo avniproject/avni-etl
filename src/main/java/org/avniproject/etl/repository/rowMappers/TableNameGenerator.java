@@ -21,6 +21,10 @@ public class TableNameGenerator {
         put(ProgramEnrolmentRepeatableQuestionGroup, List.of(6, 20, 20));
         put("ProgramEncounter", List.of(6, 6, 20));
         put(ProgramEncounterRepeatableQuestionGroup, List.of(6, 6, 20, 20));
+        // #174. Same three parts as ProgramEncounter, so the same widths. A mapping with fewer parts
+        // reads only the leading entries, so the shorter shapes are covered by the same list.
+        put("Approval", List.of(6, 6, 20));
+        put("Rejection", List.of(6, 6, 20));
     }};
 
     private String buildProperTableName(List<String> entities) {
@@ -32,12 +36,17 @@ public class TableNameGenerator {
     }
 
     public String generateName(List<String> entities, String tableType, String suffix) {
-        List<String> entitiesWithSuffix = new ArrayList<>(entities);
+        // Absent parts are dropped rather than carried through. Approval and Rejection (#174) are the
+        // first form types whose mapping shape varies - a subject-only mapping has no programme and no
+        // encounter type - and buildProperTableName calls toLowerCase on every part. This is additive
+        // for every existing caller: a null part throws today, so no working name can change.
+        List<String> presentEntities = entities.stream().filter(Objects::nonNull).collect(Collectors.toList());
+        List<String> entitiesWithSuffix = new ArrayList<>(presentEntities);
         if (suffix != null) {
             entitiesWithSuffix.add(suffix);
         }
         String tableName = buildProperTableName(entitiesWithSuffix);
-        return tableName.length() > POSTGRES_MAX_TABLE_NAME_LENGTH ? getTrimmedTableName(entities, tableType, suffix) : tableName;
+        return tableName.length() > POSTGRES_MAX_TABLE_NAME_LENGTH ? getTrimmedTableName(presentEntities, tableType, suffix) : tableName;
     }
 
     private String getTrimmedTableName(List<String> entities, String tableType, String suffix) {

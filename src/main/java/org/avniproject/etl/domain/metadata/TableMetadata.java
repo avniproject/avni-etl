@@ -314,7 +314,12 @@ public class TableMetadata extends Model {
         CalendarDateMarker,
         AttendanceType,
         Session,
-        AttendanceRecord
+        AttendanceRecord,
+        // The reporting tables for approval and rejection form answers (#174). Deliberately not added to
+        // TableType below - that enumerates the parent entity types a repeatable question group hangs
+        // off, and RepeatableQuestionGroupTableFactory switches over it exhaustively with no default.
+        Approval,
+        Rejection
     }
 
 
