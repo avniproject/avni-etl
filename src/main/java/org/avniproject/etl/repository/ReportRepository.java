@@ -143,7 +143,7 @@ public class ReportRepository {
                 "       count(*) as count\n" +
                 "from ${schemaName}.sync_telemetry st\n" +
                 "         join ${schemaName}.users u on st.user_id = u.id\n" +
-                "where sync_status = 'incomplete'\n" +
+                "where sync_status in ('incomplete', 'failed')\n" +
                 "and (u.is_voided = false or u.is_voided isnull)\n" +
                 "and u.organisation_id notnull\n" +
                 "${syncTelemetryWhere}\n"+
