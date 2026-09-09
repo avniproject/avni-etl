@@ -318,6 +318,13 @@ public class TableMetadata extends Model {
         // The reporting tables for approval and rejection form answers (#174). Deliberately not added to
         // TableType below - that enumerates the parent entity types a repeatable question group hangs
         // off, and RepeatableQuestionGroupTableFactory switches over it exhaustively with no default.
+        //
+        // The consequence, which is deliberate: repeatableQuestionGroups.sql reads parent_table_type
+        // straight from f.form_type with no filter, so an Approval or Rejection form containing a
+        // repeatable question group reaches TableType.valueOf and fails the organisation's ETL run
+        // loudly. Question groups inside decision forms are out of scope for #174 and need their own
+        // story; until then the run stopping and saying so is preferred to a table going quietly
+        // missing from reporting.
         Approval,
         Rejection
     }

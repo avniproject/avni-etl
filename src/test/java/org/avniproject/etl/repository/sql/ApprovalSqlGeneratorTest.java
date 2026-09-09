@@ -123,6 +123,69 @@ public class ApprovalSqlGeneratorTest {
         assertThat(sql, not(containsString("${")));
     }
 
+    @Test
+    public void leavesNoUnsubstitutedPlaceholdersOnAnyShape() {
+        assertThat(sqlFor(tableMetadata(TableMetadata.Type.Approval, null, null)), not(containsString("${")));
+        assertThat(sqlFor(tableMetadata(TableMetadata.Type.Approval, "programme-uuid", null)), not(containsString("${")));
+        assertThat(sqlFor(tableMetadata(TableMetadata.Type.Rejection, null, "encounter-type-uuid")), not(containsString("${")));
+    }
+
+    /**
+     * Two programmes sharing one visit type each get the other's decisions without this.
+     *
+     * A decision on a programme visit records entity_type ProgramEncounter and the visit type in
+     * entity_type_uuid; the programme is not on the row and never has been. So (Mother, ANC, Home Visit)
+     * and (Mother, PNC, Home Visit) generate a byte-identical filter, and one ANC approval lands in the
+     * PNC table too - a report counting PNC approvals counts ANC ones as well, with no error anywhere.
+     * 52 such subject-type/visit-type pairs exist across 30 organisations today; none has approval
+     * switched on yet, so this is latent rather than live.
+     */
+    @Test
+    public void aProgrammeVisitMappingTakesOnlyItsOwnProgrammesDecisions() {
+        String anc = sqlFor(tableMetadata(TableMetadata.Type.Approval, "anc-uuid", "home-visit-uuid"));
+        String pnc = sqlFor(tableMetadata(TableMetadata.Type.Approval, "pnc-uuid", "home-visit-uuid"));
+
+        assertThat(anc, containsString("prog.uuid = 'anc-uuid'"));
+        assertThat(pnc, containsString("prog.uuid = 'pnc-uuid'"));
+        assertThat("the two tables must not generate the same filter",
+                anc.replace("anc-uuid", "X"), not(is(pnc.replace("pnc-uuid", "X"))));
+    }
+
+    /**
+     * The programme is recovered by following the decision to the record it judged, which is the only
+     * place it is written down. entity_id points at the program_encounter.
+     */
+    @Test
+    public void findsTheProgrammeByFollowingTheRecordThatWasJudged() {
+        String sql = sqlFor(tableMetadata(TableMetadata.Type.Approval, "anc-uuid", "home-visit-uuid"));
+
+        assertThat(sql, containsString("pe.id = entity.entity_id"));
+        assertThat(sql, containsString("public.program_enrolment pen"));
+        assertThat(sql, containsString("public.program prog"));
+        assertThat("EXISTS, not a join - this template promises one row per decision",
+                sql, containsString("AND EXISTS (SELECT 1 FROM public.program_encounter pe"));
+    }
+
+    /**
+     * The other three shapes identify themselves. entity_type_uuid is the subject type for a bare
+     * subject and the programme itself for an enrolment, and a plain visit has no programme to lose - so
+     * the filter must be empty rather than excluding every row.
+     */
+    @Test
+    public void theOtherThreeShapesGetNoProgrammeFilter() {
+        assertThat(sqlFor(tableMetadata(TableMetadata.Type.Approval, null, null)), not(containsString("prog.uuid")));
+        assertThat(sqlFor(tableMetadata(TableMetadata.Type.Approval, "programme-uuid", null)), not(containsString("prog.uuid")));
+        assertThat(sqlFor(tableMetadata(TableMetadata.Type.Approval, null, "encounter-type-uuid")), not(containsString("prog.uuid")));
+    }
+
+    @Test
+    public void theRejectionTemplateFiltersByProgrammeToo() {
+        String sql = sqlFor(tableMetadata(TableMetadata.Type.Rejection, "anc-uuid", "home-visit-uuid"));
+
+        assertThat(sql, containsString("prog.uuid = 'anc-uuid'"));
+        assertThat(sql, containsString("aps.status = 'Rejected'"));
+    }
+
     /**
      * The regression test for the missing alias. buildObservationSelection emits ind.observations for
      * sync-attribute columns, which SchemaMetadataRepository adds to every non-subject table - so a

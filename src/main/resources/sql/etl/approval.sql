@@ -6,6 +6,12 @@
 -- TransactionalSyncSqlGenerator.approvalEntityType. They cannot be written in, because one template
 -- serves all four shapes an approval form can attach to.
 --
+-- approval_program_filter is the same story and is empty for three of those four shapes. A decision on a
+-- programme visit records the encounter type and never the programme, so two programmes sharing one
+-- encounter type produce a byte-identical filter and each table would collect the other's decisions. The
+-- programme is recovered by following entity_id to the record judged. EXISTS rather than a join, because
+-- this template promises one row per decision and a join is a standing invitation to break that.
+--
 -- The two aliases are contractual, not stylistic. TransactionDataSyncHelper.buildObservationSelection
 -- emits entity.observations for form answers and ind.observations for the sync-attribute columns that
 -- SchemaMetadataRepository adds to every non-subject table, so both must resolve.
@@ -42,6 +48,7 @@ FROM public.entity_approval_status entity
   ${cross_join_concept_maps}
 WHERE entity.entity_type = '${approval_entity_type}'
   AND entity.entity_type_uuid = '${approval_entity_type_uuid}'
+  ${approval_program_filter}
   AND st.uuid = '${subject_type_uuid}'
   AND aps.status = 'Approved'
   and entity.last_modified_date_time > '${start_time}'

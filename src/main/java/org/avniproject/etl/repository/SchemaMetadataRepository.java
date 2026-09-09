@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -221,7 +220,7 @@ public class SchemaMetadataRepository {
             Object rqgConceptUUID = stringObjectMap.get("repeatable_question_group_concept_uuid");
             return rqgConceptUUID == null ? formMappingUUID : formMappingUUID + rqgConceptUUID;
         }));
-        return tableMaps.values().stream().map(mapList -> new TableMetadataMapper().create(mapList)).filter(Objects::nonNull).collect(Collectors.toList());
+        return tableMaps.values().stream().map(mapList -> new TableMetadataMapper().create(mapList)).collect(Collectors.toList());
     }
 
     private void addDecisionConceptColumns(TableMetadata tableMetadata) {
@@ -291,7 +290,7 @@ public class SchemaMetadataRepository {
         List<Map<String, Object>> maps = runInOrgContext(() -> jdbcTemplate.queryForList(sql), jdbcTemplate);
         Map<Object, List<Map<String, Object>>> tableMaps = maps.stream().collect(Collectors.groupingBy(stringObjectMap ->
                 stringObjectMap.get("group_subject_type_uuid").toString() + stringObjectMap.get("member_subject_type_uuid").toString()));
-        List<TableMetadata> tables = tableMaps.values().stream().map(mapList -> new TableMetadataMapper().create(mapList)).filter(Objects::nonNull).collect(Collectors.toList());
+        List<TableMetadata> tables = tableMaps.values().stream().map(mapList -> new TableMetadataMapper().create(mapList)).collect(Collectors.toList());
         tables.stream().filter(t -> t.getType().equals(TableMetadata.Type.HouseholdToMember)).forEach(this::addHeadOfHouseholdColumns);
         return tables;
     }
