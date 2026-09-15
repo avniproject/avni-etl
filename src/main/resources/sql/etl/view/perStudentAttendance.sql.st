@@ -7,7 +7,7 @@ WITH windowed_expected AS (
     FROM "<schema_name>".expected_sessions es
     WHERE es.scheduled_date >= (current_date - (interval '1 month' * <student_window_months>))
 ),
-members AS (
+members AS MATERIALIZED (
     SELECT gs.organisation_id, grp.uuid AS group_subject_uuid, gm.uuid AS student_subject_uuid,
            gs.membership_start_date, gs.membership_end_date
     FROM public.group_subject gs

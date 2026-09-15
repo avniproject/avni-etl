@@ -216,6 +216,16 @@ public class AttendanceSyncIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
+    public void perStudentAttendanceMembersCteIsMaterialized() throws java.io.IOException {
+        String template = new String(getClass().getResourceAsStream("/sql/etl/view/perStudentAttendance.sql.st")
+                .readAllBytes());
+        // A single-reference CTE is inlined by default in Postgres 12+, which is what exposes
+        // public.individual.uuid's platform-wide-unique column stats to the outer join
+        // (avni-etl#175). AS MATERIALIZED is the one-word fix; assert it stays that way.
+        assertThat(template, org.hamcrest.Matchers.containsString("members AS MATERIALIZED ("));
+    }
+
+    @Test
     public void perStudentAttendanceTemplateHasAStatementTimeout() throws java.io.IOException {
         String template = new String(getClass().getResourceAsStream("/sql/etl/view/perStudentAttendance.sql.st")
                 .readAllBytes());
