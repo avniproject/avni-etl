@@ -31,6 +31,8 @@ import static org.hamcrest.Matchers.nullValue;
 public class AttendanceSyncIntegrationTest extends BaseIntegrationTest {
     @Autowired
     private EtlService etlService;
+    @Autowired
+    private org.avniproject.etl.repository.ReportingViewRepository reportingViewRepository;
 
 
     private static final String BENGALURU_CAL = "cal-bengaluru-0000-0000-000000000001";
@@ -216,9 +218,8 @@ public class AttendanceSyncIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    public void perStudentAttendanceMembersCteIsMaterialized() throws java.io.IOException {
-        String template = new String(getClass().getResourceAsStream("/sql/etl/view/perStudentAttendance.sql.st")
-                .readAllBytes());
+    public void perStudentAttendanceMembersCteIsMaterialized() {
+        String template = org.avniproject.etl.repository.sql.SqlFile.readFile("/sql/etl/view/perStudentAttendance.sql.st");
         // A single-reference CTE is inlined by default in Postgres 12+, which is what exposes
         // public.individual.uuid's platform-wide-unique column stats to the outer join
         // (avni-etl#175). AS MATERIALIZED is the one-word fix; assert it stays that way.
@@ -226,9 +227,8 @@ public class AttendanceSyncIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    public void perStudentAttendanceTemplateHasAStatementTimeout() throws java.io.IOException {
-        String template = new String(getClass().getResourceAsStream("/sql/etl/view/perStudentAttendance.sql.st")
-                .readAllBytes());
+    public void perStudentAttendanceTemplateHasAStatementTimeout() {
+        String template = org.avniproject.etl.repository.sql.SqlFile.readFile("/sql/etl/view/perStudentAttendance.sql.st");
         assertThat(template.trim(), org.hamcrest.Matchers.startsWith("SET LOCAL statement_timeout = '30min';"));
     }
 
@@ -243,8 +243,10 @@ public class AttendanceSyncIntegrationTest extends BaseIntegrationTest {
         // rows until one runs. (pg_class.reltuples is not the signal it looks like — every one
         // of these four templates builds an index straight after the CREATE, and CREATE INDEX
         // sets reltuples and relpages itself, with pg_stats still empty.)
-        List<String> unanalyzed = List.of("working_day_calendar", "subject_resolved_calendar",
-                "expected_sessions", "per_student_attendance").stream()
+        // Read from ReportingViewRepository's own config rather than a separate hardcoded list,
+        // so a future materialized view is covered by construction, not by remembering to update
+        // a second list here.
+        List<String> unanalyzed = reportingViewRepository.getMaterializedViewNames().stream()
                 .filter(view -> {
                     Integer statsRows = jdbcTemplate.queryForObject(format(
                             "select count(*) from pg_stats where schemaname = 'orgc' and tablename = '%s'", view), Integer.class);

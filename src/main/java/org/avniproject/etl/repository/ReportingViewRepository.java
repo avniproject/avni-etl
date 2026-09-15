@@ -188,18 +188,24 @@ public class ReportingViewRepository implements ReportingViewMetaData {
         st.add(STUDENT_WINDOW_MONTHS, etlServiceConfig.getPerStudentAttendanceWindowInMonths());
 
         String query = st.render();
+        if (config.isMaterialized()) {
+            // Appended to the same multi-statement string as the CREATE, not issued as a separate
+            // call: this keeps ANALYZE inside the same implicit transaction, so it inherits any
+            // SET LOCAL statement_timeout the template itself sets, and a failure here is exactly
+            // as contained as a CREATE failure already is -- not a second, independent failure point.
+            query += String.format("%nANALYZE \"%s\".\"%s\";", schemaName, config.getViewName());
+        }
 
         executeQueryInContext(organisationIdentity, query, "created", config.getViewName(), schemaName);
         log.info(String.format("%s view created", config.getViewName()));
-        if (config.isMaterialized()) {
-            analyzeView(organisationIdentity, config.getViewName(), schemaName);
-        }
         users.forEach(user -> grantPermissionToView(schemaName, config.getViewName(), user));
     }
 
-    private void analyzeView(OrganisationIdentity organisationIdentity, String viewName, String schemaName) {
-        String query = String.format("ANALYZE \"%s\".\"%s\"", schemaName, viewName);
-        executeQueryInContext(organisationIdentity, query, "analyzed", viewName, schemaName);
+    public List<String> getMaterializedViewNames() {
+        return viewConfigs.values().stream()
+                .filter(ViewConfig::isMaterialized)
+                .map(ViewConfig::getViewName)
+                .collect(Collectors.toList());
     }
 
     public void grantPermissionToView(String schemaName, String viewName, String userName) {
