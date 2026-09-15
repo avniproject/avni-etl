@@ -15,9 +15,9 @@ import static org.avniproject.etl.repository.rowMappers.tableMappers.CommonColum
  *
  * Identical in shape to ApprovalRepeatableQuestionGroupTable and deliberately a separate table: a
  * rejection's answers are a different question set from an approval's, and a report counting reasons for
- * rejection must not have approvals mixed into it. The REJECTION suffix is what keeps the two apart, and
- * keeps both clear of the encounter question-group table - see ApprovalRepeatableQuestionGroupTable for
- * why a name collision is destructive rather than merely wrong.
+ * rejection must not have approvals mixed into it. The REJ suffix is what keeps the two apart and keeps
+ * both clear of the encounter question-group table; it is short for the same reason APPR is. See
+ * ApprovalRepeatableQuestionGroupTable for why a name collision is destructive rather than merely wrong.
  */
 public class RejectionRepeatableQuestionGroupTable extends Table {
     @Override
@@ -33,7 +33,7 @@ public class RejectionRepeatableQuestionGroupTable extends Table {
 
     @Override
     public String name(Map<String, Object> tableDetails) {
-        return generateTableName(RejectionRepeatableQuestionGroup, "REJECTION", tableDetails,
+        return generateTableName(RejectionRepeatableQuestionGroup, "REJ", tableDetails,
                 "subject_type_name", "program_name", "encounter_type_name", "parent_concept_name");
     }
 }

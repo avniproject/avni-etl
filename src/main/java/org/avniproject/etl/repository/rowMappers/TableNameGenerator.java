@@ -23,11 +23,14 @@ public class TableNameGenerator {
         put(ProgramEnrolmentRepeatableQuestionGroup, List.of(6, 20, 20));
         put("ProgramEncounter", List.of(6, 6, 20));
         put(ProgramEncounterRepeatableQuestionGroup, List.of(6, 6, 20, 20));
-        // #174. Four parts - subject type, programme, visit type, question-group concept - so the same
-        // widths as the programme-encounter group. A mapping with fewer parts reads only the leading
-        // entries, which is what covers the subject-only and subject+programme shapes.
-        put(ApprovalRepeatableQuestionGroup, List.of(6, 6, 20, 20));
-        put(RejectionRepeatableQuestionGroup, List.of(6, 6, 20, 20));
+        // #174. Four parts - subject type, programme, visit type, question-group concept - and narrower
+        // than the programme-encounter group's because getTrimmedName appends " <suffix>" to EVERY part,
+        // not once to the name. At four parts that is 4 * (1 + suffix length) of overhead before any
+        // content: with the widths used elsewhere and an APPROVAL suffix the trimmed name came to 91
+        // characters and postgres truncates at 63. 6+6+13+13, plus 4*5 for " APPR" and 3 underscores,
+        // is 61. A mapping with fewer parts reads only the leading entries.
+        put(ApprovalRepeatableQuestionGroup, List.of(6, 6, 13, 13));
+        put(RejectionRepeatableQuestionGroup, List.of(6, 6, 13, 13));
         // #174. Same three parts as ProgramEncounter, so the same widths. A mapping with fewer parts
         // reads only the leading entries, so the shorter shapes are covered by the same list.
         put("Approval", List.of(6, 6, 20));

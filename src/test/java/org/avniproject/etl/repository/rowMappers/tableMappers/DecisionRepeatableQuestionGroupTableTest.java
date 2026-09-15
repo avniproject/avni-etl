@@ -132,4 +132,23 @@ public class DecisionRepeatableQuestionGroupTableTest {
         assertThat(new ApprovalRepeatableQuestionGroupTable().name(details("Mother", null, null, "Reasons")),
                 not(emptyOrNullString()));
     }
+
+    /**
+     * ApprovalTable has this guard; these two did not, and they carry a fourth part - the question group
+     * concept - so they run longer than any existing decision table name. Postgres truncates at 63, and a
+     * truncated name that lands on an existing table is dropped rather than rejected.
+     */
+    @Test
+    public void staysWithinPostgresTableNameLimit() {
+        Map<String, Object> longNames = details(
+                "An extremely long subject type name that runs past sixty three characters on its own",
+                "An extremely long programme name that also runs well past sixty three characters",
+                "An extremely long encounter type name that does the same again",
+                "An extremely long repeatable question group concept name as well");
+
+        assertThat("postgres truncates at 63 characters",
+                new ApprovalRepeatableQuestionGroupTable().name(longNames).length(), lessThanOrEqualTo(63));
+        assertThat("postgres truncates at 63 characters",
+                new RejectionRepeatableQuestionGroupTable().name(longNames).length(), lessThanOrEqualTo(63));
+    }
 }
