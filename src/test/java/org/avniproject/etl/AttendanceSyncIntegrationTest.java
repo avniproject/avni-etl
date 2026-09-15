@@ -215,6 +215,13 @@ public class AttendanceSyncIntegrationTest extends BaseIntegrationTest {
         assertThat(countOfRowsIn("orgc.per_student_attendance"), greaterThan(0L));
     }
 
+    @Test
+    public void perStudentAttendanceTemplateHasAStatementTimeout() throws java.io.IOException {
+        String template = new String(getClass().getResourceAsStream("/sql/etl/view/perStudentAttendance.sql.st")
+                .readAllBytes());
+        assertThat(template.trim(), org.hamcrest.Matchers.startsWith("SET LOCAL statement_timeout = '30min';"));
+    }
+
     private Map<String, Object> expectedSession(String date) {
         return jdbcTemplate.queryForMap(format(
                 "select calendar_day_type, status, reason_concept_uuid from orgc.expected_sessions where group_subject_uuid='%s' and attendance_type_uuid='%s' and scheduled_date='%s'",
