@@ -13,6 +13,8 @@ public class RepeatableQuestionGroupTableFactory {
             case ProgramEnrolment -> new ProgramEnrolmentRepeatableQuestionGroupTable();
             case ProgramEncounter -> new ProgramEncounterRepeatableQuestionGroupTable();
             case Encounter -> new EncounterRepeatableQuestionGroupTable();
+            case Approval -> new ApprovalRepeatableQuestionGroupTable();
+            case Rejection -> new RejectionRepeatableQuestionGroupTable();
         };
     }
 }

@@ -16,6 +16,9 @@ public class RepeatableQuestionGroupSyncSqlGenerator {
         this.put(TableMetadata.TableType.Encounter, "generalEncounterRepeatableQGObservations.sql");
         this.put(TableMetadata.TableType.ProgramEnrolment, "programEnrolmentRepeatableQGObservations.sql");
         this.put(TableMetadata.TableType.ProgramEncounter, "programEncounterRepeatableQGObservations.sql");
+        // #174 - a decision form can carry a repeatable question group like any other form.
+        this.put(TableMetadata.TableType.Approval, "approvalRepeatableQGObservations.sql");
+        this.put(TableMetadata.TableType.Rejection, "rejectionRepeatableQGObservations.sql");
     }};
 
     private static String toString(String uuid) {
@@ -46,6 +49,10 @@ public class RepeatableQuestionGroupSyncSqlGenerator {
                 .replace("${encounter_type_uuid}", toString(tableMetadata.getEncounterTypeUuid()))
                 .replace("${program_uuid}", toString(tableMetadata.getProgramUuid()))
                 .replace("${repeatable_question_group_concept_uuid}", toString(tableMetadata.getRepeatableQuestionGroupConceptUuid()))
+                // Empty for the four non-decision parents, whose templates carry no such placeholder.
+                .replace("${approval_entity_type}", TransactionDataSyncHelper.approvalEntityType(tableMetadata))
+                .replace("${approval_entity_type_uuid}", TransactionDataSyncHelper.approvalEntityTypeUuid(tableMetadata))
+                .replace("${approval_program_filter}", TransactionDataSyncHelper.approvalProgramFilter(tableMetadata))
                 .replace("${start_time}", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").format(startTime))
                 .replace("${end_time}", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").format(endTime));
     }

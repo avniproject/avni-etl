@@ -23,6 +23,11 @@ public class TableMetadata extends Model {
     private String groupSubjectTypeUuid;
     private String memberSubjectTypeUuid;
     private String repeatableQuestionGroupConceptUuid;
+    // Set only for a repeatable question group asked on a decision form (#174). Every other parent is
+    // derived from the mapping shape in getParentTableType, and has to stay that way: parent_table_type
+    // is the raw form type, and TableType has no member for ProgramExit or either cancellation type, so
+    // reading it for all form types would trade one crash for several.
+    private TableType decisionParentTableType;
     private List<ColumnMetadata> columnMetadataList = new ArrayList<>();
     private List<IndexMetadata> indexMetadataList = new ArrayList<>();
 
@@ -267,8 +272,15 @@ public class TableMetadata extends Model {
         return columnMetadataList.stream().anyMatch(columnMetadata -> columnMetadata.getColumn().getName().equals(columnName));
     }
 
+    public void setDecisionParentTableType(TableType decisionParentTableType) {
+        this.decisionParentTableType = decisionParentTableType;
+    }
+
     public TableType getParentTableType() {
         if (!StringUtils.hasLength(repeatableQuestionGroupConceptUuid)) return null;
+        // A decision's question group hangs off the decision, which the mapping shape cannot express: an
+        // Approval form on a subject type and a visit type has exactly the shape of an encounter form.
+        if (decisionParentTableType != null) return decisionParentTableType;
 
         if (StringUtils.hasLength(encounterTypeUuid))
             return StringUtils.hasLength(programUuid) ? TableType.ProgramEncounter : TableType.Encounter;
@@ -315,32 +327,40 @@ public class TableMetadata extends Model {
         AttendanceType,
         Session,
         AttendanceRecord,
-        // The reporting tables for approval and rejection form answers (#174). Deliberately not added to
-        // TableType below - that enumerates the parent entity types a repeatable question group hangs
-        // off, and RepeatableQuestionGroupTableFactory switches over it exhaustively with no default.
-        //
-        // The consequence, which is deliberate: repeatableQuestionGroups.sql reads parent_table_type
-        // straight from f.form_type with no filter, so an Approval or Rejection form containing a
-        // repeatable question group reaches TableType.valueOf and fails the organisation's ETL run
-        // loudly. Question groups inside decision forms are out of scope for #174 and need their own
-        // story; until then the run stopping and saying so is preferred to a table going quietly
-        // missing from reporting.
+        // The reporting tables for approval and rejection form answers (#174).
         Approval,
         Rejection
     }
 
 
+    /**
+     * The parent entity types a repeatable question group can hang off.
+     *
+     * Approval and Rejection are here because a decision form can contain a repeatable question group
+     * like any other form, and repeatableQuestionGroups.sql reads parent_table_type straight from
+     * f.form_type with no filter. They were left out when #174 first landed, which made
+     * TableType.valueOf throw and took down the whole organisation's ETL run rather than one table.
+     *
+     * Every switch over this enum is exhaustive with no default, so adding a member here is a compile
+     * error until each site handles it - which is the point.
+     */
     public enum TableType {
         IndividualProfile,
         Encounter,
         ProgramEnrolment,
-        ProgramEncounter
+        ProgramEncounter,
+        Approval,
+        Rejection
     }
 
+    // A decision's question-group rows hang off the decision, not off the record judged - both types
+    // resolve to the same source row in entity_approval_status.
     public static final Map<TableType, String> qgParentColumnIds = Map.of(TableType.IndividualProfile, "individual_id",
             TableType.Encounter, "encounter_id",
             TableType.ProgramEnrolment, "program_enrolment_id",
-            TableType.ProgramEncounter, "program_encounter_id");
+            TableType.ProgramEncounter, "program_encounter_id",
+            TableType.Approval, "entity_approval_status_id",
+            TableType.Rejection, "entity_approval_status_id");
 
     public boolean isSubjectTable() {
         return Arrays.asList(Type.Individual, Type.Person, Type.Household, Type.Group).contains(this.type);

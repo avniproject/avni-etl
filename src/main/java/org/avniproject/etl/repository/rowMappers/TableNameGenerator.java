@@ -11,6 +11,8 @@ public class TableNameGenerator {
     public static final String EncounterRepeatableQuestionGroup = "EncounterRepeatableQuestionGroup";
     public static final String ProgramEnrolmentRepeatableQuestionGroup = "ProgramEnrolmentRepeatableQuestionGroup";
     public static final String ProgramEncounterRepeatableQuestionGroup = "ProgramEncounterRepeatableQuestionGroup";
+    public static final String ApprovalRepeatableQuestionGroup = "ApprovalRepeatableQuestionGroup";
+    public static final String RejectionRepeatableQuestionGroup = "RejectionRepeatableQuestionGroup";
 
     private static final Map<String, List<Integer>> trims = new HashMap<>() {{
         put("Registration", List.of(6, 6));
@@ -21,6 +23,11 @@ public class TableNameGenerator {
         put(ProgramEnrolmentRepeatableQuestionGroup, List.of(6, 20, 20));
         put("ProgramEncounter", List.of(6, 6, 20));
         put(ProgramEncounterRepeatableQuestionGroup, List.of(6, 6, 20, 20));
+        // #174. Four parts - subject type, programme, visit type, question-group concept - so the same
+        // widths as the programme-encounter group. A mapping with fewer parts reads only the leading
+        // entries, which is what covers the subject-only and subject+programme shapes.
+        put(ApprovalRepeatableQuestionGroup, List.of(6, 6, 20, 20));
+        put(RejectionRepeatableQuestionGroup, List.of(6, 6, 20, 20));
         // #174. Same three parts as ProgramEncounter, so the same widths. A mapping with fewer parts
         // reads only the leading entries, so the shorter shapes are covered by the same list.
         put("Approval", List.of(6, 6, 20));

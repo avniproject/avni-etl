@@ -22,6 +22,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import org.avniproject.etl.repository.rowMappers.tableMappers.ApprovalTable;
+import org.avniproject.etl.repository.rowMappers.tableMappers.RejectionTable;
 
 @Service
 public class RepeatableQuestionGroupMediaColumnProcessingService {
@@ -303,6 +305,12 @@ public class RepeatableQuestionGroupMediaColumnProcessingService {
                         // Use SubjectTable for Individual profiles
                         parentTableName = new SubjectTable().name(tableDetails);
                         break;
+                    case Approval:
+                        parentTableName = new ApprovalTable().name(tableDetails);
+                        break;
+                    case Rejection:
+                        parentTableName = new RejectionTable().name(tableDetails);
+                        break;
                     default:
                         throw new IllegalStateException("Unsupported parent table type: " + parentTableType);
                 }
@@ -338,6 +346,11 @@ public class RepeatableQuestionGroupMediaColumnProcessingService {
         }
         if (tableMetadata.getParentTableType() == TableMetadata.TableType.IndividualProfile) {
             return mediaService.determineSubjectIdColumn(tableMetadata);
+        }
+        // A decision's question-group rows hang off the decision itself (#174).
+        if (tableMetadata.getParentTableType() == TableMetadata.TableType.Approval
+                || tableMetadata.getParentTableType() == TableMetadata.TableType.Rejection) {
+            return "entity_approval_status_id";
         }
         throw new IllegalArgumentException("Unknown parent id column: " + tableMetadata.getParentTableType());
     }

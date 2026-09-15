@@ -146,18 +146,32 @@ public class ApprovalRejectionTableTest {
     }
 
     /**
-     * TableType is the list of parent entity types a repeatable question group can hang off, not a list
-     * of kinds of table. RepeatableQuestionGroupTableFactory switches over it as an exhaustive switch
-     * expression with no default, so adding a constant is a compile error - and qgParentColumnIds is
-     * keyed by it, so an entry there would be unreachable. This guard exists so the next person to read
-     * the story the way it is written gets a red test rather than a puzzling compile failure.
+     * TableType is the list of parent entity types a repeatable question group can hang off.
+     *
+     * Approval and Rejection were deliberately left out when #174 first landed, on the grounds that a
+     * question group inside a decision form was out of scope. The consequence was not a missing table:
+     * repeatableQuestionGroups.sql reads parent_table_type straight from f.form_type with no filter, so
+     * such a form reached TableType.valueOf("Approval") and took the organisation's entire ETL run down.
+     * They are now members, and a decision form's question group gets its own reporting table.
+     *
+     * This guard is the counterpart to that. RepeatableQuestionGroupTableFactory switches over this enum
+     * exhaustively with no default, so a new member is a compile error there - but nothing makes
+     * qgParentColumnIds complete, and a missing entry substitutes null into DuplicateRowDeleteAction's
+     * ${parentIdColumn} at sync time rather than failing at build time.
      */
     @Test
-    public void tableTypeStillEnumeratesOnlyRepeatableQuestionGroupParents() {
+    public void everyTableTypeCanParentAQuestionGroup() {
         assertThat(List.of(TableMetadata.TableType.values()),
                 containsInAnyOrder(TableMetadata.TableType.IndividualProfile,
                         TableMetadata.TableType.Encounter,
                         TableMetadata.TableType.ProgramEnrolment,
-                        TableMetadata.TableType.ProgramEncounter));
+                        TableMetadata.TableType.ProgramEncounter,
+                        TableMetadata.TableType.Approval,
+                        TableMetadata.TableType.Rejection));
+
+        for (TableMetadata.TableType tableType : TableMetadata.TableType.values()) {
+            assertThat("qgParentColumnIds must name the column the deduplication deletes by, for " + tableType,
+                    TableMetadata.qgParentColumnIds, hasKey(tableType));
+        }
     }
 }

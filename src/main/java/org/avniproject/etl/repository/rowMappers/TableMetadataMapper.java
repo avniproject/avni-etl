@@ -80,6 +80,14 @@ public class TableMetadataMapper {
         tableMetadata.setProgramUuid((String) tableDetails.get("program_uuid"));
         if (tableDetails.get("table_type").equals("RepeatableQuestionGroup")) {
             tableMetadata.setRepeatableQuestionGroupConceptUuid((String) tableDetails.get("repeatable_question_group_concept_uuid"));
+            // Only the two decision types are read off the form type. The rest are left to the shape
+            // logic in getParentTableType, which is what keeps ProgramExit and the cancellation form
+            // types - none of which TableType has a member for - working as they always have.
+            String parentFormType = (String) tableDetails.get("parent_table_type");
+            if (TableMetadata.TableType.Approval.name().equals(parentFormType)
+                    || TableMetadata.TableType.Rejection.name().equals(parentFormType)) {
+                tableMetadata.setDecisionParentTableType(TableMetadata.TableType.valueOf(parentFormType));
+            }
         }
     }
 
