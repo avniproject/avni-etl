@@ -222,6 +222,28 @@ public class AttendanceSyncIntegrationTest extends BaseIntegrationTest {
         assertThat(template.trim(), org.hamcrest.Matchers.startsWith("SET LOCAL statement_timeout = '30min';"));
     }
 
+    @Test
+    @Sql({"/attendance-test-data-teardown.sql", "/test-data-teardown.sql", "/test-data.sql", "/attendance-test-data.sql"})
+    @Sql(scripts = {"/attendance-test-data-teardown.sql", "/test-data-teardown.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    public void everyGatedMaterializedViewIsAnalyzedAfterCreation() {
+        runEtl();
+        // avni-etl#175: expected_sessions was planned against with no statistics at all during
+        // every rebuild, because nothing in the ETL ran ANALYZE. Column statistics are what the
+        // planner reads for selectivity, and only ANALYZE writes them: a view has no pg_stats
+        // rows until one runs. (pg_class.reltuples is not the signal it looks like — every one
+        // of these four templates builds an index straight after the CREATE, and CREATE INDEX
+        // sets reltuples and relpages itself, with pg_stats still empty.)
+        List<String> unanalyzed = List.of("working_day_calendar", "subject_resolved_calendar",
+                "expected_sessions", "per_student_attendance").stream()
+                .filter(view -> {
+                    Integer statsRows = jdbcTemplate.queryForObject(format(
+                            "select count(*) from pg_stats where schemaname = 'orgc' and tablename = '%s'", view), Integer.class);
+                    return statsRows == null || statsRows == 0;
+                })
+                .collect(java.util.stream.Collectors.toList());
+        assertThat(unanalyzed, org.hamcrest.Matchers.empty());
+    }
+
     private Map<String, Object> expectedSession(String date) {
         return jdbcTemplate.queryForMap(format(
                 "select calendar_day_type, status, reason_concept_uuid from orgc.expected_sessions where group_subject_uuid='%s' and attendance_type_uuid='%s' and scheduled_date='%s'",

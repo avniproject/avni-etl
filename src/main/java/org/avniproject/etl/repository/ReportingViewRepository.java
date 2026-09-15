@@ -191,7 +191,15 @@ public class ReportingViewRepository implements ReportingViewMetaData {
 
         executeQueryInContext(organisationIdentity, query, "created", config.getViewName(), schemaName);
         log.info(String.format("%s view created", config.getViewName()));
+        if (config.isMaterialized()) {
+            analyzeView(organisationIdentity, config.getViewName(), schemaName);
+        }
         users.forEach(user -> grantPermissionToView(schemaName, config.getViewName(), user));
+    }
+
+    private void analyzeView(OrganisationIdentity organisationIdentity, String viewName, String schemaName) {
+        String query = String.format("ANALYZE \"%s\".\"%s\"", schemaName, viewName);
+        executeQueryInContext(organisationIdentity, query, "analyzed", viewName, schemaName);
     }
 
     public void grantPermissionToView(String schemaName, String viewName, String userName) {
