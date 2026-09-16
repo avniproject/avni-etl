@@ -189,10 +189,6 @@ public class ReportingViewRepository implements ReportingViewMetaData {
 
         String query = st.render();
         if (config.isMaterialized()) {
-            // Appended to the same multi-statement string as the CREATE, not issued as a separate
-            // call: this keeps ANALYZE inside the same implicit transaction, so it inherits any
-            // SET LOCAL statement_timeout the template itself sets, and a failure here is exactly
-            // as contained as a CREATE failure already is -- not a second, independent failure point.
             query += String.format("%nANALYZE \"%s\".\"%s\";", schemaName, config.getViewName());
         }
 
