@@ -134,6 +134,53 @@ public class DecisionRepeatableQuestionGroupTableTest {
     }
 
     /**
+     * The regression that took dineshbootcamp's run down after the crash was fixed.
+     *
+     * A question group on a subject type's registration form and the same question group on that subject
+     * type's Approval form agree on every field matches() compared: type, subject type, no programme, no
+     * visit type, same concept. Both new tables therefore matched the single existing row - the decision
+     * one renamed the physical table to its own name, and the registration one then issued ADD COLUMN
+     * against the name that rename had just moved.
+     */
+    @Test
+    public void doesNotMatchAQuestionGroupOnADifferentForm() {
+        TableMetadata registrationGroup = questionGroup("registration-form-uuid");
+        TableMetadata decisionGroup = questionGroup("approval-form-uuid");
+
+        assertThat("two question groups differing only by form must not match, or one renames the other away",
+                decisionGroup.matches(registrationGroup), is(false));
+    }
+
+    @Test
+    public void stillMatchesTheSameQuestionGroupAcrossRuns() {
+        assertThat(questionGroup("registration-form-uuid").matches(questionGroup("registration-form-uuid")),
+                is(true));
+    }
+
+    @Test
+    public void leavesMatchingOfOtherTableTypesAlone() {
+        // Comparing the form for every type would stop a table matching when its form is replaced, and an
+        // unmatched table is created fresh - which drops the live one.
+        TableMetadata one = new TableMetadata();
+        one.setType(TableMetadata.Type.ProgramEncounter);
+        one.setFormUuid("form-one");
+        TableMetadata two = new TableMetadata();
+        two.setType(TableMetadata.Type.ProgramEncounter);
+        two.setFormUuid("form-two");
+
+        assertThat(one.matches(two), is(true));
+    }
+
+    private TableMetadata questionGroup(String formUuid) {
+        TableMetadata tableMetadata = new TableMetadata();
+        tableMetadata.setType(TableMetadata.Type.RepeatableQuestionGroup);
+        tableMetadata.setSubjectTypeUuid("subject-type-uuid");
+        tableMetadata.setRepeatableQuestionGroupConceptUuid("rqg-concept-uuid");
+        tableMetadata.setFormUuid(formUuid);
+        return tableMetadata;
+    }
+
+    /**
      * ApprovalTable has this guard; these two did not, and they carry a fourth part - the question group
      * concept - so they run longer than any existing decision table name. Postgres truncates at 63, and a
      * truncated name that lands on an existing table is dropped rather than rejected.

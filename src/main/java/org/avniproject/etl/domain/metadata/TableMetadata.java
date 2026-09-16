@@ -47,7 +47,31 @@ public class TableMetadata extends Model {
                 && nullSafeEquals(other.programUuid, this.programUuid)
                 && nullSafeEquals(other.groupSubjectTypeUuid, this.groupSubjectTypeUuid)
                 && nullSafeEquals(other.memberSubjectTypeUuid, this.memberSubjectTypeUuid)
-                && nullSafeEquals(other.repeatableQuestionGroupConceptUuid, this.repeatableQuestionGroupConceptUuid);
+                && nullSafeEquals(other.repeatableQuestionGroupConceptUuid, this.repeatableQuestionGroupConceptUuid)
+                && matchesOnFormWhereQuestionGroupsWouldCollide(other);
+    }
+
+    /**
+     * Separates two repeatable question groups that differ only by the form they are asked on (#174).
+     *
+     * Everything else compared above is the same for a question group on a subject type's registration
+     * form and one on that subject type's Approval form: same type, same subject type, no programme, no
+     * visit type, same question-group concept. So both new tables matched the one existing row. The
+     * decision table saw a different name and emitted a rename, and the registration table then altered a
+     * name the rename had just moved - "relation ... does not exist", and the organisation's run stopped.
+     * Nothing collided before, because a decision form could not produce a question group table at all.
+     *
+     * Restricted to repeatable question groups on purpose. Comparing the form everywhere would mean a form
+     * replaced with a new uuid stops matching its existing table, and an unmatched table is created fresh -
+     * CreateTable opens with "drop table if exists <name> cascade", so that would drop live tables and
+     * their views rather than rename them.
+     *
+     * parent_table_type is not persisted, so the form is the only thing that tells these two apart on the
+     * existing-schema side.
+     */
+    private boolean matchesOnFormWhereQuestionGroupsWouldCollide(TableMetadata other) {
+        if (!Type.RepeatableQuestionGroup.equals(this.type)) return true;
+        return nullSafeEquals(other.formUuid, this.formUuid);
     }
 
     public List<Diff> findChanges(TableMetadata existingTable) {
