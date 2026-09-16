@@ -227,9 +227,14 @@ public class AttendanceSyncIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    public void perStudentAttendanceTemplateHasAStatementTimeout() {
-        String template = org.avniproject.etl.repository.sql.SqlFile.readFile("/sql/etl/view/perStudentAttendance.sql.st");
-        assertThat(template.trim(), org.hamcrest.Matchers.startsWith("SET LOCAL statement_timeout = '30min';"));
+    public void everyEtlConnectionCarriesAStatementTimeout() {
+        // avniproject/avni-etl#175, review comment from ombhardwajj: a SET LOCAL line in one
+        // template only bounds that one view, and a single-threaded ETL blocks every other
+        // organisation behind whichever view is running -- working_day_calendar,
+        // subject_resolved_calendar and expected_sessions need the same bound, not just
+        // per_student_attendance. Set once, on the ETL's own connection pool, not per template.
+        String timeout = jdbcTemplate.queryForObject("select current_setting('statement_timeout')", String.class);
+        assertThat(timeout, is("30min"));
     }
 
     @Test

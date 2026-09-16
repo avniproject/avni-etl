@@ -1,4 +1,3 @@
-SET LOCAL statement_timeout = '30min';
 DROP MATERIALIZED VIEW IF EXISTS "<schema_name>"."<view_name>" CASCADE;
 CREATE MATERIALIZED VIEW "<schema_name>"."<view_name>" AS
 WITH windowed_expected AS (
