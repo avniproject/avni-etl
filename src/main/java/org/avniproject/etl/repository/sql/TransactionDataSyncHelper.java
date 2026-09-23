@@ -132,7 +132,11 @@ public class TransactionDataSyncHelper {
                 case Subject:
                 case Encounter:
                 case Location: {
-                    return String.format("(%s%s) as \"%s\"", obsColumn, column.getTextExtractor(), columnName);
+                    // These three store the referenced record's UUID. Copied across as stored, the
+                    // reporting column is unreadable and cannot be joined to anything, so resolve it
+                    // to the name, the way get_coded_string_value resolves a coded answer above.
+                    return String.format("public.get_reference_string_value(%s%s, '%s')::TEXT as \"%s\"",
+                            obsColumn, column.getJsonbExtractor(), column.getConceptType(), columnName);
                 }
                 case ImageV2: {
                     return String.format("(%s%s)::JSONB as \"%s\"", obsColumn, column.getTextExtractor(), columnName);

@@ -31,6 +31,9 @@ class SqlGeneratorTest {
                 .withColumnMetadata(createColumnMetaData(1, "single select", 10, ColumnMetadata.ConceptType.SingleSelect, "uuid-3"))
                 .withColumnMetadata(createColumnMetaData(1, "multi select", 10, ColumnMetadata.ConceptType.MultiSelect, "uuid-4"))
                 .withColumnMetadata(createColumnMetaData(1, "date", 10, ColumnMetadata.ConceptType.Date, "uuid-5"))
+                .withColumnMetadata(createColumnMetaData(1, "school", 10, ColumnMetadata.ConceptType.Subject, "uuid-6"))
+                .withColumnMetadata(createColumnMetaData(1, "village", 10, ColumnMetadata.ConceptType.Location, "uuid-7"))
+                .withColumnMetadata(createColumnMetaData(1, "last visit", 10, ColumnMetadata.ConceptType.Encounter, "uuid-8"))
                 .build();
         Calendar startTime = Calendar.getInstance();
         startTime.set(1970, 1, 12, 13, 23, 4);
@@ -46,13 +49,13 @@ class SqlGeneratorTest {
                 "    \"subject_location_accuracy\", \"subject_location_x\", \"subject_location_y\",\n" +
                 "    \"is_voided\", \"created_by_id\", \"last_modified_by_id\", \"created_date_time\",\n" +
                 "    \"last_modified_date_time\", \"organisation_id\", \"legacy_id\"\n" +
-                "        , \"numeric field\", \"text field\", \"single select\", \"multi select\", \"date\"\n" +
+                "        , \"numeric field\", \"text field\", \"single select\", \"multi select\", \"date\", \"school\", \"village\", \"last visit\"\n" +
                 ")\n" +
                 "    (with Individual_concept_maps as (SELECT public.hstore((array_agg(c2.uuid)) :: text [], (array_agg(c2.name)) :: text []) AS map\n" +
                 "                  FROM public.concept\n" +
                 "                         join public.concept_answer a on concept.id = a.concept_id\n" +
                 "                         join public.concept c2 on a.answer_concept_id = c2.id\n" +
-                "                  where concept.uuid in ('dummy', 'uuid-1', 'uuid-2', 'uuid-3', 'uuid-4', 'uuid-5'))\n" +
+                "                  where concept.uuid in ('dummy', 'uuid-1', 'uuid-2', 'uuid-3', 'uuid-4', 'uuid-5', 'uuid-6', 'uuid-7', 'uuid-8'))\n" +
                 "        SELECT entity.id                                                                as \"id\",\n" +
                 "        entity.address_id                                                               as \"address_id\",\n" +
                 "        entity.uuid                                                                     as \"uuid\",\n" +
@@ -74,7 +77,10 @@ class SqlGeneratorTest {
                 "(entity.observations->> 'uuid-2')::TEXT as \"text field\",\n" +
                 "public.get_coded_string_value(entity.observations-> 'uuid-3', Individual_concept_maps.map)::TEXT as \"single select\",\n" +
                 "public.get_coded_string_value(entity.observations-> 'uuid-4', Individual_concept_maps.map)::TEXT as \"multi select\",\n" +
-                "((entity.observations->> 'uuid-5')::timestamptz AT time zone 'asia/kolkata')::date as \"date\"\n" +
+                "((entity.observations->> 'uuid-5')::timestamptz AT time zone 'asia/kolkata')::date as \"date\",\n" +
+                "public.get_reference_string_value(entity.observations-> 'uuid-6', 'Subject')::TEXT as \"school\",\n" +
+                "public.get_reference_string_value(entity.observations-> 'uuid-7', 'Location')::TEXT as \"village\",\n" +
+                "public.get_reference_string_value(entity.observations-> 'uuid-8', 'Encounter')::TEXT as \"last visit\"\n" +
                 "        FROM public.individual entity\n" +
                 "        LEFT OUTER JOIN public.subject_type st on st.id = entity.subject_type_id\n" +
                 "        cross join Individual_concept_maps\n" +
