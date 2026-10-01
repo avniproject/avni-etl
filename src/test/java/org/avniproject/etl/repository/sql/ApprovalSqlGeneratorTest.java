@@ -147,8 +147,8 @@ public class ApprovalSqlGeneratorTest {
 
         assertThat(anc, containsString("prog.uuid = 'anc-uuid'"));
         assertThat(pnc, containsString("prog.uuid = 'pnc-uuid'"));
-        assertThat("the two tables must not generate the same filter",
-                anc.replace("anc-uuid", "X"), not(is(pnc.replace("pnc-uuid", "X"))));
+        assertThat("ANC's table must not take PNC's decisions", anc, not(containsString("pnc-uuid")));
+        assertThat("PNC's table must not take ANC's decisions", pnc, not(containsString("anc-uuid")));
     }
 
     /**
