@@ -6,19 +6,22 @@ volume (~1.19M program encounters) those queries run 30+ minutes and die on repl
 recovery conflicts, so every report fails with a generic error
 ([FD#8512](https://avni.freshdesk.com/a/tickets/8512), avni-infra#114).
 
-**What:** This config rebuilds the same 11 datasets as small tables in the **jnpct schema**,
+**What:** This config rebuilds the same 11 datasets as tables in the **jnpct schema**,
 sourced from the org's ETL tables, on every ETL sync. The tables carry the **same names and
 column contracts** as the legacy views. Because the Jasper datasource logs in as DB user
 `jnpct` (default `search_path = "$user", public`), the jnpct-schema tables shadow the public
-views automatically — **no JRXML changes needed**. Measured: each table rebuilds in <1s
-(biggest is ~47k rows); report queries that took 30+ min on the legacy views answer in
-seconds against these tables.
+views automatically — **no JRXML changes needed**. Measured on 12 Oct 2026 on prerelease, which is a production
+snapshot from the start of the release cycle, so production holds more by now: the
+11 tables hold about 530 MB, the largest being `jnpct_child_followup_view` at 181k rows and
+246 MB; the whole refresh takes 9 to 14 s and adds 10 to 25 s to a jnpct ETL run of about
+63 s; a report-shaped query answers in milliseconds, against 30+ min on the legacy views.
 
 ## Design notes
 
 - **Full refresh per sync** (`<view>-delete-all.sql` + per-branch inserts), not incremental:
-  total rebuild cost is a few seconds, runs inside the post-ETL transaction (readers always
-  see a complete table), and is self-healing after any missed sync or schema rebuild.
+  the rebuild takes seconds, runs inside the post-ETL transaction (readers always see a
+  complete table), and is self-healing after any missed sync or schema rebuild. Its cost is
+  that every run rewrites all ~530 MB, which the replica replays and autovacuum cleans up.
 - **`exists_check` is schema-qualified on every DDL entry.** The default check matches by
   table name across all schemas and would always find the legacy *public view* of the same
   name, so table creation would be skipped forever without it.
