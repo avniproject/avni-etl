@@ -1,0 +1,31 @@
+{
+  "ddl": [
+    {
+      "order": 1,
+      "table": "t",
+      "sql": "create-t.sql",
+      "exists_check": "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'postetl_check_test' AND table_name = 't')"
+    }
+  ],
+  "dml": [
+    {
+      "order": 1,
+      "table": "t",
+      "sqls": [
+        {
+          "order": 1,
+          "sourceTableName": "src",
+          "insert-sql": "",
+          "update-sqls": [
+            "delete-t.sql",
+            "insert-t.sql",
+            "../shared/assert-not-emptied.sql"
+          ],
+          "sql-params": [
+            "t"
+          ]
+        }
+      ]
+    }
+  ]
+}

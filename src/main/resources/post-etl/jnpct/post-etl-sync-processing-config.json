@@ -78,7 +78,11 @@
           "insert-sql": "",
           "update-sqls": [
             "jnpct_anc_cluster_incharge_visit_view-delete-all.sql",
-            "jnpct_anc_cluster_incharge_visit_view-b1-insert.sql"
+            "jnpct_anc_cluster_incharge_visit_view-b1-insert.sql",
+            "../shared/assert-not-emptied.sql"
+          ],
+          "sql-params": [
+            "jnpct_anc_cluster_incharge_visit_view"
           ]
         }
       ]
@@ -101,7 +105,11 @@
           "sourceTableName": "individual_pregnancy_anc_cluster_incharge",
           "insert-sql": "",
           "update-sqls": [
-            "jnpct_anc_combined_visit_view-b2-insert.sql"
+            "jnpct_anc_combined_visit_view-b2-insert.sql",
+            "../shared/assert-not-emptied.sql"
+          ],
+          "sql-params": [
+            "jnpct_anc_combined_visit_view"
           ]
         }
       ]
@@ -116,7 +124,11 @@
           "insert-sql": "",
           "update-sqls": [
             "jnpct_anc_visit_view-delete-all.sql",
-            "jnpct_anc_visit_view-b1-insert.sql"
+            "jnpct_anc_visit_view-b1-insert.sql",
+            "../shared/assert-not-emptied.sql"
+          ],
+          "sql-params": [
+            "jnpct_anc_visit_view"
           ]
         }
       ]
@@ -131,7 +143,11 @@
           "insert-sql": "",
           "update-sqls": [
             "jnpct_child_birth_form_view-delete-all.sql",
-            "jnpct_child_birth_form_view-b1-insert.sql"
+            "jnpct_child_birth_form_view-b1-insert.sql",
+            "../shared/assert-not-emptied.sql"
+          ],
+          "sql-params": [
+            "jnpct_child_birth_form_view"
           ]
         }
       ]
@@ -146,7 +162,11 @@
           "insert-sql": "",
           "update-sqls": [
             "jnpct_child_enrolment_view-delete-all.sql",
-            "jnpct_child_enrolment_view-b1-insert.sql"
+            "jnpct_child_enrolment_view-b1-insert.sql",
+            "../shared/assert-not-emptied.sql"
+          ],
+          "sql-params": [
+            "jnpct_child_enrolment_view"
           ]
         }
       ]
@@ -169,7 +189,11 @@
           "sourceTableName": "individual_child_child_followup_cluster_incharge",
           "insert-sql": "",
           "update-sqls": [
-            "jnpct_child_followup_view-b2-insert.sql"
+            "jnpct_child_followup_view-b2-insert.sql",
+            "../shared/assert-not-emptied.sql"
+          ],
+          "sql-params": [
+            "jnpct_child_followup_view"
           ]
         }
       ]
@@ -192,7 +216,11 @@
           "sourceTableName": "individual_child_child_pnc_cluster_incharge",
           "insert-sql": "",
           "update-sqls": [
-            "jnpct_child_pnc_view-b2-insert.sql"
+            "jnpct_child_pnc_view-b2-insert.sql",
+            "../shared/assert-not-emptied.sql"
+          ],
+          "sql-params": [
+            "jnpct_child_pnc_view"
           ]
         }
       ]
@@ -207,7 +235,11 @@
           "insert-sql": "",
           "update-sqls": [
             "jnpct_delivery_view-delete-all.sql",
-            "jnpct_delivery_view-b1-insert.sql"
+            "jnpct_delivery_view-b1-insert.sql",
+            "../shared/assert-not-emptied.sql"
+          ],
+          "sql-params": [
+            "jnpct_delivery_view"
           ]
         }
       ]
@@ -222,7 +254,11 @@
           "insert-sql": "",
           "update-sqls": [
             "jnpct_pnc_visit_view-delete-all.sql",
-            "jnpct_pnc_visit_view-b1-insert.sql"
+            "jnpct_pnc_visit_view-b1-insert.sql",
+            "../shared/assert-not-emptied.sql"
+          ],
+          "sql-params": [
+            "jnpct_pnc_visit_view"
           ]
         }
       ]
@@ -237,7 +273,11 @@
           "insert-sql": "",
           "update-sqls": [
             "jnpct_pregnancy_enrolment_view-delete-all.sql",
-            "jnpct_pregnancy_enrolment_view-b1-insert.sql"
+            "jnpct_pregnancy_enrolment_view-b1-insert.sql",
+            "../shared/assert-not-emptied.sql"
+          ],
+          "sql-params": [
+            "jnpct_pregnancy_enrolment_view"
           ]
         }
       ]
@@ -276,7 +316,11 @@
           "sourceTableName": "individual_child",
           "insert-sql": "",
           "update-sqls": [
-            "jnpct_program_exit_view-b4-insert.sql"
+            "jnpct_program_exit_view-b4-insert.sql",
+            "../shared/assert-not-emptied.sql"
+          ],
+          "sql-params": [
+            "jnpct_program_exit_view"
           ]
         }
       ]
