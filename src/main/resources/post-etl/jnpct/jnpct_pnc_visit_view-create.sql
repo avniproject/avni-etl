@@ -1,7 +1,7 @@
 -- Shadow table replacing legacy public.jnpct_pnc_visit_view for Jasper (FD#8512, avni-infra#114).
 -- Same name inside the jnpct schema: the Jasper datasource (login user jnpct,
 -- default search_path "$user", public) resolves this table instead of the
--- legacy view. Dropping this table instantly reverts Jasper to the legacy view.
+-- legacy view. To roll back, see README.md: a dropped table is recreated by the next ETL run.
 set role jnpct;
 
 CREATE TABLE jnpct."jnpct_pnc_visit_view"

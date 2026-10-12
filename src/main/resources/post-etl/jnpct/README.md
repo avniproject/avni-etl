@@ -53,12 +53,29 @@ seconds against these tables.
 3. Spot-compare a handful of rows against the legacy view by `"Enc.Id"`
    (expect identical values except the documented date/stale-uuid improvements).
 
+## Failures are silent: watch the ETL log
+
+If any script here fails (for example a form change renames an ETL column), the whole
+post-ETL transaction rolls back. The tables keep the last good data and Jasper keeps
+serving it, with no error on any report. The only sign is `Error executing post-ETL
+scripts` in the ETL log during a jnpct run (the run starts with `Running ETL for` and the
+jnpct identity). Anyone changing JNPCT's forms should check the next jnpct ETL run for it.
+
+## Other clients that log in as `jnpct`
+
+The shadowing is not specific to Jasper. Any Metabase or Superset query that connects as
+DB user `jnpct` and reads `jnpct_*_view` without a schema also gets these tables from now on,
+with the same ~90 min lag and the same improvements listed above.
+
 ## Rollback
 
-- **Instant, no deploy:** `DROP TABLE jnpct."jnpct_<name>_view";` for the affected table(s) —
-  name resolution immediately falls back to the legacy public view. Also
-  `DELETE FROM public.post_etl_sync_status WHERE db_user = 'jnpct';` if you want the next
-  sync to rebuild from scratch.
+- **Real rollback (needs a deploy):** rename `post-etl-sync-processing-config.json` to
+  `post-etl-sync-processing-config.json_bkp`, as was done for apfodisha in `aed2f73`, deploy,
+  then `DROP TABLE jnpct."jnpct_<name>_view";` for all 11 tables. Name resolution falls back
+  to the legacy public views.
+- **Dropping a table alone is not a rollback.** The DDL pass recreates any missing table on
+  every ETL run, so the next jnpct sync (at most `repeatIntervalInMinutes`, 90 by default)
+  brings it back. Use it only as a stopgap until the deploy above.
 - Full Jasper repository backup (all 41 JNPCT report definitions, pre-change) taken
   2026-10-06 and held by the support team.
 - ⚠️ After any jnpct ETL **schema rebuild**, the shadow tables are recreated empty by the
