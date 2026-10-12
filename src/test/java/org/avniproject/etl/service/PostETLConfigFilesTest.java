@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -66,6 +67,7 @@ public class PostETLConfigFilesTest {
                 failures.add("ddl " + ddl.getTable() + ": " + ddl.getSql() + " must start with `set role " + schema
                         + ";`, or the table is owned by the ETL login and the org's own login cannot read it");
             }
+            if (ddlFile != null) reportUnqualifiedCasts(Files.readString(ddlFile), "ddl " + ddl.getTable() + ": " + ddl.getSql(), failures);
             String existsCheck = ddl.getExistsCheck();
             if (existsCheck == null || !existsCheck.contains("table_schema = '" + schema + "'")) {
                 failures.add("ddl " + ddl.getTable() + ": exists_check must name table_schema = '" + schema
@@ -84,6 +86,7 @@ public class PostETLConfigFilesTest {
                     if (path != null && Files.readString(path).contains(":param1") && nullSafe(source.getSqlParams()).isEmpty()) {
                         failures.add("dml " + dml.getTable() + ": " + file + " uses :param1 but its source has no sql-params");
                     }
+                    if (path != null) reportUnqualifiedCasts(Files.readString(path), "dml " + dml.getTable() + ": " + file, failures);
                 }
             }
         }
@@ -111,6 +114,25 @@ public class PostETLConfigFilesTest {
             return null;
         }
         return path;
+    }
+
+    // Post-ETL sets search_path to the org schema alone, so only built-in types resolve unqualified.
+    // A type from an extension in public (hstore, say) must be written public.<type>.
+    private static final Set<String> BUILT_IN_TYPES = Set.of("text", "varchar", "char", "date", "time", "timestamp",
+            "timestamptz", "interval", "integer", "int", "int2", "int4", "int8", "smallint", "bigint", "numeric",
+            "decimal", "real", "float4", "float8", "boolean", "bool", "uuid", "json", "jsonb", "regclass", "oid");
+    private static final Pattern CAST = Pattern.compile("::\\s*([A-Za-z_][A-Za-z0-9_]*)(\\s*\\.)?");
+
+    private static void reportUnqualifiedCasts(String sql, String owner, List<String> failures) {
+        Matcher cast = CAST.matcher(sql);
+        while (cast.find()) {
+            String type = cast.group(1).toLowerCase();
+            boolean qualified = cast.group(2) != null;
+            if (!qualified && !BUILT_IN_TYPES.contains(type)) {
+                failures.add(owner + ": ::" + type + " must be schema-qualified (e.g. ::public." + type
+                        + "); post-ETL's search_path holds only the org schema");
+            }
+        }
     }
 
     // The first statement, skipping blank lines and -- comments, must switch to the org's role

@@ -58,7 +58,7 @@ SELECT
     e."Place of last delivery"::text AS "Enl.Place of last delivery",
     e."Risk in the last pregnancy"::text AS "Enl.Risk in the last pregnancy",
     e."what kind of risk occurred"::text AS "Enl.what kind of risk occurred",
-    NULL::hstore AS "map"
+    NULL::public.hstore AS "map"
   FROM jnpct."individual_pregnancy" e
   JOIN jnpct.individual i ON i.id = e.individual_id
   LEFT JOIN jnpct.address a ON a.id = i.address_id
