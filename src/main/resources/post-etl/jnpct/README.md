@@ -46,13 +46,49 @@ seconds against these tables.
    jnpct ETL run: every 90 minutes by default (`repeatIntervalInMinutes`), plus the run's own time.
    The column `Enc.Counselling Done for the risk factors / Morbidities to all ` keeps the trailing
    space the legacy views gave it.
+5. **A row the ETL holds twice shows twice.** The ETL can keep two versions of one row when both
+   have the same `last_modified_date_time`. The legacy views read the live tables and could not.
+   The count under *Before deploy* says how often this happens.
 
 ## Verification after deploy
 
 Every query below returns counts, sizes, timestamps or job status only.
 
-**Before deploy.** Record how long jnpct's last 10 ETL runs took (the job-history query under
-*Watching for stale data*, `ended_at - started_at`).
+**Before deploy.**
+1. Record how long jnpct's last 10 ETL runs took (the job-history query under
+   *Watching for stale data*, `ended_at - started_at`).
+2. Count repeated ids in the ETL tables the refresh reads. Anything above zero shows as a
+   duplicated row in a report (difference 5 above), so raise it on avni-etl#179 before deploying:
+
+   ```sql
+   select 'individual' as source, count(*) - count(distinct id) as repeated_ids from jnpct."individual"
+   union all
+   select 'individual_child' as source, count(*) - count(distinct id) as repeated_ids from jnpct."individual_child"
+   union all
+   select 'individual_child_birth_form' as source, count(*) - count(distinct id) as repeated_ids from jnpct."individual_child_birth_form"
+   union all
+   select 'individual_child_child_followup' as source, count(*) - count(distinct id) as repeated_ids from jnpct."individual_child_child_followup"
+   union all
+   select 'individual_child_child_followup_cluster_incharge' as source, count(*) - count(distinct id) as repeated_ids from jnpct."individual_child_child_followup_cluster_incharge"
+   union all
+   select 'individual_child_child_pnc' as source, count(*) - count(distinct id) as repeated_ids from jnpct."individual_child_child_pnc"
+   union all
+   select 'individual_child_child_pnc_cluster_incharge' as source, count(*) - count(distinct id) as repeated_ids from jnpct."individual_child_child_pnc_cluster_incharge"
+   union all
+   select 'individual_eligible_couple' as source, count(*) - count(distinct id) as repeated_ids from jnpct."individual_eligible_couple"
+   union all
+   select 'individual_ncd_program' as source, count(*) - count(distinct id) as repeated_ids from jnpct."individual_ncd_program"
+   union all
+   select 'individual_pregnancy' as source, count(*) - count(distinct id) as repeated_ids from jnpct."individual_pregnancy"
+   union all
+   select 'individual_pregnancy_anc' as source, count(*) - count(distinct id) as repeated_ids from jnpct."individual_pregnancy_anc"
+   union all
+   select 'individual_pregnancy_anc_cluster_incharge' as source, count(*) - count(distinct id) as repeated_ids from jnpct."individual_pregnancy_anc_cluster_incharge"
+   union all
+   select 'individual_pregnancy_delivery_form' as source, count(*) - count(distinct id) as repeated_ids from jnpct."individual_pregnancy_delivery_form"
+   union all
+   select 'individual_pregnancy_pnc' as source, count(*) - count(distinct id) as repeated_ids from jnpct."individual_pregnancy_pnc";
+   ```
 
 **After the first jnpct run.**
 1. The 11 tables exist in the jnpct schema and each has rows (`select count(*)`).
@@ -81,22 +117,26 @@ A failed refresh rolls back every table here. Jasper keeps serving the last good
 error on any report. Two ways to notice:
 
 1. **Job history.** A failed refresh fails the whole jnpct ETL job, and the job history records
-   it with `success = false` and the error:
+   it with `success = false`:
 
    ```sql
-   select started_at, ended_at, success, error_message
+   select started_at, ended_at, success
    from public.scheduled_job_run
    where job_name = (select uuid from public.organisation where db_user = 'jnpct')
    order by started_at desc limit 10;
    ```
-2. **Freshness.** A failure earlier in the ETL (schema migration, sync) never reaches this step,
-   so the job history shows that error instead and these tables simply stop moving. The newest
-   visit here should be close to the newest in the ETL table it comes from:
+   The `error_message` column of the same table holds the full error. It can quote a row's
+   values, so read it only where beneficiary data may be seen, and never paste it into an AI tool.
+2. **Freshness.** If the jnpct job stops running, or fails before this step, the ETL tables stop
+   moving along with these, so compare against the clock, not against each other:
 
    ```sql
-   select (select max("Enc.encounter_date_time") from jnpct.jnpct_anc_visit_view) as shadow_newest,
-          (select max(encounter_date_time) from jnpct.individual_pregnancy_anc) as etl_newest;
+   select now() - max(started_at) as since_last_run,
+          now() - max(ended_at) filter (where success) as since_last_success
+   from public.scheduled_job_run
+   where job_name = (select uuid from public.organisation where db_user = 'jnpct');
    ```
+   Either one above about 3 hours (two missed 90-minute cycles) means the tables are stale.
 
 Anyone changing JNPCT's forms should check the next jnpct run in the job history.
 
@@ -105,8 +145,13 @@ Anyone changing JNPCT's forms should check the next jnpct run in the job history
 Each table's refresh ends with `../shared/assert-not-emptied.sql`. If a table that had rows comes
 out of a refresh empty, the check fails the run, so every table keeps its last good data and the
 job history names the table. It never fires on a first run or on a table that was always empty.
-It also misses a table that was filled but never analysed, which autovacuum makes rare. To switch
-it off for one table, remove the file from that table's `update-sqls` and drop its `sql-params`.
+It also misses a table that was filled but never analysed, which autovacuum makes rare.
+
+Once it fires, every later run fails the same way, because the rollback puts the old rows back.
+All 11 tables stay frozen until someone acts. If the empty result is correct, clear it without a
+deploy: `DROP TABLE jnpct."<name>";` for the table the error names. The next run recreates and
+refills it, and a new table never trips the check. To switch the check off for good, remove the
+file from that table's `update-sqls` and drop its `sql-params`.
 
 ## Other clients that log in as `jnpct`
 
