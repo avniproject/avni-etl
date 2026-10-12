@@ -112,7 +112,7 @@ CREATE TABLE jnpct."jnpct_pnc_visit_view"
     "EncCancel.Reason of death"                                  text    NULL
 );
 
-CREATE UNIQUE INDEX "uidx_pnc_key" ON jnpct."jnpct_pnc_visit_view" ("Enc.Id");
+CREATE INDEX "idx_pnc_key" ON jnpct."jnpct_pnc_visit_view" ("Enc.Id");
 CREATE INDEX "idx_pnc_ind_date_of_birth" ON jnpct."jnpct_pnc_visit_view" ("Ind.date_of_birth");
 CREATE INDEX "idx_pnc_ind_phc" ON jnpct."jnpct_pnc_visit_view" ("Ind.phc");
 CREATE INDEX "idx_pnc_enc_encounter_date_t" ON jnpct."jnpct_pnc_visit_view" ("Enc.encounter_date_time");

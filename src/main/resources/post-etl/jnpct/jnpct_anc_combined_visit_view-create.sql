@@ -127,7 +127,7 @@ CREATE TABLE jnpct."jnpct_anc_combined_visit_view"
     "Enc.MONEY SAVED"                                                  text    NULL,
     "Enc.Who will give blood if required"                              text    NULL,
     "Enc.MAKE CLOTHES READY FOR THE DELIVERY AND NEW BORN BABY"        text    NULL,
-    "Enc.Counselling Done for the risk factors / Morbidities to all"   text    NULL,
+    "Enc.Counselling Done for the risk factors / Morbidities to all "   text    NULL,
     "Enc.Counselling done for the Government Scheme?"                  text    NULL,
     "Enc.Chiranjivi yojna form is ready?"                              text    NULL,
     "Enc.Have you enrolled in any government scheme?"                  text    NULL,
@@ -150,7 +150,7 @@ CREATE TABLE jnpct."jnpct_anc_combined_visit_view"
     "EncCancel.Reason of death"                                        text    NULL
 );
 
-CREATE UNIQUE INDEX "uidx_anc_combined_key" ON jnpct."jnpct_anc_combined_visit_view" ("Enc.Id");
+CREATE INDEX "idx_anc_combined_key" ON jnpct."jnpct_anc_combined_visit_view" ("Enc.Id");
 CREATE INDEX "idx_anc_combined_ind_date_of_birth" ON jnpct."jnpct_anc_combined_visit_view" ("Ind.date_of_birth");
 CREATE INDEX "idx_anc_combined_ind_phc" ON jnpct."jnpct_anc_combined_visit_view" ("Ind.phc");
 CREATE INDEX "idx_anc_combined_enl_enrolment_date_t" ON jnpct."jnpct_anc_combined_visit_view" ("Enl.enrolment_date_time");

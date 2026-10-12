@@ -54,7 +54,7 @@ CREATE TABLE jnpct."jnpct_child_enrolment_view"
     "Enl.Birth Weight"                              text    NULL
 );
 
-CREATE UNIQUE INDEX "uidx_child_enrolment_key" ON jnpct."jnpct_child_enrolment_view" ("Enl.Id");
+CREATE INDEX "idx_child_enrolment_key" ON jnpct."jnpct_child_enrolment_view" ("Enl.Id");
 CREATE INDEX "idx_child_enrolment_ind_date_of_birth" ON jnpct."jnpct_child_enrolment_view" ("Ind.date_of_birth");
 CREATE INDEX "idx_child_enrolment_ind_phc" ON jnpct."jnpct_child_enrolment_view" ("Ind.phc");
 CREATE INDEX "idx_child_enrolment_enl_enrolment_date_t" ON jnpct."jnpct_child_enrolment_view" ("Enl.enrolment_date_time");

@@ -128,7 +128,7 @@ CREATE TABLE jnpct."jnpct_child_followup_view"
     "EncCancel.Reason of death"                                         text    NULL
 );
 
-CREATE UNIQUE INDEX "uidx_child_followup_key" ON jnpct."jnpct_child_followup_view" ("Enc.Id");
+CREATE INDEX "idx_child_followup_key" ON jnpct."jnpct_child_followup_view" ("Enc.Id");
 CREATE INDEX "idx_child_followup_ind_date_of_birth" ON jnpct."jnpct_child_followup_view" ("Ind.date_of_birth");
 CREATE INDEX "idx_child_followup_ind_phc" ON jnpct."jnpct_child_followup_view" ("Ind.phc");
 CREATE INDEX "idx_child_followup_enc_encounter_date_t" ON jnpct."jnpct_child_followup_view" ("Enc.encounter_date_time");

@@ -103,7 +103,7 @@ CREATE TABLE jnpct."jnpct_delivery_view"
     "EncCancel.cancel_date_time"                                 timestamptz    NULL
 );
 
-CREATE UNIQUE INDEX "uidx_delivery_key" ON jnpct."jnpct_delivery_view" ("Enc.Id");
+CREATE INDEX "idx_delivery_key" ON jnpct."jnpct_delivery_view" ("Enc.Id");
 CREATE INDEX "idx_delivery_ind_date_of_birth" ON jnpct."jnpct_delivery_view" ("Ind.date_of_birth");
 CREATE INDEX "idx_delivery_ind_phc" ON jnpct."jnpct_delivery_view" ("Ind.phc");
 CREATE INDEX "idx_delivery_enl_enrolment_date_t" ON jnpct."jnpct_delivery_view" ("Enl.enrolment_date_time");

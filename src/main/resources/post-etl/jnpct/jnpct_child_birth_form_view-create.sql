@@ -88,7 +88,7 @@ CREATE TABLE jnpct."jnpct_child_birth_form_view"
     "EncCancel.Reason of death"                                         text    NULL
 );
 
-CREATE UNIQUE INDEX "uidx_child_birth_form_key" ON jnpct."jnpct_child_birth_form_view" ("Enc.Id");
+CREATE INDEX "idx_child_birth_form_key" ON jnpct."jnpct_child_birth_form_view" ("Enc.Id");
 CREATE INDEX "idx_child_birth_form_ind_date_of_birth" ON jnpct."jnpct_child_birth_form_view" ("Ind.date_of_birth");
 CREATE INDEX "idx_child_birth_form_ind_phc" ON jnpct."jnpct_child_birth_form_view" ("Ind.phc");
 CREATE INDEX "idx_child_birth_form_enc_encounter_date_t" ON jnpct."jnpct_child_birth_form_view" ("Enc.encounter_date_time");

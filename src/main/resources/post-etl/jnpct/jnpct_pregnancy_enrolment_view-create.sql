@@ -66,7 +66,7 @@ CREATE TABLE jnpct."jnpct_pregnancy_enrolment_view"
     "map"                                                      public.hstore    NULL
 );
 
-CREATE UNIQUE INDEX "uidx_pregnancy_enrolment_key" ON jnpct."jnpct_pregnancy_enrolment_view" ("Enl.Id");
+CREATE INDEX "idx_pregnancy_enrolment_key" ON jnpct."jnpct_pregnancy_enrolment_view" ("Enl.Id");
 CREATE INDEX "idx_pregnancy_enrolment_ind_date_of_birth" ON jnpct."jnpct_pregnancy_enrolment_view" ("Ind.date_of_birth");
 CREATE INDEX "idx_pregnancy_enrolment_ind_phc" ON jnpct."jnpct_pregnancy_enrolment_view" ("Ind.phc");
 CREATE INDEX "idx_pregnancy_enrolment_enl_enrolment_date_t" ON jnpct."jnpct_pregnancy_enrolment_view" ("Enl.enrolment_date_time");

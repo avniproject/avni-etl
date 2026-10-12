@@ -79,12 +79,14 @@ public class PostETLSyncService {
             log.error("Error executing post-ETL scripts", t);
             throw new RuntimeException("Failed to execute post-ETL scripts", t);
         } finally {
-            // Reset search path
+            // Reset search path and role. A DDL script may SET ROLE, which outlives the transaction
+            // on the pooled connection and would run the next borrower's queries as the org role.
             try {
                 log.info("Resetting search path to PUBLIC");
                 jdbcTemplate.execute(String.format("SET search_path TO %s", "PUBLIC"));
+                jdbcTemplate.execute("RESET ROLE");
             } catch (Exception e) {
-                log.error("Failed to reset search path in the end", e);
+                log.error("Failed to reset search path and role in the end", e);
             }
         }
     }
@@ -102,6 +104,8 @@ public class PostETLSyncService {
                 if (!tableExists(ddl)) {
                     log.info(String.format("Creating table: %s", ddl.getTable()));
                     executeSqlFile(organisation, ddl.getSql());
+                    // Undo any SET ROLE in the script, so the DML runs as the same role whether or not a table was created
+                    jdbcTemplate.execute("RESET ROLE");
                     log.info(String.format("Successfully created table: %s", ddl.getTable()));
                 } else {
                     log.info(String.format("Table %s already exists, skipping creation", ddl.getTable()));
