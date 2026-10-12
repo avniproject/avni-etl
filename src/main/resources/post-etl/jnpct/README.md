@@ -28,7 +28,7 @@ seconds against these tables.
   JNPCT programs. Non-MCH programs have no death/exit-reason concepts; those columns are NULL
   for them (they were NULL in the legacy view too).
 
-## Deliberate differences from the legacy views (improvements, not regressions)
+## Deliberate differences from the legacy views
 
 1. **Date-type observations are now correct.** The legacy views cast raw UTC observation
    timestamps to `date`, shifting IST dates one day early (e.g. Date of delivery
@@ -42,30 +42,77 @@ seconds against these tables.
    (Chiranjivi yojna / government scheme / laboratory test / Burning micturation /
    Ind.Aadhaar card) have no ETL column and are NULL. **No JNPCT report references any of
    these columns** (verified against all 41 JRXMLs).
+4. **Data is up to one ETL cycle old.** The legacy views were live. These tables refresh once per
+   jnpct ETL run: every 90 minutes by default (`repeatIntervalInMinutes`), plus the run's own time.
+   The column `Enc.Counselling Done for the risk factors / Morbidities to all ` keeps the trailing
+   space the legacy views gave it.
 
 ## Verification after deploy
 
-1. After one ETL sync, confirm the 11 tables exist in the jnpct schema and
-   `select count(*)` of each is non-zero (except possibly exit view variants).
-2. Run the two reports from FD#8512 end-to-end on Jasper:
-   *KMC Care* and *Delivery care of High risk Pregnancy Linelist* — both should return
-   in seconds.
-3. Spot-compare a handful of rows against the legacy view by `"Enc.Id"`
-   (expect identical values except the documented date/stale-uuid improvements).
+Every query below returns counts, sizes, timestamps or job status only.
 
-## Failures are silent: watch the ETL log
+**Before deploy.** Record how long jnpct's last 10 ETL runs took (the job-history query under
+*Watching for stale data*, `ended_at - started_at`).
 
-If any script here fails (for example a form change renames an ETL column), the whole
-post-ETL transaction rolls back. The tables keep the last good data and Jasper keeps
-serving it, with no error on any report. The only sign is `Error executing post-ETL
-scripts` in the ETL log during a jnpct run (the run starts with `Running ETL for` and the
-jnpct identity). Anyone changing JNPCT's forms should check the next jnpct ETL run for it.
+**After the first jnpct run.**
+1. The 11 tables exist in the jnpct schema and each has rows (`select count(*)`).
+2. Restart the Jasper datasource connection pool. A connection that already ran a report before
+   the tables existed can keep reading the legacy views until it is recycled.
+3. Run *KMC Care* and *Delivery care of High risk Pregnancy Linelist* end to end. Both should
+   return in seconds.
+
+**After three runs.**
+1. Compare jnpct's run times with the numbers from before deploy. **Roll back if a run takes more
+   than 5 minutes longer.**
+2. Table sizes and dead rows, to size what each refresh rewrites:
+
+   ```sql
+   select c.relname, pg_size_pretty(pg_total_relation_size(c.oid)) as size, s.n_dead_tup
+   from pg_class c join pg_stat_user_tables s on s.relid = c.oid
+   where c.relnamespace = 'jnpct'::regnamespace and c.relname like 'jnpct\_%\_view'
+   order by pg_total_relation_size(c.oid) desc;
+   ```
+   If the 11 tables together pass about 1 GB, the full rebuild on every run is worth replacing
+   with a refresh of changed rows only.
+
+## Watching for stale data
+
+A failed refresh rolls back every table here. Jasper keeps serving the last good data, with no
+error on any report. Two ways to notice:
+
+1. **Job history.** A failed refresh fails the whole jnpct ETL job, and the job history records
+   it with `success = false` and the error:
+
+   ```sql
+   select started_at, ended_at, success, error_message
+   from public.scheduled_job_run
+   where job_name = (select uuid from public.organisation where db_user = 'jnpct')
+   order by started_at desc limit 10;
+   ```
+2. **Freshness.** A failure earlier in the ETL (schema migration, sync) never reaches this step,
+   so the job history shows that error instead and these tables simply stop moving. The newest
+   visit here should be close to the newest in the ETL table it comes from:
+
+   ```sql
+   select (select max("Enc.encounter_date_time") from jnpct.jnpct_anc_visit_view) as shadow_newest,
+          (select max(encounter_date_time) from jnpct.individual_pregnancy_anc) as etl_newest;
+   ```
+
+Anyone changing JNPCT's forms should check the next jnpct run in the job history.
+
+## The emptied-table check
+
+Each table's refresh ends with `../shared/assert-not-emptied.sql`. If a table that had rows comes
+out of a refresh empty, the check fails the run, so every table keeps its last good data and the
+job history names the table. It never fires on a first run or on a table that was always empty.
+It also misses a table that was filled but never analysed, which autovacuum makes rare. To switch
+it off for one table, remove the file from that table's `update-sqls` and drop its `sql-params`.
 
 ## Other clients that log in as `jnpct`
 
-The shadowing is not specific to Jasper. Any Metabase or Superset query that connects as
-DB user `jnpct` and reads `jnpct_*_view` without a schema also gets these tables from now on,
-with the same ~90 min lag and the same improvements listed above.
+The shadowing is not specific to Jasper. Any Metabase or Superset query that connects as DB user
+`jnpct` and reads `jnpct_*_view` without a schema also gets these tables from now on. avni-server
+is not affected: its connections pin `currentSchema=public`.
 
 ## Rollback
 
