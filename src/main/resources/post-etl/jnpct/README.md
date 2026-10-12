@@ -89,6 +89,14 @@ Every query below returns counts, sizes, timestamps or job status only.
    union all
    select 'individual_pregnancy_pnc' as source, count(*) - count(distinct id) as repeated_ids from jnpct."individual_pregnancy_pnc";
    ```
+3. Confirm the ETL login can write to tables `jnpct` owns. Each table is created as `jnpct`, but
+   every refresh runs as the ETL login (`openchs`), which writes through its membership of the
+   `jnpct` role. Both must return `t`:
+
+   ```sql
+   select rolinherit from pg_roles where rolname = 'openchs';
+   select has_table_privilege('openchs', 'jnpct.individual', 'INSERT');
+   ```
 
 **After the first jnpct run.**
 1. The 11 tables exist in the jnpct schema and each has rows (`select count(*)`).

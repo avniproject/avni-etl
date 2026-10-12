@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -60,7 +61,11 @@ public class PostETLConfigFilesTest {
 
         for (PostETLConfig.DDLConfig ddl : nullSafe(config.getDdl())) {
             ddlTables.add(ddl.getTable());
-            requireFile(dir, ddl.getSql(), "ddl " + ddl.getTable(), referenced, failures);
+            Path ddlFile = requireFile(dir, ddl.getSql(), "ddl " + ddl.getTable(), referenced, failures);
+            if (ddlFile != null && !startsWithSetRole(Files.readString(ddlFile), schema)) {
+                failures.add("ddl " + ddl.getTable() + ": " + ddl.getSql() + " must start with `set role " + schema
+                        + ";`, or the table is owned by the ETL login and the org's own login cannot read it");
+            }
             String existsCheck = ddl.getExistsCheck();
             if (existsCheck == null || !existsCheck.contains("table_schema = '" + schema + "'")) {
                 failures.add("ddl " + ddl.getTable() + ": exists_check must name table_schema = '" + schema
@@ -106,6 +111,16 @@ public class PostETLConfigFilesTest {
             return null;
         }
         return path;
+    }
+
+    // The first statement, skipping blank lines and -- comments, must switch to the org's role
+    private static boolean startsWithSetRole(String sql, String role) {
+        for (String line : sql.split("\n")) {
+            String trimmed = line.trim();
+            if (trimmed.isEmpty() || trimmed.startsWith("--")) continue;
+            return trimmed.toLowerCase().replace("\"", "").matches("set role " + Pattern.quote(role.toLowerCase()) + "\\s*;.*");
+        }
+        return false;
     }
 
     private static <T> List<T> nullSafe(List<T> list) {
