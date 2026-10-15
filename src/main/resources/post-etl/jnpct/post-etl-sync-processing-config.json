@@ -1,0 +1,329 @@
+{
+  "ddl": [
+    {
+      "order": 1,
+      "table": "jnpct_anc_cluster_incharge_visit_view",
+      "sql": "jnpct_anc_cluster_incharge_visit_view-create.sql",
+      "exists_check": "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'jnpct' AND table_name = 'jnpct_anc_cluster_incharge_visit_view')"
+    },
+    {
+      "order": 2,
+      "table": "jnpct_anc_combined_visit_view",
+      "sql": "jnpct_anc_combined_visit_view-create.sql",
+      "exists_check": "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'jnpct' AND table_name = 'jnpct_anc_combined_visit_view')"
+    },
+    {
+      "order": 3,
+      "table": "jnpct_anc_visit_view",
+      "sql": "jnpct_anc_visit_view-create.sql",
+      "exists_check": "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'jnpct' AND table_name = 'jnpct_anc_visit_view')"
+    },
+    {
+      "order": 4,
+      "table": "jnpct_child_birth_form_view",
+      "sql": "jnpct_child_birth_form_view-create.sql",
+      "exists_check": "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'jnpct' AND table_name = 'jnpct_child_birth_form_view')"
+    },
+    {
+      "order": 5,
+      "table": "jnpct_child_enrolment_view",
+      "sql": "jnpct_child_enrolment_view-create.sql",
+      "exists_check": "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'jnpct' AND table_name = 'jnpct_child_enrolment_view')"
+    },
+    {
+      "order": 6,
+      "table": "jnpct_child_followup_view",
+      "sql": "jnpct_child_followup_view-create.sql",
+      "exists_check": "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'jnpct' AND table_name = 'jnpct_child_followup_view')"
+    },
+    {
+      "order": 7,
+      "table": "jnpct_child_pnc_view",
+      "sql": "jnpct_child_pnc_view-create.sql",
+      "exists_check": "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'jnpct' AND table_name = 'jnpct_child_pnc_view')"
+    },
+    {
+      "order": 8,
+      "table": "jnpct_delivery_view",
+      "sql": "jnpct_delivery_view-create.sql",
+      "exists_check": "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'jnpct' AND table_name = 'jnpct_delivery_view')"
+    },
+    {
+      "order": 9,
+      "table": "jnpct_pnc_visit_view",
+      "sql": "jnpct_pnc_visit_view-create.sql",
+      "exists_check": "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'jnpct' AND table_name = 'jnpct_pnc_visit_view')"
+    },
+    {
+      "order": 10,
+      "table": "jnpct_pregnancy_enrolment_view",
+      "sql": "jnpct_pregnancy_enrolment_view-create.sql",
+      "exists_check": "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'jnpct' AND table_name = 'jnpct_pregnancy_enrolment_view')"
+    },
+    {
+      "order": 11,
+      "table": "jnpct_program_exit_view",
+      "sql": "jnpct_program_exit_view-create.sql",
+      "exists_check": "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'jnpct' AND table_name = 'jnpct_program_exit_view')"
+    }
+  ],
+  "dml": [
+    {
+      "order": 1,
+      "table": "jnpct_anc_cluster_incharge_visit_view",
+      "sqls": [
+        {
+          "order": 1,
+          "sourceTableName": "individual_pregnancy_anc_cluster_incharge",
+          "insert-sql": "",
+          "update-sqls": [
+            "jnpct_anc_cluster_incharge_visit_view-delete-all.sql",
+            "jnpct_anc_cluster_incharge_visit_view-b1-insert.sql",
+            "../shared/assert-not-emptied.sql"
+          ],
+          "sql-params": [
+            "jnpct_anc_cluster_incharge_visit_view"
+          ]
+        }
+      ]
+    },
+    {
+      "order": 2,
+      "table": "jnpct_anc_combined_visit_view",
+      "sqls": [
+        {
+          "order": 1,
+          "sourceTableName": "individual_pregnancy_anc",
+          "insert-sql": "",
+          "update-sqls": [
+            "jnpct_anc_combined_visit_view-delete-all.sql",
+            "jnpct_anc_combined_visit_view-b1-insert.sql"
+          ]
+        },
+        {
+          "order": 2,
+          "sourceTableName": "individual_pregnancy_anc_cluster_incharge",
+          "insert-sql": "",
+          "update-sqls": [
+            "jnpct_anc_combined_visit_view-b2-insert.sql",
+            "../shared/assert-not-emptied.sql"
+          ],
+          "sql-params": [
+            "jnpct_anc_combined_visit_view"
+          ]
+        }
+      ]
+    },
+    {
+      "order": 3,
+      "table": "jnpct_anc_visit_view",
+      "sqls": [
+        {
+          "order": 1,
+          "sourceTableName": "individual_pregnancy_anc",
+          "insert-sql": "",
+          "update-sqls": [
+            "jnpct_anc_visit_view-delete-all.sql",
+            "jnpct_anc_visit_view-b1-insert.sql",
+            "../shared/assert-not-emptied.sql"
+          ],
+          "sql-params": [
+            "jnpct_anc_visit_view"
+          ]
+        }
+      ]
+    },
+    {
+      "order": 4,
+      "table": "jnpct_child_birth_form_view",
+      "sqls": [
+        {
+          "order": 1,
+          "sourceTableName": "individual_child_birth_form",
+          "insert-sql": "",
+          "update-sqls": [
+            "jnpct_child_birth_form_view-delete-all.sql",
+            "jnpct_child_birth_form_view-b1-insert.sql",
+            "../shared/assert-not-emptied.sql"
+          ],
+          "sql-params": [
+            "jnpct_child_birth_form_view"
+          ]
+        }
+      ]
+    },
+    {
+      "order": 5,
+      "table": "jnpct_child_enrolment_view",
+      "sqls": [
+        {
+          "order": 1,
+          "sourceTableName": "individual_child",
+          "insert-sql": "",
+          "update-sqls": [
+            "jnpct_child_enrolment_view-delete-all.sql",
+            "jnpct_child_enrolment_view-b1-insert.sql",
+            "../shared/assert-not-emptied.sql"
+          ],
+          "sql-params": [
+            "jnpct_child_enrolment_view"
+          ]
+        }
+      ]
+    },
+    {
+      "order": 6,
+      "table": "jnpct_child_followup_view",
+      "sqls": [
+        {
+          "order": 1,
+          "sourceTableName": "individual_child_child_followup",
+          "insert-sql": "",
+          "update-sqls": [
+            "jnpct_child_followup_view-delete-all.sql",
+            "jnpct_child_followup_view-b1-insert.sql"
+          ]
+        },
+        {
+          "order": 2,
+          "sourceTableName": "individual_child_child_followup_cluster_incharge",
+          "insert-sql": "",
+          "update-sqls": [
+            "jnpct_child_followup_view-b2-insert.sql",
+            "../shared/assert-not-emptied.sql"
+          ],
+          "sql-params": [
+            "jnpct_child_followup_view"
+          ]
+        }
+      ]
+    },
+    {
+      "order": 7,
+      "table": "jnpct_child_pnc_view",
+      "sqls": [
+        {
+          "order": 1,
+          "sourceTableName": "individual_child_child_pnc",
+          "insert-sql": "",
+          "update-sqls": [
+            "jnpct_child_pnc_view-delete-all.sql",
+            "jnpct_child_pnc_view-b1-insert.sql"
+          ]
+        },
+        {
+          "order": 2,
+          "sourceTableName": "individual_child_child_pnc_cluster_incharge",
+          "insert-sql": "",
+          "update-sqls": [
+            "jnpct_child_pnc_view-b2-insert.sql",
+            "../shared/assert-not-emptied.sql"
+          ],
+          "sql-params": [
+            "jnpct_child_pnc_view"
+          ]
+        }
+      ]
+    },
+    {
+      "order": 8,
+      "table": "jnpct_delivery_view",
+      "sqls": [
+        {
+          "order": 1,
+          "sourceTableName": "individual_pregnancy_delivery_form",
+          "insert-sql": "",
+          "update-sqls": [
+            "jnpct_delivery_view-delete-all.sql",
+            "jnpct_delivery_view-b1-insert.sql",
+            "../shared/assert-not-emptied.sql"
+          ],
+          "sql-params": [
+            "jnpct_delivery_view"
+          ]
+        }
+      ]
+    },
+    {
+      "order": 9,
+      "table": "jnpct_pnc_visit_view",
+      "sqls": [
+        {
+          "order": 1,
+          "sourceTableName": "individual_pregnancy_pnc",
+          "insert-sql": "",
+          "update-sqls": [
+            "jnpct_pnc_visit_view-delete-all.sql",
+            "jnpct_pnc_visit_view-b1-insert.sql",
+            "../shared/assert-not-emptied.sql"
+          ],
+          "sql-params": [
+            "jnpct_pnc_visit_view"
+          ]
+        }
+      ]
+    },
+    {
+      "order": 10,
+      "table": "jnpct_pregnancy_enrolment_view",
+      "sqls": [
+        {
+          "order": 1,
+          "sourceTableName": "individual_pregnancy",
+          "insert-sql": "",
+          "update-sqls": [
+            "jnpct_pregnancy_enrolment_view-delete-all.sql",
+            "jnpct_pregnancy_enrolment_view-b1-insert.sql",
+            "../shared/assert-not-emptied.sql"
+          ],
+          "sql-params": [
+            "jnpct_pregnancy_enrolment_view"
+          ]
+        }
+      ]
+    },
+    {
+      "order": 11,
+      "table": "jnpct_program_exit_view",
+      "sqls": [
+        {
+          "order": 1,
+          "sourceTableName": "individual_ncd_program",
+          "insert-sql": "",
+          "update-sqls": [
+            "jnpct_program_exit_view-delete-all.sql",
+            "jnpct_program_exit_view-b1-insert.sql"
+          ]
+        },
+        {
+          "order": 2,
+          "sourceTableName": "individual_eligible_couple",
+          "insert-sql": "",
+          "update-sqls": [
+            "jnpct_program_exit_view-b2-insert.sql"
+          ]
+        },
+        {
+          "order": 3,
+          "sourceTableName": "individual_pregnancy",
+          "insert-sql": "",
+          "update-sqls": [
+            "jnpct_program_exit_view-b3-insert.sql"
+          ]
+        },
+        {
+          "order": 4,
+          "sourceTableName": "individual_child",
+          "insert-sql": "",
+          "update-sqls": [
+            "jnpct_program_exit_view-b4-insert.sql",
+            "../shared/assert-not-emptied.sql"
+          ],
+          "sql-params": [
+            "jnpct_program_exit_view"
+          ]
+        }
+      ]
+    }
+  ]
+}

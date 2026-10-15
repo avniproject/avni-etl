@@ -1,0 +1,10 @@
+{
+  "ddl": [
+    {
+      "order": 1,
+      "table": "role_switching_ddl",
+      "sql": "set-role.sql",
+      "exists_check": "SELECT false"
+    }
+  ]
+}
