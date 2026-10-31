@@ -7,8 +7,11 @@ import org.avniproject.etl.domain.metadata.TableMetadata;
 import org.avniproject.etl.repository.rowMappers.tableMappers.*;
 import org.avniproject.etl.repository.rowMappers.tableMappers.repeatableQuestionGroup.RepeatableQuestionGroupTableFactory;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class TableMetadataMapper {
@@ -57,8 +60,13 @@ public class TableMetadataMapper {
         tableMetadata.setName(table.name(tableDetails));
 
         tableMetadata.addColumnMetadata(table.columns().stream().map(column -> new ColumnMetadata(column, null, null, null, false)).collect(Collectors.toList()));
+        // Two live form elements can point at the same concept (#173). Both would become a column of the
+        // same name and the flat-table insert fails with "column specified more than once", halting the org.
+        // Keep the first one, as the decision and sync-attribute columns already do.
+        Set<List<Object>> seenConcepts = new HashSet<>();
         tableMetadata.addColumnMetadata(columns.stream()
                 .filter(stringObjectMap -> stringObjectMap.get("concept_id") != null)
+                .filter(column -> seenConcepts.add(Arrays.asList(column.get("concept_uuid"), column.get("parent_concept_uuid"))))
                 .map(column -> new ColumnMetadataMapper().create(column)).collect(Collectors.toList()));
 
         table.columns().forEach(column -> {
