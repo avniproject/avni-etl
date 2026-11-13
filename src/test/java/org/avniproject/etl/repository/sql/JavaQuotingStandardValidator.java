@@ -49,8 +49,7 @@ class JavaQuotingStandardValidator {
         "\\.replace\\(\\\"\\$\\{schema_name\\}\\\"", // Legitimate string replacement (template has quotes)
         "\\.replace\\(\\\"\\$\\{table_name\\}\\\"",   // Legitimate string replacement (template has quotes)
         "\\.replace\\(\\\"\\$schemaName\\\"",        // Legitimate string replacement 
-        "\\.replace\\(\\\"\\$tableName\\\"",         // Legitimate string replacement
-        "ReportRepository\\.java" // Skip report repository (legitimate dynamic queries)
+        "\\.replace\\(\\\"\\$tableName\\\""          // Legitimate string replacement
     };
 
     @Test
